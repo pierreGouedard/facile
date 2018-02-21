@@ -1,7 +1,7 @@
-# Global settings
+## Global settings ##
 
-spark.home: /opt/spark
-hadoop.home: /opt/hadoop
-spark.executor.memory: 512m
-spark.master: local[2]
+# Secret key for flask app
+SECRET_KEY = "GyP1~:}[#\\udjuTegzjy\rk/y"
+
+
 
