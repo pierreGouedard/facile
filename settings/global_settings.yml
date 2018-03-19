@@ -1,7 +1,0 @@
-## Global settings ##
-
-# Secret key for flask app
-SECRET_KEY = "GyP1~:}[#\\udjuTegzjy\rk/y"
-
-
-

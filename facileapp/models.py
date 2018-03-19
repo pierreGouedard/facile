@@ -1,17 +1,92 @@
+#Global imports
+import os
+import pandas as pd
 
-# TEST motherfucker
-class Employe(object):
-    id = {'name': 'id', 'index': True}
-    name = {'name': 'name', 'index': False}
-    surname = {'name': 'surname', 'index': False}
-    job_title = {'name': 'job_title', 'index': False}
-    pseudo = {'name': 'pseudo', 'index': False}
-    password = {'name': 'password', 'index': False}
+# Local import
+import settings
 
-    def __init__(self, id, name, surname, job_title, pseudo, password):
+
+class Users(object):
+
+    id_spec = {'name': 'surname', 'type': int, 'index': True}
+    username_spec = {'name': 'surname', 'type': str}
+    password_spec = {'name': 'password', 'type': str}
+    rights_spec = {'name': 'password', 'type': str}
+
+    path = os.path.join(settings.facile_admin_path, 'users.csv')
+
+    def __init__(self, id, username, password, rights=None):
         self.id = id
-        self.name = name
-        self.surname = surname
-        self.job_title = job_title
-        self.pseudo = pseudo
+        self.username = username
         self.password = password
+        self.rights = rights
+
+    @staticmethod
+    def from_id(self, id_):
+        df = self.load_users()
+        if id_ in df.index:
+            return Users(id_, df.loc[id_, 'username'], df.loc[id_, 'password'], df.loc[id_, 'rights'])
+        else:
+            raise ValueError('Id {} does not exists'.format(id_))
+
+    @staticmethod
+    def from_username(username):
+        df = Users.load_users()
+        s = df.loc[df.username == username].iloc[0]
+        if not s.empty:
+            return Users(int(s.name), s['username'], s['password'], s['rights'])
+        else:
+            raise ValueError('username {} does not exists'.format(username))
+
+    @staticmethod
+    def from_login(username, password):
+        df = Users.load_users()
+
+        if username in df.username.values:
+
+            s = df.loc[df.username == username].iloc[0]
+            if str(password) == str(s['password']):
+                return Users(int(s.name), s['username'], s['password'], s['rights'])
+            else:
+                raise ValueError('password is not correct')
+        else:
+            raise ValueError('username {} does not exists'.format(username))
+
+
+    @staticmethod
+    def load_users():
+        df = pd.read_csv(Users.path, index_col='id')
+        return df
+
+    def add_user(self):
+        df = Users.load_users()
+        id_ = df.index.max() + 1
+
+        if self.username not in df.username:
+            df = df.append(pd.DataFrame([[self.username, self.password, self.rights]], index=[id_], columns=df.columns))
+            df.reset_index().to_csv(self.path)
+
+        else:
+            raise ValueError('username {} already exists'.format(self.username))
+
+    def alter_user(self):
+        df = Users.load_users()
+
+        if self.id in df.index:
+
+            # Alter user
+            for c in df.columns:
+                df.loc[self.id, c] = self.__getattribute__(c)
+
+            # Save it
+            df.reset_index().to_csv(self.path)
+
+        else:
+            raise ValueError('id {} does not exists'.format(self.username))
+
+
+
+
+
+
+

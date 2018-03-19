@@ -5,5 +5,5 @@ app = Flask(__name__, instance_relative_config=True)
 app.config.from_object('config')
 
 # Import views and models
-from . import views
-from . import models
+from facileapp import views
+from facileapp import models
