@@ -17,3 +17,4 @@ class LoginSchema(deform.schema.CSRFSchema):
         colander.String(),
         title="Password",
         default="xxxxx")
+
