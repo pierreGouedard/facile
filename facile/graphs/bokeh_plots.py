@@ -1,6 +1,6 @@
-from bokeh import plotting, resources
-from bokeh.embed import file_html
+from bokeh import plotting
 import itertools
+import pandas as pd
 
 
 def plot_series(df, title='bokeh plot'):
@@ -18,4 +18,4 @@ def plot_series(df, title='bokeh plot'):
     for column_name, s in df.iteritems():
         fig.line(df.index, s.values, line_width=1.4, color=colors.next(), legend=column_name)
 
-    return file_html(fig, resources=resources.CDN, title=title)
+    return fig

@@ -2,64 +2,35 @@
 import deform
 import colander
 import datetime
+import pandas as pd
 from translationstring import TranslationStringFactory
 _ = TranslationStringFactory('deform')
 
 # Local import
 from facile.forms.Deform import Form
 
-class testdatewidget(deform.widget.DateInputWidget):
-    type_name = 'pute'
-    key = 'dates'
-
 
 class SeriesForm(Form):
+    # Redefine class attribute here if necessary
+    mapping_name = {'dateStart': {'date': None}, 'dateEnd': {'date': None}, 'tag': None, 'submit': None}
 
     def __init__(self, request, template_deform_path):
-        Form.__init__(self, request, template_deform_path)
+        Form.__init__(self, request, template_deform_path, SeriesSchema())
 
-    def get_form(self):
-        schema = SeriesSchema()
-        deform.form.Form.set_zpt_renderer(self.search_path)
-        form = deform.form.Form(schema, buttons=('submit',), use_ajax=True)
-        form.set_zpt_renderer(self.search_path)
-        import IPython
-        IPython.embed()
-        return self.render_form(form)
+    # validate_ method method should be re-defined in class that inherit from Form
+    def validate_(self, pstruct):
+        try:
+            assert(pd.Timestamp(pstruct['dateStart']['date']) <= pd.Timestamp(pstruct['dateEnd']['date']))
 
-class TestForm(Form):
+        except AssertionError:
+            raise deform.ValidationFailure
 
-    def __init__(self, request, template_deform_path):
-        Form.__init__(self, request, template_deform_path)
+    # format_ function should be re-defined in class that inherit from Form
+    def format_(self, pstruct):
+        pstruct['dateStart'] = pd.Timestamp(pstruct['dateStart']['date'])
+        pstruct['dateEnd'] = pd.Timestamp(pstruct['dateEnd']['date'])
 
-    def get_form(self, appstruct=colander.null):
-        appstruct = {"people": [
-            {
-                'name': 'keith',
-                'age': 20,
-            },
-            {
-                'name': 'fred',
-                'age': 23,
-            },
-        ]}
-        schema = Schema()
-        form = deform.form.Form(schema, buttons=('submit',))
-        import IPython
-        IPython.embed()
-        return self.render_form(form, **{'mask': "salepute"})
-
-
-class Person(colander.MappingSchema):
-    name = colander.SchemaNode(colander.String())
-    age = colander.SchemaNode(colander.Integer(),
-                              validator=colander.Range(0, 200))
-
-class People(colander.SequenceSchema):
-    person = Person()
-
-class Schema(colander.MappingSchema):
-    people = People()
+        return pstruct
 
 
 class SeriesSchema(colander.Schema):
@@ -71,17 +42,17 @@ class SeriesSchema(colander.Schema):
             min=datetime.date(2015, 1, 1),
             min_err=_('${val} is earlier than earliest datetime ${min}')
         ),
-        widget=deform.widget.DateInputWidget(**{'key': 'dateS'})
+        widget=deform.widget.DateInputWidget(**{'key': 'dateStart-date'})
     )
 
     dateEnd = colander.SchemaNode(
         colander.Date(),
         title="Date end",
         validator=colander.Range(
-            min=datetime.datetime.now(),
+            max=datetime.datetime.now().date(),
             max_err=_('${val} is greater than maximum value ${max}')
         ),
-        widget=deform.widget.DateInputWidget(**{'key': 'dateE'})
+        widget=deform.widget.DateInputWidget(**{'key': 'dateEnd-date'})
     )
 
     tag = colander.SchemaNode(

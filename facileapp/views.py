@@ -89,28 +89,30 @@ def series():
     html_template = Template(render_template("series.html", custom_html=Markup(html_content.body.children[0].render())))
 
     # Create form
-    form = realytics.SeriesForm(request, deform_template_path).get_form()
+    web, data = realytics.SeriesForm(request, deform_template_path).process_form()
 
     # Generate plot if form correctly submitted
-    if request.method == 'POST' and form.pop('success'):
-        import IPython
-        IPython.embed()
+    if request.method == 'POST' and data.pop('success'):
 
-        fig = bokeh_plots.plot_series(generate_fake_plot(request.form['dateStart'], request.form['dateEnd']))
+        form_data = data.pop('form_data')
+        fig = bokeh_plots.plot_series(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']))
 
         html_string = file_html(fig, resources=resources.CDN, template=html_template,
-                                template_variables={k: Markup(v) for k, v in form.items()})
+                                template_variables={k: Markup(v) for k, v in web.items()})
+
         return html_string
     else:
+
         html_string = render_template(html_template, plot_div=Markup('NO DATA TO PLOT'),
-                                      **{k: Markup(v) for k, v in form.items()})
+                                      **{k: Markup(v) for k, v in web.items()})
 
     return templating.render_template_string(html_string)
 
 
 def generate_fake_plot(date_start, date_end):
     # Generate fake data for bokeh plot
-    di = pd.DatetimeIndex(start=date_start, end=date_end, freq='t')
+    di = pd.DatetimeIndex(start=pd.Timestamp('2017-01-01 00:00:00'), end=pd.Timestamp('2017-01-01 00:02:00'),
+                          freq='t')
 
     # Create fake dataframe
     df = pd.DataFrame(np.random.randn(len(di), 2), index=di, columns=['series_{}'.format(i) for i in range(2)])

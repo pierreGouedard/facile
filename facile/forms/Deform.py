@@ -2,29 +2,51 @@
 import deform
 import colander
 
+
 class Form(object):
 
+    appstruct = colander.null
+    mapping_name = {'__formid__': None, '_charset_': None}
     css_static = '<link rel="stylesheet" type="text/css" href="%s"></link>'
     js_static = '<script type="text/javascript" src="%s"></script>'
     href = "{{url_for('static', filename='deform/%s')}}"
 
-    def __init__(self, request, search_path):
+    def __init__(self, request, search_path, schema):
         self.request = request
         self.search_path = search_path
+        self.schema = schema
 
-    def render_form(self, form, appstruct=colander.null, **kw):
-        success = False
+    def validate_(self, pstruct):
+        raise NotImplementedError
+
+    def format_(self, pstruct):
+        raise NotImplementedError
+
+    def process_form(self, **kw):
+        success, form_data = False, None
+
+        # Change default renderer path
+        deform.form.Form.set_zpt_renderer(self.search_path)
+
+        # Create form
+        form = deform.form.Form(self.schema, buttons=('submit',), use_ajax=True)
 
         # condition of metho
         if self.request.method == 'POST':
             # try to validate the submitted values
             try:
-                import IPython
-                IPython.embed()
-                controls = self.order_controls(self.request.form)
-                captured = form.validate(controls)
+                # parse form
+                pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
+                pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))
+
+                # Generate succeed form (with values posted)
+                captured = form.validate_pstruct(pstruct)
+                self.validate_(pstruct)
                 html = form.render(captured)
-                success = True
+
+                # Set succes variable and format form data
+                success, form_data = True, self.format_(pstruct)
+
             # the submitted values could not be validated
             except deform.ValidationFailure as e:
                 html = e.render()
@@ -32,7 +54,7 @@ class Form(object):
 
         else:
             # the request requires a simple form rendering
-            html = form.render(appstruct, **kw)
+            html = form.render(self.appstruct, **kw)
 
         # Get static requirements
         d_reqts = form.get_widget_resources()
@@ -40,13 +62,32 @@ class Form(object):
         l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
 
         # values passed to template for rendering
-        return {
+        d_web = {
             'form': html,
             'form_css': '\n'.join(l_css_links),
             'form_js': '\n'.join(l_js_links),
-            'success': success
             }
 
+        # Add form data if Post AND success
+        d_data = {'success': success, 'form_data': form_data}
+
+        return d_web, d_data
+
     @staticmethod
-    def order_controls(d_controls):
-        return d_controls.items()
+    def recursive_parser(d_out, items):
+
+        # Parse items with d_out
+        for k in d_out.keys():
+            if d_out[k] is not None:
+
+                # Get sub list of item for the current key
+                items_ = filter(lambda (k_, v_): k in k_, items)
+                items_ = map(lambda (k_, v_): (k_.split('{}-'.format(k))[-1], v_), items_)
+
+                # Parse sub element
+                d_out[k] = Form.recursive_parser(d_out[k], items_)
+
+            else:
+                d_out[k] = dict(items).get(k, '')
+
+        return d_out
