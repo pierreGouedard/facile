@@ -1,7 +1,7 @@
 from facileapp import app
 from flask import render_template
 from flask import templating
-from flask import Markup, session, redirect, url_for, request, config
+from flask import Markup, session, redirect, url_for, request
 import pandas as pd
 import numpy as np
 
@@ -13,10 +13,17 @@ from dominate.tags import *
 
 from facile.forms import login_form, realytics
 from facile.graphs import bokeh_plots
-from facileapp.models import Users
 
 from settings import deform_template_path
-import deform
+
+l_cats = ['accessMethod=web,deviceType=0,eventName=ry_c_ry_session_server',
+          'accessMethod=web,deviceType=1,eventName=ry_c_ry_session_server',
+          'accessMethod=web,deviceType=2,eventName=ry_c_ry_session_server',
+          'accessMethod=web,deviceType=3,eventName=ry_c_ry_session_server',
+          'accessMethod=mobileapp,deviceType=1,eventName=ry_c_ry_session_server',
+          'accessMethod=mobileappinstall,deviceType=1,eventName=ry_c_ry_session_server'
+          ]
+
 
 @app.route('/')
 def home():
@@ -30,36 +37,33 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
 
+    # The doc is composed of a form to login
+    html_content = dominate.document()
+    with html_content:
+        with div(cls='row'):
+            with div(cls='col-sm-12'):
+                p('{{form_css}} {{ form_js }} {{ form }}')
+
+    html_template = Template(render_template("login.html",
+                                             custom_html=Markup(html_content.body.children[0].render())))
+
+    # process request
+    web, data = login_form.LoginForm(request, deform_template_path).process_form()
+
     if request.method == 'GET':
-
-        # The doc is composed of a form and of a bokeh plot
-        html_content = dominate.document()
-        with html_content:
-            with div(cls='row'):
-                with div(cls='col-sm-12'):
-                    p('{{ form_login }}')
-
-        html_template = Template(render_template("login.html",
-                                                 custom_html=Markup(html_content.body.children[0].render())))
-
-        # Create form
-        schema = login_form.LoginSchema()
-        process_btn = deform.form.Button(name='process', title="Process")
-        form = deform.form.Form(schema, buttons=(process_btn,))
-        html_string = render_template(html_template, form_login=Markup(form.render()))
-
+        html_string = render_template(html_template, **{k: Markup(v) for k, v in web.items()})
         return html_string
 
     else:
-        try:
-            user = Users.from_login(request.form['username'], request.form['password'])
-        except ValueError:
-            return redirect(url_for('login'))
+        if data.pop('success'):
+            form_data = data.pop('form_data')
+            session['username'] = form_data['user'].username
+            session['rights'] = form_data['user'].rights
 
-        session['username'] = user.username
-        session['rights'] = user.rights
-
-        return redirect(url_for('home'))
+            return redirect(url_for('home'))
+        else:
+            html_string = render_template(html_template, **{k: Markup(v) for k, v in web.items()})
+            return html_string
 
 
 @app.route('/logout', methods=['GET', 'POST'])
@@ -89,7 +93,7 @@ def series():
     html_template = Template(render_template("series.html", custom_html=Markup(html_content.body.children[0].render())))
 
     # Create form
-    web, data = realytics.SeriesForm(request, deform_template_path).process_form()
+    web, data = realytics.SeriesForm(request, deform_template_path, l_cats).process_form()
 
     # Generate plot if form correctly submitted
     if request.method == 'POST' and data.pop('success'):
@@ -111,8 +115,7 @@ def series():
 
 def generate_fake_plot(date_start, date_end):
     # Generate fake data for bokeh plot
-    di = pd.DatetimeIndex(start=pd.Timestamp('2017-01-01 00:00:00'), end=pd.Timestamp('2017-01-01 00:02:00'),
-                          freq='t')
+    di = pd.DatetimeIndex(start=date_start, end=date_end, freq='t')
 
     # Create fake dataframe
     df = pd.DataFrame(np.random.randn(len(di), 2), index=di, columns=['series_{}'.format(i) for i in range(2)])
