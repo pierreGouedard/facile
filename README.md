@@ -35,24 +35,24 @@ Organisation:
 
 
 - page Forms (add / edit / delete) main tables
-        - list of options (left nav bar)
-            * Personel: href = /form/personel
-            * Affaires: href = /form/affaire
-            * Devis: href = /form/devis
-            * Achat: href = /form/achat
-            * Heure: href = /form/Heure
+    - list of options (left nav bar)
+        * Personel: href = /form/personel
+        * Affaires: href = /form/affaire
+        * Devis: href = /form/devis
+        * Achat: href = /form/achat
+        * Heure: href = /form/Heure
 
-        - Layout:
-            * left navigtaion bar to move from one form to another
-            * First row: main key of the table for search:
-                * one editable field for creation (i.e str <affaire_id> + int <indice>
-                * one dropdown list of existing affaire for edition
-            * Middle rows: fill raquired information
-                * A specific input for each information to fill in the corresponding table
-            * Before last row:
-                * A save, a delete and a 'get pdf' button
-            * Last row:
-                * table of the last 50 element created
+    - Layout:
+        * left navigtaion bar to move from one form to another
+        * First row: main key of the table for search:
+            * one editable field for creation (i.e str <affaire_id> + int <indice>
+            * one dropdown list of existing affaire for edition
+        * Middle rows: fill raquired information
+            * A specific input for each information to fill in the corresponding table
+        * Before last row:
+            * A save, a delete and a 'get pdf' button
+        * Last row:
+            * table of the last 50 element created
 
 - page Exploration
     - layout:
