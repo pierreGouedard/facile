@@ -1,21 +1,12 @@
 # Global imports
 import deform
 import colander
-
-# Local import
-from facileapp.models import Users
-
-
-# Global imports
-import deform
-import colander
-import pandas as pd
 from translationstring import TranslationStringFactory
 _ = TranslationStringFactory('deform')
 
 # Local import
 from facile.forms.Deform import Form
-
+from facileapp.models import Users
 
 class LoginForm(Form):
 
@@ -50,7 +41,8 @@ class LoginForm(Form):
 
             password = colander.SchemaNode(
                 colander.String(),
-                title="Password")
+                validator=colander.Length(min=4, max=100),
+                widget=deform.widget.PasswordWidget())
 
         return LoginSchema()
 
