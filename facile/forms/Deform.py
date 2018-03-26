@@ -3,6 +3,7 @@ import deform
 import colander
 from flask import render_template_string
 
+
 class Form(object):
 
     appstruct = colander.null

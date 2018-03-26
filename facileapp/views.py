@@ -68,6 +68,25 @@ def logout():
    return redirect(url_for('home'))
 
 
+@app.route('/form', methods=['GET', 'POST'])
+def form():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    return render_template("form.html")
+
+
+@app.route('/explore', methods=['GET', 'POST'])
+def explore():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    return render_template("explore.html")
+
+
+####################################### REALYTICS #####################################################
+
+
 @app.route('/series', methods=['GET', 'POST'])
 def series():
     if 'username' not in session:
@@ -126,6 +145,53 @@ def baseline():
             s_spots = pd.Series()
 
         # Generate new form (with spotids selecction
+        web, data = realytics.BaselineForm(request, deform_template_path, l_cats, l_spotids)\
+            .process_form()
+
+        fig = bokeh_plots.plot_series_and_event(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']),
+                                                s_spots)
+
+        html = file_html(fig, resources=resources.CDN, template=custom_template,
+                         template_variables={k: Markup(v) for k, v in web.items()})
+    else:
+
+        html = render_template(custom_template, plot_div=Markup('NO DATA TO PLOT'),
+                               **{k: Markup(v) for k, v in web.items()})
+
+    return html
+
+
+@app.route('/impact', methods=['GET', 'POST'])
+def impact():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # Create page global layout
+    custom_template = Template(render_template('impact.html', custom_html=Markup(layout.get_baseline_layout())))
+
+    # Create form
+    web, data = realytics.BaselineForm(request, deform_template_path, l_cats, []).process_form()
+
+    # Generate plot if form correctly submitted
+    if request.method == 'POST' and data.pop('success'):
+
+        form_data = data.pop('form_data')
+        l_dates = [form_data['dateStart'], form_data['dateEnd']]
+
+        # Generate fake spots
+        s_spots = generate_fake_spot_id(l_dates[0], l_dates[1])
+
+        if len(form_data['spotid']) > 0:
+            # Get spot ids
+            s_spots = s_spots.loc[set(form_data['spotid']).intersection(set(s_spots.index))]
+            l_spotids = map(str, s_spots.index)
+
+        else:
+            # Get spots ids
+            l_spotids = map(str, s_spots.index)
+            s_spots = pd.Series()
+
+        # Generate new form (with spotids selection
         web, data = realytics.BaselineForm(request, deform_template_path, l_cats, l_spotids)\
             .process_form()
 
