@@ -24,6 +24,7 @@ l_cats = ['accessMethod=web,deviceType=0,eventName=ry_c_ry_session_server',
           'accessMethod=mobileappinstall,deviceType=1,eventName=ry_c_ry_session_server'
           ]
 
+l_spotids = []#['12345', '13579', '246810']
 
 @app.route('/')
 def home():
@@ -103,23 +104,42 @@ def baseline():
     custom_template = Template(render_template('baseline.html', custom_html=Markup(layout.get_baseline_layout())))
 
     # Create form
-    web, data = realytics.BaselineForm(request, deform_template_path, l_cats).process_form()
+    web, data = realytics.BaselineForm(request, deform_template_path, l_cats, []).process_form()
 
     # Generate plot if form correctly submitted
     if request.method == 'POST' and data.pop('success'):
 
         form_data = data.pop('form_data')
-        fig = bokeh_plots.plot_series(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']))
+        l_dates = [form_data['dateStart'], form_data['dateEnd']]
+
+        # Generate fake spots
+        s_spots = generate_fake_spot_id(l_dates[0], l_dates[1])
+
+        if len(form_data['spotid']) > 0:
+            # Get spot ids
+            s_spots = s_spots.loc[set(form_data['spotid']).intersection(set(s_spots.index))]
+            l_spotids = map(str, s_spots.index)
+
+        else:
+            # Get spots ids
+            l_spotids = map(str, s_spots.index)
+            s_spots = pd.Series()
+
+        # Generate new form (with spotids selecction
+        web, data = realytics.BaselineForm(request, deform_template_path, l_cats, l_spotids)\
+            .process_form()
+
+        fig = bokeh_plots.plot_series_and_event(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']),
+                                                s_spots)
 
         html = file_html(fig, resources=resources.CDN, template=custom_template,
                          template_variables={k: Markup(v) for k, v in web.items()})
-        return html
-
     else:
+
         html = render_template(custom_template, plot_div=Markup('NO DATA TO PLOT'),
                                **{k: Markup(v) for k, v in web.items()})
 
-        return templating.render_template_string(html)
+    return html
 
 
 def generate_fake_plot(date_start, date_end):
@@ -130,3 +150,18 @@ def generate_fake_plot(date_start, date_end):
     df = pd.DataFrame(np.random.randn(len(di), 2), index=di, columns=['series_{}'.format(i) for i in range(2)])
 
     return df
+
+
+def generate_fake_spot_id(start, end):
+    np.random.seed(1001)
+
+    n = int((end - start).total_seconds() / 600)
+
+    s_spots = pd.Series(name='spotid')
+
+    for d in np.random.randint(0, high=n, size=int(0.6 * n)):
+        spotid = np.random.randint(10000, high=99999)
+        s_spots.loc[spotid] = start + pd.Timedelta(minutes=d * 10)
+
+    return s_spots
+

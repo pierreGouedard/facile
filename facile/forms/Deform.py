@@ -1,7 +1,7 @@
 # Global import
 import deform
 import colander
-
+from flask import render_template_string
 
 class Form(object):
 
@@ -22,6 +22,9 @@ class Form(object):
     def format_(self, pstruct):
         raise NotImplementedError
 
+    def deffered_missing_(self, pstruct):
+        return pstruct
+
     def process_form(self, **kw):
         success, form_data = False, None
 
@@ -35,12 +38,17 @@ class Form(object):
         if self.request.method == 'POST':
             # try to validate the submitted values
             try:
+
                 # parse form
                 pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
                 pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))
 
+                # Deffered read only input
+                self.deffered_missing_(pstruct)
+
                 # Generate succeed form (with values posted)
                 captured = form.validate_pstruct(pstruct)
+
                 self.validate_(pstruct)
                 html = form.render(captured)
 
@@ -64,8 +72,8 @@ class Form(object):
         # values passed to template for rendering
         d_web = {
             'form': html,
-            'form_css': '\n'.join(l_css_links),
-            'form_js': '\n'.join(l_js_links),
+            'form_css': render_template_string('\n'.join(l_css_links)),
+            'form_js': render_template_string('\n'.join(l_js_links)),
             }
 
         # Add form data if Post AND success
@@ -78,7 +86,7 @@ class Form(object):
 
         # Parse items with d_out
         for k in d_out.keys():
-            if d_out[k] is not None:
+            if isinstance(d_out[k], dict):
 
                 # Get sub list of item for the current key
                 items_ = filter(lambda (k_, v_): k in k_, items)
@@ -87,7 +95,14 @@ class Form(object):
                 # Parse sub element
                 d_out[k] = Form.recursive_parser(d_out[k], items_)
 
+            elif isinstance(d_out[k], list):
+                items_ = filter(lambda (k_, v_): k in k_, items)
+                d_out[k] = [v_ for _, v_ in items_]
+
             else:
-                d_out[k] = dict(items).get(k, '')
+                if k in [k_ for k_, _ in items]:
+                    d_out[k] = dict(items)[k]
+                else:
+                    d_out.pop(k)
 
         return d_out
