@@ -1,35 +1,89 @@
-from dominate.tags import body, div, p
+from dominate.tags import body, div, p, table, col, thead, tr, th, tbody, td
 import dominate
 from jinja2 import Template
+import os
+from flask import render_template_string, url_for
 
 
 class Table(object):
-    table_template_variable = ''
+    css_static = '<link rel="stylesheet" type="text/css" href="%s"></link>'
+    js_static = '<script type="text/javascript" src="%s"></script>'
+    template_static = os.path.join(url_for('static'), 'template/%s')
+    href = "{{url_for('static', filename='table/%s')}}"
 
-    def __init__(self, l_rows, init='doc', title=''):
+    def __init__(self, column_names, is_index=True, index_name=None, fixed_header=True, fixed_index=False,
+                 d_sizes=None):
 
-        self.l_rows = l_rows
-        if init == 'doc':
-            self.layout = dominate.document(title=title)
-        elif init == 'body':
-            self.layout = body
-        elif init == 'div':
-            self.layout = div(id=title)
+        self.column_names = column_names
+        self.is_index = is_index
+        self.index_name = []
+        if is_index:
+            self.index_name = [index_name] if index_name is not None else 'Index'
+
+
+        self.fixed_header = fixed_header
+
+        if not fixed_header and fixed_index:
+            self.fixed_index = True
         else:
-            raise ValueError('Init of html document nor understood {}'.format(init))
+            self.fixed_index = False
 
-    def build_template(self):
-        with self.layout:
-            for name, l_cols in self.l_rows:
-                with div(cls='row ', id=name):
-                    for d_col in l_cols:
-                        with div(cls='col-sm-%i' % d_col['span']):
-                            if d_col['content'] == 'form':
-                                p(self.form_template_variable)
-                            elif d_col['content'] == 'plot':
-                                p(self.plot_template_variable)
-                            elif d_col['content'] == 'table':
-                                p(self.plot_template_variable)
+        if d_sizes is not None:
+            self.l_sizes = [(name, '200px') for name in self.column_names + [self.index_name]]
+        else:
+            self.l_sizes = [(name, d_sizes.get(name, "200px")) for name in self.column_names + [self.index_name]]
+
+    def get_table_resources(self):
+        ressource = {'template': self.template_static % 'fixedheader.html',
+                     'css': [self.css_static % self.href % 'css/mainfixedheader.css',
+                             self.css_static % self.href % 'css/perfect-scrollbar.css'],
+                     'js': [self.js_static % self.href % 'js/perfect-scrollbar.min.js']
+                     }
+
+        if self.fixed_index:
+            ressource.update({'template': self.template_static % 'fixedcolumn.html',
+                              'css': [self.css_static % self.href % 'css/mainfixedcolumn.css',
+                                      self.css_static % self.href % 'css/perfect-scrollbar.css']
+                              })
+
+    def render_table_from_pandas(self, df):
+
+        # Fixed Head !!!!!
+        html_head = table
+        with html_head:
+            for c, s in self.l_sizes:
+                col(width=s)
+            with thead:
+                with tr(cls="row100 head"):
+                    for c, _ in self.l_sizes:
+                        th(c, cls="cell100 column")
+
+        html_body = table
+        with html_body:
+            for c, s in self.l_sizes:
+                col(width=s)
+            with tbody:
+                for index, row in df.iterrows():
+                    with tr(cls="row100 body"):
+                        if self.is_index:
+                                td(self.index_name[0], cls="cell100 column")
+
+                        for name in self.column_names:
+                            td(row[name], cls="cell100 column")
+
+        # Get static requirements
+        d_reqts = self.get_table_resources()
+        l_js_links = [self.js_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['js']]
+        l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
+
+        # values passed to template for rendering
+        d_web = {
+            'table': html,
+            'table_css': render_template_string('\n'.join(l_css_links)),
+            'table_js': render_template_string('\n'.join(l_js_links)),
+        }
+
+        return d_web, d_data
 
 
 def get_series_layout():
