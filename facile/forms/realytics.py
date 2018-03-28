@@ -87,7 +87,6 @@ class ImpactForm(Form):
         return ImpactSchema()
 
 
-
 class BaselineForm(Form):
 
     def __init__(self, request, template_deform_path, choices_cat, choices_spots):

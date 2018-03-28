@@ -16,13 +16,12 @@ from facile.tables import table
 
 from settings import deform_template_path
 
-l_cats = ['accessMethod=web,deviceType=0,eventName=ry_c_ry_session_server',
-          'accessMethod=web,deviceType=1,eventName=ry_c_ry_session_server',
-          'accessMethod=web,deviceType=2,eventName=ry_c_ry_session_server',
-          'accessMethod=web,deviceType=3,eventName=ry_c_ry_session_server',
-          'accessMethod=mobileapp,deviceType=1,eventName=ry_c_ry_session_server',
-          'accessMethod=mobileappinstall,deviceType=1,eventName=ry_c_ry_session_server'
-          ]
+l_cats = ['web,desktop',
+          'web,mobile',
+          'web,tablet',
+          'web,smarttv',
+          'mobileapp,mobile',
+          'mobileappinstall,mobile']
 
 
 @app.route('/')
@@ -164,19 +163,60 @@ def impact():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    df = pd.DataFrame(np.random.randn(10, 4), columns=['col1', 'col2', 'col3', 'col4'])
-    df = df.rename_axis('Rank')
+    # Create page global layout
+    custom_template = Template(render_template('impact.html', custom_html=Markup(boostrap.get_impact_layout())))
 
-    import IPython
-    IPython.embed()
+    # Create form
+    web, data = realytics.ImpactForm(request, deform_template_path, l_cats, []).process_form()
 
-    tbl = table.Table(df.columns, index_name='Rank', d_sizes={c: '120px' for c in df.columns})
-    html = tbl.render_table_from_pandas(df)
+    # Generate plot if form correctly submitted
+    if request.method == 'POST' and data.pop('success'):
 
-    import IPython
-    IPython.embed()
+        form_data = data.pop('form_data')
+        l_dates = [form_data['dateStart'], form_data['dateEnd']]
 
-    return None
+        # Generate fake spots
+        s_spots = generate_fake_spot_id(l_dates[0], l_dates[1])
+
+        if len(form_data['spotid']) > 0:
+            # Get spot ids
+            s_spots = s_spots.loc[set(form_data['spotid']).intersection(set(s_spots.index))]
+            l_spotids = map(str, s_spots.index)
+
+        else:
+            # Get spots ids
+            l_spotids = map(str, s_spots.index)
+            s_spots = pd.Series()
+
+        # Render table
+        df_table, (is_fh, is_fi), d_sizes = generate_fake_metrics(l_spotids)
+        tbl = table.Table(df_table.columns, fixed_header=is_fh, fixed_index=is_fi, index_name=df_table.index.name,
+                          d_sizes=d_sizes)
+        html_table = tbl.render_table_from_pandas(df_table)
+
+        # Generate new form (with spotids selecction
+        web, data = realytics.BaselineForm(request, deform_template_path, l_cats, l_spotids) \
+            .process_form()
+
+        fig = bokeh_plots.plot_series_and_event(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']),
+                                                s_spots)
+
+        context = dict([(k, Markup(v)) for k, v in web.items()] + [('table', Markup(html_table))])
+        html = file_html(fig, resources=resources.CDN, template=custom_template, template_variables=context)
+
+    else:
+
+        # Render table
+        df_table, (is_fh, is_fi), d_sizes = generate_fake_metrics()
+        tbl = table.Table(df_table.columns, fixed_header=is_fh, fixed_index=is_fi, index_name=df_table.index.name,
+                          d_sizes=d_sizes)
+        html_table = tbl.render_table_from_pandas(df_table)
+        print type(html_table)
+
+        html = render_template(custom_template, plot_div=Markup('NO DATA TO PLOT'), table=Markup(html_table),
+                               **{k: Markup(v) for k, v in web.items()})
+
+    return html
 
 
 def generate_fake_plot(date_start, date_end):
@@ -201,4 +241,29 @@ def generate_fake_spot_id(start, end):
         s_spots.loc[spotid] = start + pd.Timedelta(minutes=d * 10)
 
     return s_spots
+
+
+def generate_fake_metrics(spotids=None):
+
+    # List of metrics name
+    l_metrics = ['R2 norm', 'Signal last minute', 'Total diff', 'Significance coefs', 'Significance model']
+
+    if spotids is not None:
+        # generate fake table of metrics for each spots on the specific traffic cat
+        df_metrics = pd.DataFrame(np.random.randn(len(spotids), len(l_metrics)), index=spotids, columns=l_metrics)
+        df_metrics = df_metrics.rename_axis('Spot ID')
+        d_sizes = {c: '200px' for c in l_metrics}
+
+        return df_metrics, (True, False), d_sizes
+    else:
+        l_agg = ['Last week', 'Last month', 'Last year', 'All time']
+        l_cols = sum([['{} - {}'.format(cat, m) for m in l_metrics] for cat in l_cats], [])
+
+        # generate fake table of metrics for the last 5 campaigns of the client
+        df_metrics = pd.DataFrame(np.random.randn(len(l_agg), len(l_cols)), index=l_agg, columns=l_cols)
+        df_metrics = df_metrics.rename_axis('Aggregation')
+        d_sizes = {c: '500px' for c in l_cols}
+
+        return df_metrics, (False, True), d_sizes
+
 

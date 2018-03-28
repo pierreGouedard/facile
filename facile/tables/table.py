@@ -14,11 +14,11 @@ class Table(object):
     def __init__(self, column_names, is_index=True, index_name=None, fixed_header=True, fixed_index=False,
                  d_sizes=None):
 
-        self.column_names = column_names
+        self.column_names = list(column_names)
         self.is_index = is_index
         self.index_name = []
         if is_index:
-            self.index_name = [index_name] if index_name is not None else 'Index'
+            self.index_name = [index_name] if index_name is not None else ['Index']
 
         self.fixed_header = fixed_header
 
@@ -28,9 +28,9 @@ class Table(object):
             self.fixed_index = False
 
         if d_sizes is not None:
-            self.l_sizes = [(name, '200px') for name in self.index_name + self.column_names]
+            self.l_sizes = [(name, d_sizes.get(name, '200px')) for name in self.index_name + self.column_names]
         else:
-            self.l_sizes = [(name, d_sizes.get(name, "200px")) for name in self.index_name + self.column_names]
+            self.l_sizes = [(name,  "200px") for name in self.index_name + self.column_names]
 
     def render_table_from_pandas(self, df):
 
@@ -38,7 +38,7 @@ class Table(object):
         d_reqts = self.get_table_resources(self.fixed_index)
 
         context = {'table_css': render_template_string('\n'.join(d_reqts['css'])),
-                   'table_js': render_template_string('\n'.join(d_reqts['css']))}
+                   'table_js': render_template_string('\n'.join(d_reqts['js']))}
 
         # Fixed Head
         if self.fixed_header:
@@ -55,7 +55,7 @@ class Table(object):
         if self.fixed_index:
             indextable = self.build_table(pd.Series(df.index).to_frame(name=self.index_name[0]), self.l_sizes[:1],
                                           self.index_name)
-            coretable = self.build_table(df, self.l_sizes[:1], self.column_names)
+            coretable = self.build_table(df, self.l_sizes[1:], self.column_names)
 
             # Update context
             context.update({'indextable': indextable, 'coretable': coretable})
@@ -81,7 +81,7 @@ class Table(object):
 
     @staticmethod
     def render_template(filename, context):
-        return jinja2.Environment(loader=jinja2.FileSystemLoader(settings['table_template_path'] or './'))\
+        return jinja2.Environment(loader=jinja2.FileSystemLoader(settings.table_template_path or './'))\
             .get_template(filename)\
             .render(context)
 

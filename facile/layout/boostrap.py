@@ -4,9 +4,9 @@ import dominate
 
 class BoostrapLayout(object):
 
-    form_template_variable = '{{form_css}} {{ form_js }} {{ form }}'
+    form_template_variable = '{{ form_css }} {{ form_js }} {{ form }}'
     plot_template_variable = '{{ plot_div }} {{ bokeh_js }} {{ bokeh_css }} {{ plot_script }}'
-    table_template_variable = ''
+    table_template_variable = '{{ table }}'
 
     def __init__(self, l_rows, init='doc', title=''):
 
@@ -31,7 +31,7 @@ class BoostrapLayout(object):
                             elif d_col['content'] == 'plot':
                                 p(self.plot_template_variable)
                             elif d_col['content'] == 'table':
-                                p(self.plot_template_variable)
+                                p(self.table_template_variable)
 
 
 def get_series_layout():
@@ -54,6 +54,18 @@ def get_baseline_layout():
     layout_baselines.build_template()
 
     return layout_baselines.layout.render()
+
+
+def get_impact_layout():
+    # Specify rows, columns, there span and content
+    l_rows = [('impact', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}]),
+              ('table', [{'span': 12, 'content': 'table'}])]
+
+    # Create layout and build it from l_rows
+    layout_impact = BoostrapLayout(l_rows, init='div', title='view_impact')
+    layout_impact.build_template()
+
+    return layout_impact.layout.render()
 
 
 def get_login_layout():
