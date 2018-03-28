@@ -1,19 +1,19 @@
+# Global import
 from facileapp import app
 from flask import render_template
-from flask import templating
 from flask import Markup, session, redirect, url_for, request
 import pandas as pd
 import numpy as np
-
 from jinja2 import Template
-from bokeh import plotting, resources
+from bokeh import resources
 from bokeh.embed import file_html
-import dominate
-from dominate.tags import *
 
+# Local import
 from facile.forms import login_form, realytics
 from facile.graphs import bokeh_plots
-from facile.layout import layout
+from facile.layout import boostrap
+from facile.tables import table
+
 from settings import deform_template_path
 
 l_cats = ['accessMethod=web,deviceType=0,eventName=ry_c_ry_session_server',
@@ -24,7 +24,6 @@ l_cats = ['accessMethod=web,deviceType=0,eventName=ry_c_ry_session_server',
           'accessMethod=mobileappinstall,deviceType=1,eventName=ry_c_ry_session_server'
           ]
 
-l_spotids = []#['12345', '13579', '246810']
 
 @app.route('/')
 def home():
@@ -37,7 +36,7 @@ def home():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     # Create page global layout
-    custom_template = Template(render_template('login.html', custom_html=Markup(layout.get_login_layout())))
+    custom_template = Template(render_template('login.html', custom_html=Markup(boostrap.get_login_layout())))
 
     # process request
     web, data = login_form.LoginForm(request, deform_template_path).process_form()
@@ -86,14 +85,13 @@ def explore():
 
 ####################################### REALYTICS #####################################################
 
-
 @app.route('/series', methods=['GET', 'POST'])
 def series():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     # Create page global layout
-    custom_template = Template(render_template('series.html', custom_html=Markup(layout.get_series_layout())))
+    custom_template = Template(render_template('series.html', custom_html=Markup(boostrap.get_series_layout())))
 
     # Create form
     web, data = realytics.SeriesForm(request, deform_template_path, l_cats).process_form()
@@ -120,7 +118,7 @@ def baseline():
         return redirect(url_for('login'))
 
     # Create page global layout
-    custom_template = Template(render_template('baseline.html', custom_html=Markup(layout.get_baseline_layout())))
+    custom_template = Template(render_template('baseline.html', custom_html=Markup(boostrap.get_baseline_layout())))
 
     # Create form
     web, data = realytics.BaselineForm(request, deform_template_path, l_cats, []).process_form()
@@ -166,46 +164,19 @@ def impact():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Create page global layout
-    custom_template = Template(render_template('impact.html', custom_html=Markup(layout.get_baseline_layout())))
+    df = pd.DataFrame(np.random.randn(10, 4), columns=['col1', 'col2', 'col3', 'col4'])
+    df = df.rename_axis('Rank')
 
-    # Create form
-    web, data = realytics.BaselineForm(request, deform_template_path, l_cats, []).process_form()
+    import IPython
+    IPython.embed()
 
-    # Generate plot if form correctly submitted
-    if request.method == 'POST' and data.pop('success'):
+    tbl = table.Table(df.columns, index_name='Rank', d_sizes={c: '120px' for c in df.columns})
+    html = tbl.render_table_from_pandas(df)
 
-        form_data = data.pop('form_data')
-        l_dates = [form_data['dateStart'], form_data['dateEnd']]
+    import IPython
+    IPython.embed()
 
-        # Generate fake spots
-        s_spots = generate_fake_spot_id(l_dates[0], l_dates[1])
-
-        if len(form_data['spotid']) > 0:
-            # Get spot ids
-            s_spots = s_spots.loc[set(form_data['spotid']).intersection(set(s_spots.index))]
-            l_spotids = map(str, s_spots.index)
-
-        else:
-            # Get spots ids
-            l_spotids = map(str, s_spots.index)
-            s_spots = pd.Series()
-
-        # Generate new form (with spotids selection
-        web, data = realytics.BaselineForm(request, deform_template_path, l_cats, l_spotids)\
-            .process_form()
-
-        fig = bokeh_plots.plot_series_and_event(generate_fake_plot(form_data['dateStart'], form_data['dateEnd']),
-                                                s_spots)
-
-        html = file_html(fig, resources=resources.CDN, template=custom_template,
-                         template_variables={k: Markup(v) for k, v in web.items()})
-    else:
-
-        html = render_template(custom_template, plot_div=Markup('NO DATA TO PLOT'),
-                               **{k: Markup(v) for k, v in web.items()})
-
-    return html
+    return None
 
 
 def generate_fake_plot(date_start, date_end):

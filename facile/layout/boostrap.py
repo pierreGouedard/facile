@@ -1,9 +1,8 @@
 from dominate.tags import body, div, p
 import dominate
-from jinja2 import Template
 
 
-class Layout(object):
+class BoostrapLayout(object):
 
     form_template_variable = '{{form_css}} {{ form_js }} {{ form }}'
     plot_template_variable = '{{ plot_div }} {{ bokeh_js }} {{ bokeh_css }} {{ plot_script }}'
@@ -40,7 +39,7 @@ def get_series_layout():
     l_rows = [('series', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}])]
 
     # Create layout and build it from l_rows
-    layout_series = Layout(l_rows, init='div', title='view_series')
+    layout_series = BoostrapLayout(l_rows, init='div', title='view_series')
     layout_series.build_template()
 
     return layout_series.layout.render()
@@ -51,7 +50,7 @@ def get_baseline_layout():
     l_rows = [('baselines', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}])]
 
     # Create layout and build it from l_rows
-    layout_baselines = Layout(l_rows, init='div', title='view_baselines')
+    layout_baselines = BoostrapLayout(l_rows, init='div', title='view_baselines')
     layout_baselines.build_template()
 
     return layout_baselines.layout.render()
@@ -62,7 +61,7 @@ def get_login_layout():
     l_rows = [('login', [{'span': 12, 'content': 'form'}])]
 
     # Create layout and build it from l_rows
-    layout_login = Layout(l_rows, init='div', title='view_series')
+    layout_login = BoostrapLayout(l_rows, init='div', title='view_series')
     layout_login.build_template()
 
     return layout_login.layout.render()
