@@ -77,3 +77,14 @@ def get_login_layout():
     layout_login.build_template()
 
     return layout_login.layout.render()
+
+
+def get_other_layout():
+
+    l_rows = [('Other', [{'span': 12, 'content': 'form'}])]
+
+    # Create layout and build it from l_rows
+    layout_other = BoostrapLayout(l_rows, init='div', title='view_other')
+    layout_other.build_template()
+
+    return layout_other.layout.render()

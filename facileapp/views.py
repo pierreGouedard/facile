@@ -9,7 +9,7 @@ from bokeh import resources
 from bokeh.embed import file_html
 
 # Local import
-from facile.forms import login_form, realytics
+from facile.forms import login_form, realytics, other_widget
 from facile.graphs import bokeh_plots
 from facile.layout import boostrap
 from facile.tables import table
@@ -82,7 +82,24 @@ def explore():
     return render_template("explore.html")
 
 
+@app.route('/test-other', methods=['GET', 'POST'])
+def test():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # Create page global layout
+    custom_template = Template(render_template('test-other.html', custom_html=Markup(boostrap.get_other_layout())))
+
+    # process request
+    web, data = other_widget.OtherForm(request, deform_template_path).process_form()
+
+    html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
+
+    return html
+
+
 ####################################### REALYTICS #####################################################
+
 
 @app.route('/series', methods=['GET', 'POST'])
 def series():
