@@ -5,5 +5,5 @@ facile_data_path = os.path.join(facile_home, 'DATA/')
 facile_project_path = os.path.join(facile_data_path, 'PROJECTS')
 facile_admin_path = os.path.join(facile_data_path, 'ADMIN')
 
-deform_template_path = os.path.join(os.path.expanduser("~"), 'facile/facileapp/static/deform/templates/')
-table_template_path = os.path.join(os.path.expanduser("~"), 'facile/facileapp/static/table/templates')
+deform_template_path = os.path.join(facile_home, 'facileapp/static/deform/templates/')
+table_template_path = os.path.join(facile_home, 'facileapp/static/table/templates')
