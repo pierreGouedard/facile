@@ -18,4 +18,4 @@ if __name__ == "__main__":
     user.password = password
 
     # Update database
-    user.update_user()
+    user.alter_user()

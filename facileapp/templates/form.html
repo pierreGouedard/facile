@@ -1,10 +1,24 @@
 <!-- home.html-->
 
 {% extends "base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}Forms{% endblock %}
 {% block body %}
-<div class="jumbotron">
-  <h1>Here are the form page</h1>
-  <p class="lead">Coming soon !</p>
+
+<div id="formnav" class="sidenav">
+  <a href="/form?table=employe">Employés</a>
+  <a href="/form?table=client">Clients</a>
+  <a href="/form?table=fournisseur">Fournisseur</a>
+  <a href="/form?table=contact">Contact</a>
+  <a href="/form?table=chantier">Chantier</a>
+  <a href="/form?table=base_prix">Base de prix</a>
+  <a href="/form?table=devis">Devis</a>
+  <a href="/form?table=affaire">Affaires</a>
+  <a href="/form?table=heure">Heures</a>
+  <a href="/form?table=achat">Achats</a>
 </div>
+
+<div class="jumbotron">
+{{ form }}
+</div>
+
 {% endblock %}

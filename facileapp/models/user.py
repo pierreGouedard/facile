@@ -1,4 +1,4 @@
-#Global imports
+# Global imports
 import os
 import pandas as pd
 
@@ -8,10 +8,10 @@ import settings
 
 class Users(object):
 
-    id_spec = {'name': 'surname', 'type': int, 'index': True}
-    username_spec = {'name': 'surname', 'type': str}
+    id_spec = {'name': 'id', 'type': int, 'index': True}
+    username_spec = {'name': 'username', 'type': str}
     password_spec = {'name': 'password', 'type': str}
-    rights_spec = {'name': 'password', 'type': str}
+    rights_spec = {'name': 'rights', 'type': str}
 
     path = os.path.join(settings.facile_admin_path, 'users.csv')
 
@@ -52,7 +52,6 @@ class Users(object):
         else:
             raise ValueError('username {} does not exists'.format(username))
 
-
     @staticmethod
     def load_users():
         df = pd.read_csv(Users.path, index_col='id')
@@ -83,10 +82,3 @@ class Users(object):
 
         else:
             raise ValueError('id {} does not exists'.format(self.username))
-
-
-
-
-
-
-

@@ -1,0 +1,81 @@
+# Global imports
+import os
+import pandas as pd
+
+# Local import
+import settings
+from facile.core.fields import StringFields, FloatFields
+from facile.core.form_processor import FormManager
+from facile.core.base_model import BaseModel
+
+
+class Base_prix(BaseModel):
+    d_month = {1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}',
+               7: 'Juillet {}', 8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}', 12: 'Decembre {}'}
+
+    l_dates = pd.DatetimeIndex(start=pd.Timestamp.now().date() - pd.Timedelta(days=90),
+                               end=pd.Timestamp.now().date() + pd.Timedelta(days=90),
+                               freq='M')
+    path = os.path.join(settings.facile_project_path, 'base_prix.csv')
+
+    d_list = {'action': [('Editer une base de prix',
+                          'Editer une base de prix')],
+
+              'base': [(d_month[t.month].format(t.year),
+                        d_month[t.month].format(t.year)) for t in l_dates]
+              }
+
+    l_index = [StringFields(title="Nom de la base", name='nom', l_choices=d_list['base'])]
+
+    l_fields = [FloatFields(title='Prix heure BE', name='prix_heure_be'),
+                FloatFields(title='Prix heure Ch', name='prix_heure_ch')]
+
+    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    nb_step_form = 2
+
+    @staticmethod
+    def from_index_(d_index, path=None):
+        # Load table employe
+        df = Base_prix.load_db(path)
+
+        # Series
+        s = BaseModel.from_index(d_index, df)
+
+        return Base_prix(d_index, s.loc[[f.name for f in Base_prix.l_fields]].to_dict(), path=path)
+
+    @staticmethod
+    def load_db(path=None):
+        if path is None:
+            path = Base_prix.path
+
+        l_fields = Base_prix.l_index + Base_prix.l_fields + Base_prix.l_hfields
+        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
+            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+    @staticmethod
+    def get_base(path=None):
+        return Base_prix.load_db(path)['nom'].unique()
+
+    @staticmethod
+    def get_price(base, path=None):
+        df = Base_prix.load_db(path)
+        return df.loc[df['nom'] == base, ['prix_heure_be', 'prix_heure_ch']].iloc[0].to_dict()
+
+    @staticmethod
+    def form_rendering_(step, d_index=None, data=None):
+        form_man = FormManager(Base_prix.l_index, Base_prix.l_fields)
+
+        if step % Base_prix.nb_step_form == 0:
+            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+                                      l_choices=Base_prix.d_list['base'], desc="une base de prix a editer")
+            form_man.render_init_form(Base_prix.action_field, index_node)
+
+        else:
+            data_db = None
+            if d_index is not None:
+                data_db = Base_prix.from_index_(d_index).__dict__
+
+            form_man.render(step % Base_prix.nb_step_form, data_db=data_db, data_form=data)
+
+        return form_man.d_form_data
+

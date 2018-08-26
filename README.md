@@ -6,11 +6,22 @@ Tables:
 - Personel:
     - Desc: Rajouter les informations du personel de la boite, suprimer / editer le profil d'un membre du personel
     - Informations requises: Nom Prenom, poste, date d'entré dans l'entreprise, date de sortie de l'entreprise,
-                             tarif heure
+                             tarif par heure
     - Nom champ:
 
+- Fournisseur:
+    - Desc: Rajouter les informations sur les fournisseur de la boite, suprimer / editer le profil d'un fournisseur
+    - Informations requises: id fournisseur, raison social, adresse livraison, adresse facturation, contact financier,
+                             contact operationnel, date de création du fournisseur
+    - Nom champ:
 
-- Affaires:
+- Client:
+    - Desc: Rajouter les informations sur les clients de la boite, suprimer / editer le profil d'un client
+    - Informations requises: id client, raison social, adresse livraison, adresse facturation, contact financier,
+                             contact operationnel, date de crétation du client, site de chantier
+    - Nom champ:
+
+- Affaire:
     - Desc: Ouvrir une nouvelle affaire et la rajouté a la base de donnée des affaires, suprimer / editer une affaire
     - Informations requises: Numero d'affaire, indice de l'affaire, chargé d'affaire, numero de devis associé (fac)
 
@@ -19,7 +30,7 @@ Tables:
     - Informations requises: Numero de devis, nombre d'heures, Montant achat
     - Nom champ:
 
-- Achat:
+- Commande:
     - Ouvrir une nouvelle demande d'achat rattaché a une affaire, suprimer / editer une demande d'achat
     - Informations requises: Numero de comande, Numréro d'affaire associé, Montant achat
     - Nom champ:
@@ -47,7 +58,7 @@ Organisation:
         * First row: main key of the table for search:
             * one editable field for creation (i.e str <affaire_id> + int <indice>
             * one dropdown list of existing affaire for edition
-        * Middle rows: fill raquired information
+        * Middle rows: fill required information
             * A specific input for each information to fill in the corresponding table
         * Before last row:
             * A save, a delete and a 'get pdf' button

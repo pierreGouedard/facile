@@ -8,6 +8,7 @@ _ = TranslationStringFactory('deform')
 from facile.forms.Deform import Form
 from facileapp.models import Users
 
+
 class LoginForm(Form):
 
     def __init__(self, request, template_deform_path):

@@ -1,4 +1,4 @@
-from dominate.tags import body, div, p
+from dominate.tags import body, div, p, h1
 import dominate
 
 
@@ -25,47 +25,41 @@ class BoostrapLayout(object):
             for name, l_cols in self.l_rows:
                 with div(cls='row ', id=name):
                     for d_col in l_cols:
-                        with div(cls='col-sm-%i' % d_col['span']):
+                        with div(cls='col-sm-%i' % d_col.get('span', 12)):
                             if d_col['content'] == 'form':
                                 p(self.form_template_variable)
                             elif d_col['content'] == 'plot':
                                 p(self.plot_template_variable)
                             elif d_col['content'] == 'table':
                                 p(self.table_template_variable)
+                            elif d_col['content'] == 'text':
+                                p(d_col['value'])
+                            elif d_col['content']:
+                                d_col['size'](d_col['value'])
 
 
-def get_series_layout():
+def get_example_layout():
     # Specify rows, columns, there span and content
-    l_rows = [('series', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}])]
+    l_rows = [('form', [{'span': 12, 'content': 'form'}])]
 
     # Create layout and build it from l_rows
-    layout_series = BoostrapLayout(l_rows, init='div', title='view_series')
-    layout_series.build_template()
+    layout_example = BoostrapLayout(l_rows, init='div', title='view_example')
+    layout_example.build_template()
 
-    return layout_series.layout.render()
+    return layout_example.layout.render()
 
 
-def get_baseline_layout():
+def get_form_layout(title):
     # Specify rows, columns, there span and content
-    l_rows = [('baselines', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}])]
-
-    # Create layout and build it from l_rows
-    layout_baselines = BoostrapLayout(l_rows, init='div', title='view_baselines')
-    layout_baselines.build_template()
-
-    return layout_baselines.layout.render()
-
-
-def get_impact_layout():
-    # Specify rows, columns, there span and content
-    l_rows = [('impact', [{'span': 3, 'content': 'form'}, {'span': 9, 'content': 'plot'}]),
+    l_rows = [('title', [{'size': h1, 'content': 'title', 'value': title}]),
+              ('form', [{'span': 12, 'content': 'form'}]),
               ('table', [{'span': 12, 'content': 'table'}])]
 
     # Create layout and build it from l_rows
-    layout_impact = BoostrapLayout(l_rows, init='div', title='view_impact')
-    layout_impact.build_template()
+    layout_form = BoostrapLayout(l_rows, init='div', title='view_form')
+    layout_form.build_template()
 
-    return layout_impact.layout.render()
+    return layout_form.layout.render()
 
 
 def get_login_layout():

@@ -1,0 +1,61 @@
+
+
+body {
+    font-family: "Lato", sans-serif;
+}
+
+#formnav {
+    height: 100%;
+    width: 250px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #EEEEEE;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 100px;
+}
+
+#formnav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #888888;
+    display: block;
+    transition: 0.3s;
+
+}
+
+#formnav a:hover {
+    color: #000000;
+    font-weight: bold;
+}
+
+#formnav {
+    transition: margin-left .5s;
+    padding-bottom: 200px;
+}
+
+#mainnav {
+    background-color: #EEEEEE;
+}
+
+#mainnav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #888888;
+    display: block;
+    transition: 0.3s;
+
+}
+
+#mainnav a:hover {
+    color: #000000;
+    font-weight: bold;
+}
+
+#appcontainer {
+    padding-top: 100px;
+}

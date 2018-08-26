@@ -5,6 +5,7 @@
   <head>
     <title>{% block title %}{% endblock %}</title>
     <!-- Bootstrap core CSS -->
+    <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.1.1.slim.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>
@@ -14,15 +15,12 @@
   <body>
     <div class="container">
 
-      <div class="row">
-        <nav class="navbar navbar-toggleable-md navbar-light bg-faded fixed-top">
-          <div class="collapse navbar-collapse" >
+      <div id="mainnav" class="row">
+        <nav id="mainnav" class="navbar navbar-toggleable-md navbar-light fixed-top">
+          <div id="mainnav" class="collapse navbar-collapse" >
             <ul class="navbar-nav mr-auto mx-auto">
               <li class="nav-item">
                 <a class="nav-link" href="/">Home</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/logout">Logout</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="/form">Forms</a>
@@ -31,26 +29,17 @@
                 <a class="nav-link" href="/explore">Explore</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="/series">Series view</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/baseline">Baseline view</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/impact">Impact view</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/test-other">test view</a>
+                <a class="nav-link" href="/logout">Logout</a>
               </li>
             </ul>
           </div>
         </nav>
       </div>
-      </br>
-      </br>
-      </br>
+
+      <div id="appcontainer">
       {% block body %}
       {% endblock %}
+      </div>
     </div> <!-- /container -->
 
       <footer class="footer">
@@ -62,5 +51,4 @@
       </footer>
 
   </body>
-
 </html>
