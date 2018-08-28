@@ -8,46 +8,56 @@ import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
 from facile.core.form_processor import FormManager
 from facile.core.base_model import BaseModel
+from facileapp.models.affaire import Affaire
+from facileapp.models.client import Client
+from facileapp.models.contact import Contact
+from facileapp.models.employe import Employe
+from facileapp.models.base_prix import Base_prix
 
 
 class Devis(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'devis.csv')
 
-    d_list = {'action': [('Ajouter un devis', 'Ajouter un devis'),
-                         ('Modifier un devis', 'Modifier un devis'),
-                         ('Suprimer un devis', 'Suprimer un devis')],
-
-              'client': zip(Client.load_db()['raison_social'].unique(),
-                            Client.load_db()['raison_social'].unique()),
-
-              'contact': Contact.get_contact('client', return_id=True),
-
-              'base_prix': Base_prix.d_list['base'],
-
-              'responsable': zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                                 Employe.get_employes(**{'emploie': 'charge affaire'})),
-
-              'affaire': [(-1, 'NA')] + zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
-              }
-
     l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget())]
-
-    l_fields = [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=d_list['affaire']),
-                StringFields(title='Client', name='rs_client', l_choices=d_list['client']),
-                IntegerFields(title='Contact', name='contact_id', l_choices=d_list['contact']),
-                StringFields(title='Responsable', name='responsable', l_choices=d_list['responsable']),
-                IntegerFields(title="Nombre d'heure BE", name='heure_be'),
-                IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
-                FloatFields(title='Montant achat', name='montant_achat'),
-                FloatFields(title='Coefficient achat', name='coef_achat'),
-                DateFields(title='Date de debut', name='date_start'),
-                DateFields(title='Date de fin', name='date_end'),
-                StringFields(title='Base de prix', name='base_prix', l_choices=d_list['base_prix']),
-                FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2)]
-
-    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
+    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 3
+
+    @staticmethod
+    def l_fields():
+        l_fields = \
+            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Devis.list('affaire')),
+             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client')),
+             IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
+             StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable')),
+             IntegerFields(title="Nombre d'heure BE", name='heure_be'),
+             IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
+             FloatFields(title='Montant achat', name='montant_achat'),
+             FloatFields(title='Coefficient achat', name='coef_achat'),
+             DateFields(title='Date de debut', name='date_start'),
+             DateFields(title='Date de fin', name='date_end'),
+             StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
+             FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2)]
+
+        return l_fields
+
+    @staticmethod
+    def list(kw):
+
+        if kw == 'client':
+            return zip(Client.get_clients(), Client.get_clients())
+        elif kw == 'contact':
+            return Contact.get_contact('client', return_id=True)
+        elif kw == 'responsable':
+            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
+                       Employe.get_employes(**{'emploie': 'charge affaire'}))
+        elif kw == 'affaire':
+            return [(-1, 'NA')] + zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
+        elif kw == 'base_prix':
+            return Base_prix.list('base')
+        else:
+            return []
 
     @staticmethod
     def from_index_(d_index, path=None):
@@ -57,15 +67,15 @@ class Devis(BaseModel):
         # Series
         s = BaseModel.from_index(d_index, df)
 
-        return Devis(d_index, s.loc[[f.name for f in Devis.l_fields]].to_dict(), path=path)
+        return Devis(d_index, s.loc[[f.name for f in Devis.l_fields()]].to_dict(), path=path)
 
     @staticmethod
     def load_db(path=None):
         if path is None:
             path = Devis.path
 
-        return pd.read_csv(path, dtype={f.name: f.type for f in Devis.l_index + Devis.l_fields + Devis.l_hfields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in Devis.l_index + Devis.l_fields + Devis.l_hfields})
+        return pd.read_csv(path, dtype={f.name: f.type for f in Devis.l_index + Devis.l_fields() + Devis.l_hfields}) \
+            .fillna({f.name: f.__dict__.get('missing', '') for f in Devis.l_index + Devis.l_fields() + Devis.l_hfields})
 
     @staticmethod
     def get_devis(path=None):
@@ -112,7 +122,12 @@ class Devis(BaseModel):
         return price
 
     @staticmethod
-    def form_rendering(step, d_index=None, data=None):
+    def form_rendering(step, index=None, data=None):
+
+        if index is not None:
+            d_index = {Devis.l_index[0].name: Devis.l_index[0].type(index)}
+        else:
+            d_index = None
 
         if step % Devis.nb_step_form == 2:
 
@@ -126,17 +141,17 @@ class Devis(BaseModel):
             l_fields = [
                 FloatFields(title="Prix heure Ch", name='prix_heure_ch', round=2, widget=TextInputWidget(readonly=True)),
                 FloatFields(title="Prix heure Ch", name='prix_heure_be', round=2, widget=TextInputWidget(readonly=True))
-            ] + Devis.l_fields
+            ] + Devis.l_fields()
 
         else:
-            l_fields = Devis.l_fields
+            l_fields = Devis.l_fields()
 
         form_man = FormManager(Devis.l_index, l_fields)
 
         if step % Devis.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
-                                      l_choices=zip(Devis.get_devis(), Devis.get_devis()),
-                                      desc="En cas de modification choisir un numero de devis",)
+            index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
+                                       l_choices=zip(Devis.get_devis(), Devis.get_devis()),
+                                       desc="En cas de modification choisir un numero de devis",)
             form_man.render_init_form(Devis.action_field, index_node)
 
         else:

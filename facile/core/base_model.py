@@ -5,18 +5,24 @@ import pandas as pd
 from facile.core.fields import StringFields
 
 
+class ClassProperty (property):
+    """Subclass property to make classmethod properties possible"""
+    def __get__(self, cls, owner):
+        return self.fget.__get__(None, owner)()
+
+
 class BaseModel(object):
     path = ''
-    l_index, l_fields, l_subindex = [], [], []
+    l_index, l_subindex = [], []
     l_hfields = [StringFields(name='creation_date', title='creation_date', round=0),
                  StringFields(name='maj_date', title='maj_date', round=0)]
-    d_list = {}
+    l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
 
     def __init__(self, d_index, d_fields, d_hfields={}, path=None):
         for f in self.l_index:
             self.__setattr__(f.name, d_index[f.name])
 
-        for f in self.l_fields:
+        for f in self.l_fields():
             self.__setattr__(f.name, d_fields[f.name])
 
         for f in self.l_hfields:
@@ -24,6 +30,14 @@ class BaseModel(object):
 
         if path is not None:
             self.path = path
+
+    @staticmethod
+    def l_fields():
+        raise NotImplementedError
+
+    @staticmethod
+    def list(kw):
+        raise NotImplementedError
 
     @staticmethod
     def from_index(d_index, df):
@@ -53,7 +67,7 @@ class BaseModel(object):
         raise NotImplementedError
 
     def check_subindex(self, df, b_exists=True):
-        df_, l_fields = df.copy(), [self.l_fields[i] for i in self.l_subindex]
+        df_, l_fields = df.copy(), [self.l_fields()[i] for i in self.l_subindex]
         for f in l_fields:
             df_ = df_.loc[df_[f.name] == self.__getattribute__(f.name)]
 
@@ -84,8 +98,8 @@ class BaseModel(object):
 
         else:
             # Add record and save dataframe as csv
-            data = [f.type(self.__getattribute__(f.name)) for f in self.l_index + self.l_fields + self.l_hfields]
-            df_ = pd.DataFrame([data], columns=[f.name for f in self.l_index + self.l_fields + self.l_hfields])
+            data = [f.type(self.__getattribute__(f.name)) for f in self.l_index + self.l_fields() + self.l_hfields]
+            df_ = pd.DataFrame([data], columns=[f.name for f in self.l_index + self.l_fields() + self.l_hfields])
             df = df.append(df_, ignore_index=True)
             df.reset_index(drop=True).to_csv(self.path, index=None)
 
@@ -111,7 +125,7 @@ class BaseModel(object):
         else:
             # Alter record and save csv
             id_ = df_.index[0]
-            for f in self.l_index + self.l_fields + self.l_hfields:
+            for f in self.l_index + self.l_fields() + self.l_hfields:
                 df.loc[id_, f.name] = f.type(self.__getattribute__(f.name))
             df.to_csv(self.path, index=None)
 

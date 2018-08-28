@@ -6,7 +6,7 @@ _ = TranslationStringFactory('deform')
 
 # Local import
 from facile.forms.Deform import Form
-from facileapp.models import Users
+from facileapp.models.user import Users
 
 
 class LoginForm(Form):

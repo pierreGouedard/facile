@@ -12,22 +12,26 @@ from facile.core.base_model import BaseModel
 class Client(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'client.csv')
-
-    d_list = {'action': [('Ajouter un client', 'Ajouter un client'),
-                         ('Modifier un client', 'Modifier un client'),
-                         ('Suprimer un client', 'Suprimer un client')]}
-
     l_index = [StringFields(title='Raison social', name='raison_social')]
-
-    l_fields = [StringFields(title='contact (financier)', name='contact'),
-                StringFields(title='Adresse (financier)', name='adresse'),
-                StringFields(title='Ville (financier)', name='ville'),
-                StringFields(title='Code postal (financier)', name='code_postal'),
-                StringFields(title='tel (financier)', name='num_tel'),
-                StringFields(title='E-mail (financier)', name='mail')]
-
-    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
+    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
+
+    @staticmethod
+    def l_fields():
+        l_fields = \
+            [StringFields(title='contact (financier)', name='contact'),
+             StringFields(title='Adresse (financier)', name='adresse'),
+             StringFields(title='Ville (financier)', name='ville'),
+             StringFields(title='Code postal (financier)', name='code_postal'),
+             StringFields(title='tel (financier)', name='num_tel'),
+             StringFields(title='E-mail (financier)', name='mail')]
+
+        return l_fields
+
+    @staticmethod
+    def list(kw):
+        return []
 
     @staticmethod
     def from_index_(d_index, path=None):
@@ -37,14 +41,14 @@ class Client(BaseModel):
         # Series
         s = BaseModel.from_index(d_index, df)
 
-        return Client(d_index, s.loc[[f.name for f in Client.l_fields]].to_dict(), path=path)
+        return Client(d_index, s.loc[[f.name for f in Client.l_fields()]].to_dict(), path=path)
 
     @staticmethod
     def load_db(path=None):
         if path is None:
             path = Client.path
 
-        l_fields = Client.l_index + Client.l_fields + Client.l_hfields
+        l_fields = Client.l_index + Client.l_fields() + Client.l_hfields
         return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
@@ -53,8 +57,14 @@ class Client(BaseModel):
         return Client.load_db(path)['raison_social'].unique()
 
     @staticmethod
-    def form_rendering(step, d_index=None, data=None):
-        form_man = FormManager(Client.l_index, Client.l_fields)
+    def form_rendering(step, index=None, data=None):
+
+        if index is not None:
+            d_index = {Client.l_index[0].name: index}
+        else:
+            d_index = None
+
+        form_man = FormManager(Client.l_index, Client.l_fields())
 
         if step % Client.nb_step_form == 0:
             index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),

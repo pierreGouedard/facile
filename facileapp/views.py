@@ -10,6 +10,7 @@ from facile.utils.forms import build_form, process_form, get_args_forms, get_tit
 from facile.layout import boostrap
 from settings import deform_template_path
 
+
 @app.route('/')
 def home():
     if 'username' not in session:
@@ -100,8 +101,7 @@ def form():
             web, data = build_form(request.args['table'], request, deform_template_path, step=step, force_get=True,
                                    data=data['form_data'])
         else:
-            step, action = int(data['form_data']['step']), data['form_data']['action']
-            title = get_title_from_step(step, data['form_data'])
+            title = get_title_from_step(step, {k: request.form.get(k, '') for k in ['step', 'action', 'nb_step', 'index']})
             custom_template = Template(render_template('form.html', form=Markup(boostrap.get_form_layout(title))))
 
         # Generate table

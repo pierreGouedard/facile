@@ -50,7 +50,8 @@ class FormManager(object):
             self.d_form_data['data'] = data_db
 
         self.d_form_data['nodes'] = [f.sn for f in l_index + l_fields]
-        self.d_form_data['mapping'] = dict(d_form_data['mapping'] + [(f.name, f.mapinit) for f in l_index + l_fields])
+        self.d_form_data['mapping'] = dict(self.d_form_data['mapping'] +
+                                           [(f.name, f.mapinit) for f in l_index + l_fields])
 
         if data_form is not None:
             l_names = [f.name for f in l_index + l_fields] + ['action', 'index']

@@ -8,41 +8,47 @@ import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
 from facile.core.base_model import BaseModel
+from facileapp.models.fournisseur import Fournisseur
+from facileapp.models.client import Client
 
 
 class Contact(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'contact.csv')
-
-    d_list = {'type': [('client', 'client'),
-                       ('fournisseur', 'fournisseur')],
-
-              'client': zip(Client.get_clients(), Client.get_clients()),
-
-              'fournisseur': zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()),
-
-              'action': [('Ajouter un contact', 'Ajouter un contact'),
-                         ('Modifier un contact', 'Modifier un contact'),
-                         ('Suprimer un contact', 'Suprimer un contact')]
-              }
-
-    l_index = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1)]
-
-    l_fields = [StringFields(title='Type de contact', name='type', l_choices=d_list['type']),
-                StringFields(title='Raison social du client', name='raison_social',
-                             l_choices=d_list['client'] + d_list['fournisseur']),
-                StringFields(title='Nom complet du contact', name='contact'),
-                StringFields(title='Description du contact', name='desc'),
-                StringFields(title='Adresse', name='adresse'),
-                StringFields(title='Ville', name='ville'),
-                StringFields(title='Code postal', name='code_postal'),
-                StringFields(title='tel', name='num_tel'),
-                StringFields(title='E-mail', name='mail')]
-
-    l_subindex = [0, 1, 2]
-
-    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    l_index, l_subindex = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1)], [0, 1, 2]
+    l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
+    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
+
+    @staticmethod
+    def l_fields():
+        l_fields = \
+            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type')),
+             StringFields(title='Raison social du client', name='raison_social',
+                          l_choices=Contact.list('client') + Contact.list('fournisseur')),
+             StringFields(title='Nom complet du contact', name='contact'),
+             StringFields(title='Description du contact', name='desc'),
+             StringFields(title='Adresse', name='adresse'),
+             StringFields(title='Ville', name='ville'),
+             StringFields(title='Code postal', name='code_postal'),
+             StringFields(title='tel', name='num_tel'),
+             StringFields(title='E-mail', name='mail')]
+
+        return l_fields
+
+    @staticmethod
+    def list(kw):
+        if kw == 'client':
+            return zip(Client.load_db()['raison_social'].unique(), Client.load_db()['raison_social'].unique())
+
+        elif kw == 'fournisseur':
+            return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
+
+        elif kw == 'type':
+            return [('client', 'client'), ('fournisseur', 'fournisseur')]
+
+        else:
+            return []
 
     @staticmethod
     def from_index_(d_index, path=None):
@@ -52,7 +58,7 @@ class Contact(BaseModel):
         # Series
         s = BaseModel.from_index(d_index, df)
 
-        return Contact(d_index, s.loc[[f.name for f in Contact.l_fields]].to_dict(), path=path)
+        return Contact(d_index, s.loc[[f.name for f in Contact.l_fields()]].to_dict(), path=path)
 
     @staticmethod
     def from_subindex_(d_subindex, path=None):
@@ -64,7 +70,7 @@ class Contact(BaseModel):
     def load_db(path=None):
         if path is None:
             path = Contact.path
-        l_fields = Contact.l_index + Contact.l_fields + Contact.l_hfields
+        l_fields = Contact.l_index + Contact.l_fields() + Contact.l_hfields
         return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
@@ -117,9 +123,15 @@ class Contact(BaseModel):
             raise ValueError(e.message)
 
     @staticmethod
-    def form_rendering(step, d_index=None, data=None):
+    def form_rendering(step, index=None, data=None):
 
-        form_man = FormManager(Contact.l_index, Contact.l_fields, l_subindex=Contact.l_subindex, use_subindex=True)
+        if index is not None:
+            l_subindex = [Contact.l_fields()[i].name for i in Contact.l_subindex]
+            d_index = {k: v for k, v in zip(l_subindex, index.split(' - '))}
+        else:
+            d_index = None
+
+        form_man = FormManager(Contact.l_index, Contact.l_fields(), l_subindex=Contact.l_subindex, use_subindex=True)
 
         if step % Contact.nb_step_form == 0:
             index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),

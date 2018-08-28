@@ -1,121 +1,62 @@
-from facileapp.models import Employe, Fournisseur, Client, Contact, Chantier, Base_prix, Affaire, Devis
+from facileapp.models.employe import Employe
+from facileapp.models.fournisseur import Fournisseur
+from facileapp.models.client import Client
+from facileapp.models.contact import Contact
+from facileapp.models.chantier import Chantier
+from facileapp.models.base_prix import Base_prix
+from facileapp.models.affaire import Affaire
+from facileapp.models.devis import Devis
+from facileapp.models.facture import Facture
+from facileapp.models.commande import Commande
 from facile.forms import mutliform
 
 
-def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True):
+def build_form(table_key, request, deform_template_path, step=0, force_get=True, data=None, validate=True):
+
+    if 'index' in request.form.keys():
+        index = request.form['index']
+    else:
+        index = None
 
     if table_key == 'employe':
-        if step % Employe.nb_step_form == 0:
-            d_index = None
-        else:
-            action = request.form['action']
-
-            if 'Modifier' in action or 'Suprimer' in action:
-                l_index = [sch.name for sch in Employe.l_index]
-                d_index = {k: v for k, v in zip(l_index, request.form['index'].split('-'))}
-            else:
-                d_index = None
-
-        d_form_data = Employe.form_rendering(step, d_index, data)
+        d_form_data = Employe.form_rendering(step, index, data)
         nb_step_form = Employe.nb_step_form
 
     elif table_key == 'fournisseur':
-        if step % Fournisseur.nb_step_form == 0:
-            d_index = None
-        else:
-            action = request.form['action']
-
-            if 'Modifier' in action or 'Suprimer' in action:
-                index = Fournisseur.l_index[0].name
-                d_index = {index: request.form['index']}
-            else:
-                d_index = None
-
-        d_form_data = Fournisseur.form_rendering(step, d_index, data)
+        d_form_data = Fournisseur.form_rendering(step, index, data)
         nb_step_form = Fournisseur.nb_step_form
 
     elif table_key == 'client':
-        if step % Client.nb_step_form == 0:
-            d_index = None
-        else:
-            action = request.form['action']
-
-            if 'Modifier' in action or 'Suprimer' in action:
-                index = Client.l_index[0].name
-                d_index = {index: request.form['index']}
-            else:
-                d_index = None
-
-        d_form_data = Client.form_rendering(step, d_index, data)
+        d_form_data = Client.form_rendering(step, index, data)
         nb_step_form = Fournisseur.nb_step_form
 
     elif table_key == 'contact':
-        if step % Contact.nb_step_form == 0:
-            d_index = None
-        else:
-            action = request.form['action']
-
-            if 'Modifier' in action or 'Suprimer' in action:
-                l_subindex = [Contact.l_fields[i].name for i in Contact.l_subindex]
-                d_index = {k: v for k, v in zip(l_subindex, request.form['index'].split(' - '))}
-            else:
-                d_index = None
-
-        d_form_data = Contact.form_rendering(step, d_index, data)
+        d_form_data = Contact.form_rendering(step, index, data)
         nb_step_form = Contact.nb_step_form
 
     elif table_key == 'chantier':
-        if step % Chantier.nb_step_form == 0:
-            d_index = None
-        else:
-            action = request.form['action']
-
-            if 'Modifier' in action or 'Suprimer' in action:
-                l_subindex = [Chantier.l_fields[i].name for i in Chantier.l_subindex]
-                d_index = {k: v for k, v in zip(l_subindex, request.form['index'].split(' - '))}
-            else:
-                d_index = None
-
-        d_form_data = Chantier.form_rendering(step, d_index, data)
+        d_form_data = Chantier.form_rendering(step, index, data)
         nb_step_form = Chantier.nb_step_form
 
     elif table_key == 'base_prix':
-        if step % Base_prix.nb_step_form == 0:
-            d_index = None
-
-        else:
-            index = Base_prix.l_index[0].name
-            d_index = {index: request.form['index']}
-
-        d_form_data = Base_prix.form_rendering(step, d_index, data)
+        d_form_data = Base_prix.form_rendering(step, index, data)
         nb_step_form = Base_prix.nb_step_form
 
     elif table_key == 'affaire':
-        if step % Affaire.nb_step_form == 0:
-            d_index = None
-
-        else:
-            if 'Modifier' in request.form['action'] or 'Suprimer' in request.form['action']:
-                index = Affaire.l_index[0].name
-                d_index = {index: request.form['index']}
-            else:
-                d_index = None
-
-        d_form_data = Affaire.form_rendering(step, d_index, data)
+        d_form_data = Affaire.form_rendering(step, index, data)
         nb_step_form = Affaire.nb_step_form
 
     elif table_key == 'devis':
-        if step % Devis.nb_step_form == 0:
-            d_index = None
-        else:
-            if 'Modifier' in request.form['action'] or 'Suprimer' in request.form['action']:
-                f_index = Devis.l_index[0]
-                d_index = {f_index.name: f_index.type(request.form['index'])}
-            else:
-                d_index = None
-
-        d_form_data = Devis.form_rendering(step, d_index, data)
+        d_form_data = Devis.form_rendering(step, index, data)
         nb_step_form = Devis.nb_step_form
+
+    elif table_key == 'facture':
+        d_form_data = Facture.form_rendering(step, index, data)
+        nb_step_form = Facture.nb_step_form
+
+    elif table_key == 'commande':
+        d_form_data = Commande.form_rendering(step, index, data)
+        nb_step_form = Commande.nb_step_form
 
     elif table_key == 'heure':
 
@@ -152,148 +93,57 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
 def process_form(table_key, d_data, action):
 
     if table_key == 'employe':
-        d_data['date_start'] = d_data['date_start']['date']
-        d_data['date_end'] = d_data['date_end']['date']
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            employe = Employe.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Employe.l_index})
-
-            for sch in Employe.l_fields:
-                employe.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                employe.alter()
-            else:
-                employe.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Employe.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Employe.l_fields}
-
-            employe = Employe(d_index, d_fields)
-            employe.add()
+        l_index, l_fields = Employe.l_index, Employe.l_fields()
+        generic_process_form(l_index, l_fields, Employe, action, d_data=d_data)
 
     elif table_key == 'fournisseur':
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            fournisseur = Fournisseur.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Fournisseur.l_index})
-
-            for sch in Fournisseur.l_fields:
-                fournisseur.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                fournisseur.alter()
-            else:
-                fournisseur.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Fournisseur.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Fournisseur.l_fields}
-
-            fournisseur = Fournisseur(d_index, d_fields)
-            fournisseur.add()
+        l_index, l_fields = Fournisseur.l_index, Fournisseur.l_fields()
+        generic_process_form(l_index, l_fields, Fournisseur, action, d_data=d_data)
 
     elif table_key == 'client':
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            client = Client.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Client.l_index})
-
-            for sch in Client.l_fields:
-                client.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                client.alter()
-            else:
-                client.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Client.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Client.l_fields}
-
-            client = Client(d_index, d_fields)
-            client.add()
+        l_index, l_fields = Client.l_index, Client.l_fields()
+        generic_process_form(l_index, l_fields, Client, action, d_data=d_data)
 
     elif table_key == 'contact':
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            contact = Contact.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Contact.l_index})
-
-            for sch in Contact.l_fields:
-                contact.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                contact.alter()
-            else:
-                contact.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Contact.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Contact.l_fields}
-
-            contact = Contact(d_index, d_fields)
-            contact.add()
+        l_index, l_fields = Contact.l_index, Contact.l_fields()
+        generic_process_form(l_index, l_fields, Contact, action, d_data=d_data)
 
     elif table_key == 'chantier':
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            chantier = Chantier.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Chantier.l_index})
-
-            for sch in Chantier.l_fields:
-                chantier.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                chantier.alter()
-            else:
-                chantier.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Chantier.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Chantier.l_fields}
-
-            chantier = Chantier(d_index, d_fields)
-            chantier.add()
+        l_index, l_fields = Chantier.l_index, Chantier.l_fields()
+        generic_process_form(l_index, l_fields, Chantier, action, d_data=d_data)
 
     elif table_key == 'affaire':
-
-        if 'Modifier' in action or 'Suprimer' in action:
-            affaire = Affaire.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Affaire.l_index})
-
-            for sch in Affaire.l_fields:
-                affaire.__setattr__(sch.name, d_data[sch.name])
-            if 'Modifier' in action:
-                affaire.alter()
-            else:
-                affaire.delete()
-
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Affaire.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Affaire.l_fields}
-
-            chantier = Affaire(d_index, d_fields)
-            chantier.add()
+        l_index, l_fields = Affaire.l_index, Affaire.l_fields()
+        generic_process_form(l_index, l_fields, Affaire, action, d_data=d_data)
 
     elif table_key == 'base_prix':
-
-        base_prix = Base_prix.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Base_prix.l_index})
-
-        for sch in Base_prix.l_fields:
-            base_prix.__setattr__(sch.name, sch.type(d_data[sch.name]))
-
-        base_prix.alter()
+        l_index, l_fields = Base_prix.l_index, Base_prix.l_fields()
+        generic_process_form(l_index, l_fields, Base_prix, 'Modifier', d_data=d_data)
 
     elif table_key == 'devis':
+        l_index, l_fields = Devis.l_index, [f for f in Devis.l_fields() if f not in ['price']]
+        generic_process_form(l_index, l_fields, Devis, action, d_data)
 
-        if 'Modifier' in action or 'Suprimer' in action:
-            devis = Chantier.from_index_({sch.name: sch.type(d_data[sch.name]) for sch in Devis.l_index})
+    elif table_key == 'commande':
+        l_index, l_fields = Commande.l_index, [f for f in Commande.l_fields() if f not in ['montant_ttc', 'montant_tva']]
+        generic_process_form(l_index, l_fields, Commande, action, d_data)
 
-            for sch in Chantier.l_fields:
-                devis.__setattr__(sch.name, sch.type(d_data[sch.name]))
-            if 'Modifier' in action:
-                devis.alter()
-            else:
-                devis.delete()
+    elif table_key == 'facture':
+        l_index, l_fields = Facture.l_index, [f for f in Facture.l_fields() if f not in ['montant_ttc', 'montant_tva']]
+        generic_process_form(l_index, l_fields, Facture, action, d_data)
 
-        elif 'Ajouter' in action:
-            d_index = {sch.name: sch.type(d_data[sch.name]) for sch in Devis.l_index}
-            d_fields = {sch.name: sch.type(d_data[sch.name]) for sch in Deviss.l_fields}
 
-            devis = Devis(d_index, d_fields)
-            devis.add()
+def generic_process_form(l_index, l_fields, model, action, d_data=None):
+    if 'Ajouter' in action:
+        model({f.name: f.type(d_data[f.name]) for f in l_index}, {f.name: f.type(d_data[f.name]) for f in l_fields}) \
+            .add()
+    elif 'Suprimer' in action:
+        model.from_index_({f.name: f.type(d_data[f.name]) for f in l_index}).delete()
+    else:
+        model_ = model.from_index_({f.name: f.type(d_data[f.name]) for f in l_index})
+        for f in l_fields:
+            model_.__setattr__(f.name, f.type(d_data[f.name]))
+        model_.alter()
 
 
 def get_args_forms(d_data):
@@ -313,7 +163,7 @@ def get_args_forms(d_data):
 
 def get_title_from_step(step, data):
     action = data['action']
-    if 'Ajouter' in data['action']:
+    if 'Ajouter' in action:
         title = action if step % int(data['nb_step']) > 0 else 'Choisissez une action'
     else:
         title = '{}: {}'.format(action, data.get('index', '')) if step % int(data['nb_step']) > 0 \

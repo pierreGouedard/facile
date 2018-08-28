@@ -1,9 +1,8 @@
-import os
+# Global import
 import pandas as pd
 from colander import SchemaNode as sn, String, Date, DateTime, Integer, Money, Float
-from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, CheckboxWidget, MoneyInputWidget, \
-    RadioChoiceWidget, HiddenWidget, TextInputWidget
-import copy
+from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, MoneyInputWidget, HiddenWidget, \
+    TextInputWidget
 
 
 class StringFields(object):
@@ -77,7 +76,7 @@ class FloatFields(object):
             self.widget = widget
         else:
             if l_choices:
-                self.widget = Select2Widget(values=l_choices, multiple=multiple, missing=missing)
+                self.widget = Select2Widget(values=l_choices, multiple=multiple)
             else:
                 self.widget = None
 
@@ -85,7 +84,7 @@ class FloatFields(object):
         self.processing_form = lambda x: float(x)
         self.processing_db = lambda x: float(x)
 
-        self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc)
+        self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc, missing=missing)
 
     def set_mode(self):
         return FloatFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc)
@@ -106,7 +105,7 @@ class MoneyFields(object):
             self.widget = widget
         else:
             if l_choices:
-                self.widget = Select2Widget(values=l_choices, multiple=multiple, missing=missing)
+                self.widget = Select2Widget(values=l_choices, multiple=multiple)
             else:
                 self.widget = MoneyInputWidget()
 
@@ -114,15 +113,13 @@ class MoneyFields(object):
         self.processing_form = lambda x: float(x)
         self.processing_db = lambda x: float(x)
 
-        self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc)
+        self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc, missing=missing)
 
-    @staticmethod
-    def set_mode(title, name, round, widget=None):
-        return MoneyFields(title, name, round, widget=widget, desc=self.desc)
+    def set_mode(self):
+        return MoneyFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc)
 
-    @staticmethod
-    def hidden_mode(title, name, round):
-        return MoneyFields(title, name, round, widget=HiddenWidget())
+    def hidden_mode(self):
+        return MoneyFields(self.title, self.name, self.round, widget=HiddenWidget())
 
 
 class DateFields(object):

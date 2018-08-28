@@ -8,29 +8,38 @@ import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
 from facile.core.base_model import BaseModel
+from facileapp.models.chantier import Chantier
+from facileapp.models.employe import Employe
 
 
 class Affaire(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'affaire.csv')
 
-    d_list = {'action': [('Ajouter une affaire', 'Ajouter une affaire'),
-                         ('Modifier une affaire', 'Modifier une affaire'),
-                         ('Suprimer une affaire', 'Suprimer une affaire')],
-
-              'chantier': Chantier.get_chantier(return_id=True),
-
-              'responsable': zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                                 Employe.get_employes(**{'emploie': 'charge affaire'}))
-              }
-
     l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget())]
-
-    l_fields = [IntegerFields(title='Chantier', name='chantier_id', l_choices=d_list['chantier']),
-                StringFields(title='Responsable', name='responsable', l_choices=d_list['responsable'])]
-
-    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions)
+    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
+
+    @staticmethod
+    def l_fields():
+        l_fields = \
+            [IntegerFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier')),
+             StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'))]
+
+        return l_fields
+
+    @staticmethod
+    def list(kw):
+        if kw == 'chantier':
+            return Chantier.get_chantier(return_id=True)
+
+        elif kw == 'responsable':
+            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
+                       Employe.get_employes(**{'emploie': 'charge affaire'}))
+
+        else:
+            return []
 
     @staticmethod
     def from_index_(d_index, path=None):
@@ -40,13 +49,13 @@ class Affaire(BaseModel):
         # Series
         s = BaseModel.from_index(d_index, df)
 
-        return Affaire(d_index, s.loc[[f.name for f in Affaire.l_fields]].to_dict(), path=path)
+        return Affaire(d_index, s.loc[[f.name for f in Affaire.l_fields()]].to_dict(), path=path)
 
     @staticmethod
     def load_db(path=None):
         if path is None:
             path = Affaire.path
-        l_fields = Affaire.l_index + Affaire.l_fields + Affaire.l_hfields
+        l_fields = Affaire.l_index + Affaire.l_fields() + Affaire.l_hfields
 
         return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
@@ -72,11 +81,17 @@ class Affaire(BaseModel):
             raise ValueError(e.message)
 
     @staticmethod
-    def form_rendering(step, d_index=None, data=None):
-        form_man = FormManager(Affaire.l_index, Affaire.l_fields)
+    def form_rendering(step, index=None, data=None):
+
+        if index is not None:
+            d_index = {Affaire.l_index[0].name: Affaire.l_index[0].type(index)}
+        else:
+            d_index = None
+
+        form_man = FormManager(Affaire.l_index, Affaire.l_fields())
 
         if step % Affaire.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+            index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
                                       l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire()),
                                       desc="En cas de modification choisir un numero d'affaire",)
             form_man.render_init_form(Affaire.action_field, index_node)

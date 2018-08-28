@@ -6,4 +6,4 @@ app.config.from_object('config')
 
 # Import views and models
 from facileapp import views
-from facileapp.models import .
+from facileapp.models import *

@@ -14,7 +14,7 @@ __maintainer__ = 'Pierre Gouedard'
 
 class TestAffaire(unittest.TestCase):
     def setUp(self):
-        self.affaire_id = np.random.randint(100000, 999999)
+        self.affaire_id = 123456
         self.d_init = {0: {'affaire_id': self.affaire_id,
                            'chantier_id': 0, 'responsable': 'Jean Dujardin', 'creation_date': str(pd.Timestamp.now()),
                            'maj_date': str(pd.Timestamp.now())}

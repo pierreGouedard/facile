@@ -19,7 +19,8 @@ class TestDevis(unittest.TestCase):
                            'contact_id': 0, 'responsable': 'Jean Dujardin', 'heure_be': np.random.randint(5, 30),
                            'heure_ch': np.random.randint(50, 100), 'montant_achat': np.random.randint(1000, 50000),
                            'coef_achat': 1.5 + np.random.randn(), 'date_start': '2018-01-01', 'date_end': '2018-03-01',
-                           'base_prix': 'Mai 2018', 'price': 0}
+                           'base_prix': 'Mai 2018', 'price': 0, 'creation_date': str(pd.Timestamp.now()),
+                           'maj_date': str(pd.Timestamp.now())}
                        }
         self.path = os.path.join(facile_test_path, 'devis.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)

@@ -7,44 +7,52 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, ClassProperty
+from facileapp.models.client import Client
+from facileapp.models.contact import Contact
+from facileapp.models.employe import Employe
 
 
 class Chantier(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'chantier.csv')
-
-    d_list = {'client': zip(Client.load_db()['raison_social'].unique(),
-                            Client.load_db()['raison_social'].unique()),
-
-              'contact': Contact.get_contact('client', return_id=True),
-
-              'responsable': zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                                 Employe.get_employes(**{'emploie': 'charge affaire'})),
-
-              'is_active': [('oui', 'Oui'),
-                            ('non', 'Non')],
-
-              'action': [('Ajouter un chantier', 'Ajouter un chantier'),
-                         ('Modifier un chantier', 'Modifier un chantier'),
-                         ('Suprimer un chantier', 'Suprimer un chantier')]}
-
-    l_index = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget())]
-
-    l_fields = [StringFields(title='Raison social du client', name='rs_client', l_choices=d_list['client']),
-                StringFields(title='Nom du chantier', name='nom'),
-                IntegerFields(title='Contact exterieur', name='contact_id', l_choices=d_list['contact']),
-                StringFields(title='Responsable du chantier', name='responsable', l_choices=d_list['responsable']),
-                StringFields(title='Adresse', name='adresse'),
-                StringFields(title='Ville', name='ville'),
-                StringFields(title='Code postal', name='code_postal'),
-                StringFields(title='Le chantier est actif', name='is_active',
-                             widget=RadioChoiceWidget(values=d_list['is_active'], **{'key': 'is_active'}))
-                ]
-
-    l_subindex = [0, 1]
-    action_field = StringFields(title='Action', name='action', l_choices=d_list['action'], round=0)
+    l_index, l_subindex = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget())], [0, 1]
+    l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
+    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
+
+    @staticmethod
+    def l_fields():
+        l_fields = \
+            [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client')),
+             StringFields(title='Nom du chantier', name='nom'),
+             IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
+             StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable')),
+             StringFields(title='Adresse', name='adresse'),
+             StringFields(title='Ville', name='ville'),
+             StringFields(title='Code postal', name='code_postal'),
+             StringFields(title='Le chantier est actif', name='is_active',
+                          widget=RadioChoiceWidget(values=Chantier.list('is_active'), **{'key': 'is_active'}))
+             ]
+
+        return l_fields
+
+    @staticmethod
+    def list(kw):
+        if kw == 'client':
+            return zip(Client.load_db()['raison_social'].unique(), Client.load_db()['raison_social'].unique())
+
+        elif kw == 'contact':
+            return Contact.get_contact('client', return_id=True)
+
+        elif kw == 'responsable':
+            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
+                       Employe.get_employes(**{'emploie': 'charge affaire'}))
+        elif kw == 'is_active':
+            return [('oui', 'Oui'), ('non', 'Non')]
+
+        else:
+            return []
 
     @staticmethod
     def from_index_(d_index, path=None):
@@ -54,7 +62,7 @@ class Chantier(BaseModel):
         # Series
         s = BaseModel.from_index(d_index, df)
 
-        return Chantier(d_index, s.loc[[f.name for f in Chantier.l_fields]].to_dict(), path=path)
+        return Chantier(d_index, s.loc[[f.name for f in Chantier.l_fields()]].to_dict(), path=path)
 
     @staticmethod
     def from_subindex_(d_subindex, path=None):
@@ -66,7 +74,7 @@ class Chantier(BaseModel):
     def load_db(path=None):
         if path is None:
             path = Chantier.path
-        l_fields = Chantier.l_index + Chantier.l_fields + Chantier.l_hfields
+        l_fields = Chantier.l_index + Chantier.l_fields() + Chantier.l_hfields
         return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
@@ -103,9 +111,15 @@ class Chantier(BaseModel):
             raise ValueError(e.message)
 
     @staticmethod
-    def form_rendering(step, d_index=None, data=None):
+    def form_rendering(step, index=None, data=None):
 
-        form_man = FormManager(Chantier.l_index, Chantier.l_fields, l_subindex=Chantier.l_subindex, use_subindex=True)
+        if index is not None:
+            l_subindex = [Chantier.l_fields()[i].name for i in Contact.l_subindex]
+            d_index = {k: v for k, v in zip(l_subindex, index.split(' - '))}
+        else:
+            d_index = None
+
+        form_man = FormManager(Chantier.l_index, Chantier.l_fields(), l_subindex=Chantier.l_subindex, use_subindex=True)
 
         if step % Chantier.nb_step_form == 0:
             index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
@@ -119,4 +133,6 @@ class Chantier(BaseModel):
                 data_db = Chantier.from_subindex_(d_index).__dict__
 
             form_man.render(step % Chantier.nb_step_form, data_db=data_db, data_form=data)
+
+        return form_man.d_form_data
 
