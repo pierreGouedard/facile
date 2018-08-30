@@ -1,11 +1,12 @@
 class FormManager(object):
     buttons = ('Retour', 'Suivant')
 
-    def __init__(self, l_index, l_fields, l_subindex=[], use_subindex=False):
+    def __init__(self, l_index, l_fields, l_subindex=[], use_subindex=False, use_groupindex=False):
         self.l_index = l_index
         self.l_fields = l_fields
         self.l_subindex = l_subindex
         self.use_subindex = use_subindex
+        self.use_groupindex = use_groupindex
         self.d_form_data = None
 
     def render_init_form(self, action_node, index_node):
@@ -42,7 +43,6 @@ class FormManager(object):
                 l_fields = map(lambda (i, x): x if not i in self.l_subindex else f.hidden_mode(), l_fields)
 
             self.d_form_data['mapping'] += [('Ajouter', None)]
-
             for f in l_index + l_fields:
                 if f.name in data_db:
                     data_db[f.name] = f.processing_db(data_db[f.name])

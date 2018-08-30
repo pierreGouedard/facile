@@ -30,7 +30,7 @@ class Facture(BaseModel):
              StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable')),
              StringFields(title='Objet', name='objet'),
              FloatFields(title='Montant facture HT', name='montant_ht'),
-             FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
+             FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
              FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
              FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget()),
              IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),

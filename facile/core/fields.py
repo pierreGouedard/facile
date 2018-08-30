@@ -1,8 +1,9 @@
 # Global import
 import pandas as pd
-from colander import SchemaNode as sn, String, Date, DateTime, Integer, Money, Float
+from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, Money, Float, Sequence
 from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, MoneyInputWidget, HiddenWidget, \
     TextInputWidget
+import copy
 
 
 class StringFields(object):
@@ -23,7 +24,7 @@ class StringFields(object):
                 self.widget = TextInputWidget()
 
         self.mapinit = None
-        self.processing_form = lambda x: str(x)
+        self.processing_form = lambda x: str(x) if x else missing
         self.processing_db = lambda x: str(x)
 
         self.sn = sn(String(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
@@ -52,7 +53,7 @@ class IntegerFields(object):
                 self.widget = None
 
         self.mapinit = None
-        self.processing_form = lambda x: int(x)
+        self.processing_form = lambda x: int(x) if x else missing
         self.processing_db = lambda x: int(x)
 
         self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
@@ -81,7 +82,7 @@ class FloatFields(object):
                 self.widget = None
 
         self.mapinit = None
-        self.processing_form = lambda x: float(x)
+        self.processing_form = lambda x: float(x) if x else missing
         self.processing_db = lambda x: float(x)
 
         self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc, missing=missing)
@@ -110,7 +111,7 @@ class MoneyFields(object):
                 self.widget = MoneyInputWidget()
 
         self.mapinit = None
-        self.processing_form = lambda x: float(x)
+        self.processing_form = lambda x: float(x) if x else missing
         self.processing_db = lambda x: float(x)
 
         self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc, missing=missing)
@@ -179,5 +180,58 @@ class DateTimeFields(object):
             self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
             processing_form=lambda x: pd.Timestamp(x)
         )
+
+
+class MappingFields(object):
+
+    def __init__(self, title, name, prefix, l_fields, round=1, desc=None, widget=None):
+        self.title = title
+        self.desc = desc
+        self.prefix = prefix
+        self.name = name
+        self.l_fields = []
+
+        for f in l_fields:
+            f_ = copy.deepcopy(f)
+            f_.sn.name = '{}-{}'.format(prefix, f.name)
+            self.l_fields += [f_]
+
+        self.round = round
+        self.mapinit = {f.name: f.mapinit for f in l_fields}
+
+        self.processing_form = lambda x: {f.name: f.processing_form(x[f.name]) for f in self.l_fields}
+        self.processing_db = lambda x: {f.sn.name: f.processing_db(x[f.name]) for f in self.l_fields}
+
+        self.sn = Schema(title=self.title, name=name, description=desc, widget=widget)
+        for f in self.l_fields:
+            self.sn.add(f.sn)
+
+    def set_mode(self):
+        return MappingFields(self.title, self.name, self.prefix, self.l_fields, self.round, desc=self.desc)
+
+    def hidden_mode(self):
+        return MappingFields(self.title, self.name, self.prefix, self.l_fields, self.round, widget=HiddenWidget())
+
+
+class SequenceFields(object):
+
+    def __init__(self, title, name, field, round=1, desc=None, widget=None):
+        self.title = title
+        self.name = name
+        self.field = field
+        self.desc = desc
+        self.round = round
+
+        self.mapinit = [field.mapinit]
+        self.processing_form = lambda x: [field.processing_form(d) for d in x]
+        self.processing_db = lambda x: [field.processing_db(d) for d in x]
+
+        self.sn = sn(Sequence(), field.sn, name=self.name, title=self.title, description=self.desc, widget=widget)
+
+    def set_mode(self):
+        return SequenceFields(self.title, self.name, self.field, self.round, desc=self.desc)
+
+    def hidden_mode(self):
+        return SequenceFields(self.title, self.name, self.field, self.round, widget=HiddenWidget())
 
 

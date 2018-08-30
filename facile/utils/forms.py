@@ -8,6 +8,7 @@ from facileapp.models.affaire import Affaire
 from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
 from facileapp.models.commande import Commande
+from facileapp.models.heure import Heure
 from facile.forms import mutliform
 
 
@@ -60,26 +61,8 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
 
     elif table_key == 'heure':
 
-        import colander
-        import deform
-
-        class ArticleMapping(colander.Schema):
-            name = 'article'
-
-        article = ArticleMapping()
-        article.add(colander.SchemaNode(colander.Integer(), name='article-quantite'))
-        article.add(colander.SchemaNode(colander.Integer(), name='article-prix_unit'))
-        article.add(colander.SchemaNode(colander.Integer(), name='article-description'))
-
-        sequence = colander.SchemaNode(
-                colander.Sequence(),
-                article
-            )
-
-        d_form_data = {'nodes': [sequence], 'buttons': ('submit',),
-                       'mapping': {'article': [{'quantite': None, 'description': None, 'prix_unit': None}]}
-                       }
-        step, action, nb_step_form = 0, None, 1
+        d_form_data = Heure.form_rendering(step, index, data)
+        nb_step_form = Heure.nb_step_form
 
     else:
         raise ValueError('key not understood {}'.format(table_key))
@@ -131,6 +114,17 @@ def process_form(table_key, d_data, action):
     elif table_key == 'facture':
         l_index, l_fields = Facture.l_index, [f for f in Facture.l_fields() if f not in ['montant_ttc', 'montant_tva']]
         generic_process_form(l_index, l_fields, Facture, action, d_data)
+
+    elif table_key == 'heure':
+        l_index, l_fields = Heure.l_index, Heure.l_fields()
+
+        for d_heure in d_data['heure']:
+            d_data_ = {k: v for k, v in d_heure.items() + [('semaine', d_data['index'])]}
+
+            if d_heure['heure_id'] == l_index[0].sn.missing:
+                generic_process_form(l_index, l_fields, Heure, 'Ajouter', d_data_)
+            else:
+                generic_process_form(l_index, l_fields, Heure, 'Modifier', d_data_)
 
 
 def generic_process_form(l_index, l_fields, model, action, d_data=None):

@@ -63,6 +63,17 @@ class BaseModel(object):
             raise ValueError('sub index: {} does not exist'.format(d_subindex))
 
     @staticmethod
+    def from_groupindex(d_groupindex, l_index_names, df):
+
+        for k, v in d_groupindex.items():
+            df = df.loc[df[k] == v]
+
+        if not df.empty:
+            return [{name: r[name] for name in l_index_names} for _, r in df.iterrows()]
+        else:
+            return []
+
+    @staticmethod
     def load_db(path=None):
         raise NotImplementedError
 

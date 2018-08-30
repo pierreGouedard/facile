@@ -55,20 +55,22 @@ class Form(object):
 
                 # Generate succeed form (with values posted)
                 if validate:
-                    pstruct = form.validate_pstruct(pstruct)
+                    _ = form.validate_pstruct(pstruct)
                     pstruct = self.validate_(pstruct)
-                    html = form.render(captured)
+
+                    html = form.render(pstruct)
+
                 else:
                     html = form.render(self.appstruct, **kw)
 
-                    # Deffered read only input
-                    pstruct = self.deffered_missing_(pstruct)
+                # Deffered read only input
+                pstruct = self.deffered_missing_(pstruct)
 
-                    # Forrmat entry of spots
-                    if d_format:
-                        for k, f in d_format.items():
-                            if k in pstruct:
-                                pstruct[k] = f(pstruct[k])
+                # Forrmat entry of spots
+                if d_format:
+                    for k, f in d_format.items():
+                        if k in pstruct:
+                            pstruct[k] = f(pstruct[k])
 
                 success, form_data = True, self.format_(pstruct)
 
