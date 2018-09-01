@@ -15,7 +15,9 @@ from facileapp.models.client import Client
 class Contact(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'contact.csv')
-    l_index, l_subindex = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1)], [0, 1, 2]
+    l_index = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, show_in_table=True,
+                             rank=0)]
+    l_subindex = [0, 1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -23,11 +25,12 @@ class Contact(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type')),
+            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), show_in_table=True,
+                          rank=1),
              StringFields(title='Raison social du client', name='raison_social',
-                          l_choices=Contact.list('client') + Contact.list('fournisseur')),
-             StringFields(title='Nom complet du contact', name='contact'),
-             StringFields(title='Description du contact', name='desc'),
+                          l_choices=Contact.list('client') + Contact.list('fournisseur'), show_in_table=True, rank=2),
+             StringFields(title='Nom complet du contact', name='contact', show_in_table=True, rank=3),
+             StringFields(title='Description du contact', name='desc', show_in_table=True, rank=4),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
@@ -147,3 +150,22 @@ class Contact(BaseModel):
             form_man.render(step % Contact.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Contact.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Contact.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Contact.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Contact.l_index + Contact.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

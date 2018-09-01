@@ -17,7 +17,8 @@ from facileapp.models.base_prix import Base_prix
 class Facture(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'facture.csv')
-    l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget())]
+    l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), show_in_table=True,
+                             rank=0)]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -25,14 +26,17 @@ class Facture(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire')),
-             StringFields(title='Client', name='rs_client', l_choices=Facture.list('client')),
-             StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable')),
+            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
+                           show_in_table=True, rank=1),
+             StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), show_in_table=True,
+                          rank=2),
+             StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
+                          show_in_table=True, rank=3),
              StringFields(title='Objet', name='objet'),
              FloatFields(title='Montant facture HT', name='montant_ht'),
              FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
              FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget()),
+             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), show_in_table=True, rank=4),
              IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),
              StringFields(title='Mandat', name='is_mandated',
                           widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_mandated'})),
@@ -138,3 +142,22 @@ class Facture(BaseModel):
             form_man.render(step % Facture.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Facture.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Facture.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Facture.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Facture.l_index + Facture.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

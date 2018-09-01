@@ -16,7 +16,8 @@ from facileapp.models.employe import Employe
 class Chantier(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'chantier.csv')
-    l_index, l_subindex = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget())], [0, 1]
+    l_index = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget(), show_in_table=True, rank=0)]
+    l_subindex = [0, 1]
     l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -24,10 +25,12 @@ class Chantier(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client')),
-             StringFields(title='Nom du chantier', name='nom'),
+            [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
+                          show_in_table=True, rank=1),
+             StringFields(title='Nom du chantier', name='nom', show_in_table=True, rank=2),
              IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
-             StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable')),
+             StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
+                          show_in_table=True, rank=0),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
@@ -136,3 +139,21 @@ class Chantier(BaseModel):
 
         return form_man.d_form_data
 
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Chantier.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Chantier.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Chantier.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Chantier.l_index + Chantier.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

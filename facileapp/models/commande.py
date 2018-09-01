@@ -17,7 +17,8 @@ from facileapp.models.fournisseur import Fournisseur
 class Commande(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'commande.csv')
-    l_index = [IntegerFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget())]
+    l_index = [IntegerFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), show_in_table=True,
+                             rank=0)]
     l_actions = map(lambda x: (x.format('une commande'), x.format('une commande')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -25,15 +26,17 @@ class Commande(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire')),
-             StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur')),
+            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
+                           show_in_table=True, rank=1),
+             StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur'),
+                          show_in_table=True, rank=2),
              IntegerFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
              StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
              FloatFields(title='Montant Commande HT', name='montant_ht'),
              FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
              FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget()),
-             IntegerFields(title="Nombre d'article", name='nb_article'),
+             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), show_in_table=True, rank=3),
+             IntegerFields(title="Nombre d'article", name='nb_article', show_in_table=True, rank=4),
              StringFields(title="Liste des articles", name='l_article'),
              StringFields(title='Mandat', name='is_mandated',
                           widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_mandated'})),
@@ -138,3 +141,22 @@ class Commande(BaseModel):
             form_man.render(step % Commande.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Commande.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Commande.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Commande.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Commande.l_index + Commande.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

@@ -17,7 +17,8 @@ from facileapp.models.base_prix import Base_prix
 class Heure(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'heure.csv')
-    l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1)]
+    l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1, show_in_table=True,
+                             rank=0)]
     l_groupindex = [0]
 
     l_actions = [('Editer les heures', 'Editer les heures')]
@@ -29,11 +30,14 @@ class Heure(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title="Semaine", name='semaine', widget=HiddenWidget()),
-             IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire')),
-             StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe')),
-             IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0),
-             IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0)]
+            [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), show_in_table=True,
+                          rank=1),
+             IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
+                           show_in_table=True,  rank=2),
+             StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe'), show_in_table=True,
+                          rank=3),
+             IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0, show_in_table=True, rank=4),
+             IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0, show_in_table=True, rank=5)]
 
         return l_fields
 
@@ -137,3 +141,22 @@ class Heure(BaseModel):
 
             form_man.render(step % Heure.nb_step_form, data_db=data_db, data_form=data)
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Heure.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Heure.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Heure.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Heure.l_index + Heure.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:20, [t[0] for t in l_cols]]
+
+        return df

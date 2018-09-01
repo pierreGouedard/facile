@@ -16,7 +16,8 @@ class Affaire(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'affaire.csv')
 
-    l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget())]
+    l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget(), show_in_table=True,
+                             rank=1)]
     l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -25,7 +26,8 @@ class Affaire(BaseModel):
     def l_fields():
         l_fields = \
             [IntegerFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier')),
-             StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'))]
+             StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'),
+                          show_in_table=True, rank=1)]
 
         return l_fields
 
@@ -92,8 +94,8 @@ class Affaire(BaseModel):
 
         if step % Affaire.nb_step_form == 0:
             index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
-                                      l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire()),
-                                      desc="En cas de modification choisir un numero d'affaire",)
+                                       l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire()),
+                                       desc="En cas de modification choisir un numero d'affaire",)
             form_man.render_init_form(Affaire.action_field, index_node)
 
         else:
@@ -104,3 +106,22 @@ class Affaire(BaseModel):
             form_man.render(step % Affaire.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Affaire.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Affaire.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Affaire.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Affaire.l_index + Affaire.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

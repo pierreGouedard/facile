@@ -22,34 +22,34 @@ def build_table_form(table_key):
         df_table = Employe.table_rendering()
 
     elif table_key == 'fournisseur':
-        df_table = Employe.table_rendering()
+        df_table = Fournisseur.table_rendering()
 
     elif table_key == 'client':
-        df_table = Employe.table_rendering()
+        df_table = Client.table_rendering()
 
     elif table_key == 'contact':
-        df_table = Employe.table_rendering()
+        df_table = Contact.table_rendering()
 
     elif table_key == 'chantier':
-        df_table = Employe.table_rendering()
+        df_table = Chantier.table_rendering()
 
     elif table_key == 'base_prix':
-        df_table = Employe.table_rendering()
+        df_table = Base_prix.table_rendering()
 
     elif table_key == 'affaire':
-        df_table = Employe.table_rendering()
+        df_table = Affaire.table_rendering()
 
     elif table_key == 'devis':
-        df_table = Employe.table_rendering()
+        df_table = Devis.table_rendering()
 
     elif table_key == 'facture':
-        df_table = Employe.table_rendering()
+        df_table = Facture.table_rendering()
 
     elif table_key == 'commande':
-        df_table = Employe.table_rendering()
+        df_table = Commande.table_rendering()
 
     elif table_key == 'heure':
-        df_table = Employe.table_rendering()
+        df_table = Heure.table_rendering()
 
     else:
         raise ValueError('key not understood {}'.format(table_key))

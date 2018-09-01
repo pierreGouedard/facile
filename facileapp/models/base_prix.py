@@ -12,7 +12,7 @@ from facile.core.base_model import BaseModel
 class Base_prix(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'base_prix.csv')
-    l_index = [StringFields(title="Nom de la base", name='nom')]
+    l_index = [StringFields(title="Nom de la base", name='nom', show_in_table=True, rank=0)]
     action_field = StringFields(title='Action', name='action',
                                 l_choices=[('Editer une base de prix', 'Editer une base de prix')], round=0)
     nb_step_form = 2
@@ -20,8 +20,8 @@ class Base_prix(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [FloatFields(title='Prix heure BE', name='prix_heure_be'),
-             FloatFields(title='Prix heure Ch', name='prix_heure_ch')]
+            [FloatFields(title='Prix heure BE', name='prix_heure_be', show_in_table=True, rank=1),
+             FloatFields(title='Prix heure Ch', name='prix_heure_ch', show_in_table=True, rank=2)]
 
         return l_fields
 
@@ -77,7 +77,6 @@ class Base_prix(BaseModel):
 
         return df.loc[df['nom'] == base, ['prix_heure_be', 'prix_heure_ch']].iloc[0].to_dict()
 
-
     @staticmethod
     def form_rendering(step, index=None, data=None):
         if index is not None:
@@ -101,3 +100,21 @@ class Base_prix(BaseModel):
 
         return form_man.d_form_data
 
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Base_prix.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Base_prix.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Base_prix.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Base_prix.l_index + Base_prix.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

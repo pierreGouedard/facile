@@ -19,7 +19,8 @@ class Devis(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'devis.csv')
 
-    l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget())]
+    l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), show_in_table=True,
+                             rank=0)]
     l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 3
@@ -27,10 +28,12 @@ class Devis(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Devis.list('affaire')),
-             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client')),
+            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Devis.list('affaire'),
+                           show_in_table=True, rank=1),
+             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), show_in_table=True, rank=2),
              IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
-             StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable')),
+             StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
+                          show_in_table=True, rank=3),
              IntegerFields(title="Nombre d'heure BE", name='heure_be'),
              IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
              FloatFields(title='Montant achat', name='montant_achat'),
@@ -38,7 +41,8 @@ class Devis(BaseModel):
              DateFields(title='Date de debut', name='date_start'),
              DateFields(title='Date de fin', name='date_end'),
              StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-             FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2)]
+             FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2,
+                         show_in_table=True, rank=4)]
 
         return l_fields
 
@@ -162,3 +166,22 @@ class Devis(BaseModel):
             form_man.render(step % Devis.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Devis.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Devis.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Devis.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Devis.l_index + Devis.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

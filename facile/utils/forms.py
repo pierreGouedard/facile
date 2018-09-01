@@ -104,15 +104,18 @@ def process_form(table_key, d_data, action):
         generic_process_form(l_index, l_fields, Base_prix, 'Modifier', d_data=d_data)
 
     elif table_key == 'devis':
-        l_index, l_fields = Devis.l_index, [f for f in Devis.l_fields() if f not in ['price']]
+        l_index, l_fields = Devis.l_index, [f for f in Devis.l_fields()]
+        d_data['price'] = 0
         generic_process_form(l_index, l_fields, Devis, action, d_data)
 
     elif table_key == 'commande':
-        l_index, l_fields = Commande.l_index, [f for f in Commande.l_fields() if f not in ['montant_ttc', 'montant_tva']]
+        l_index, l_fields = Commande.l_index, [f for f in Commande.l_fields()]
+        d_data['montant_ttc'], d_data['montant_tva'] = 0, 0
         generic_process_form(l_index, l_fields, Commande, action, d_data)
 
     elif table_key == 'facture':
-        l_index, l_fields = Facture.l_index, [f for f in Facture.l_fields() if f not in ['montant_ttc', 'montant_tva']]
+        l_index, l_fields = Facture.l_index, [f for f in Facture.l_fields()]
+        d_data['montant_ttc'], d_data['montant_tva'] = 0, 0
         generic_process_form(l_index, l_fields, Facture, action, d_data)
 
     elif table_key == 'heure':

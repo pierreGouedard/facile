@@ -13,7 +13,7 @@ class Fournisseur(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'fournisseur.csv')
 
-    l_index = [StringFields(title='Raison social', name='raison_social')]
+    l_index = [StringFields(title='Raison social', name='raison_social', show_in_table=True, rank=0)]
     l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -21,12 +21,12 @@ class Fournisseur(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title='contact (financier)', name='contact'),
+            [StringFields(title='contact (financier)', name='contact', show_in_table=True, rank=1),
              StringFields(title='Adresse (financier)', name='adresse'),
              StringFields(title='Ville (financier)', name='ville'),
              StringFields(title='Code postal (financier)', name='code_postal'),
-             StringFields(title='tel (financier)', name='num_tel'),
-             StringFields(title='E-mail (financier)', name='mail')]
+             StringFields(title='tel (financier)', name='num_tel', show_in_table=True, rank=2),
+             StringFields(title='E-mail (financier)', name='mail', show_in_table=True, rank=3)]
 
         return l_fields
 
@@ -81,3 +81,22 @@ class Fournisseur(BaseModel):
             form_man.render(step % Fournisseur.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
+
+    @staticmethod
+    def table_rendering():
+        # Load database
+        df = Fournisseur.load_db()
+
+        # Sort dataframe by date of maj or creation
+        df['sort_key'] = df[[f.name for f in Fournisseur.l_hfields]]\
+            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Fournisseur.l_hfields if row[f.name] != 'None']),
+                   axis=1)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+
+        # Get columns to display
+        l_cols = sorted([(f.name, f.rank) for f in Fournisseur.l_index + Fournisseur.l_fields() if f.show_in_table],
+                        key=lambda t: t[1])
+
+        df = df.loc[:10, [t[0] for t in l_cols]]
+
+        return df

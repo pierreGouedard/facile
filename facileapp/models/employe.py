@@ -110,7 +110,7 @@ class Employe(BaseModel):
         df['sort_key'] = df[[f.name for f in Employe.l_hfields]]\
             .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Employe.l_hfields if row[f.name] != 'None']),
                    axis=1)
-        df = df.sort_values(by='sort_key').reset_index(drop=True)
+        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
 
         # Get columns to display
         l_cols = sorted([(f.name, f.rank) for f in Employe.l_index + Employe.l_fields() if f.show_in_table],
