@@ -48,7 +48,6 @@ class Form(object):
         if self.request.method == 'POST' and not force_get:
             # try to validate the submitted values
             try:
-
                 # parse form
                 pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
                 pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))

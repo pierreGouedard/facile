@@ -19,7 +19,7 @@ class LoginForm(Form):
     def validate_(self, pstruct):
         try:
             _ = Users.from_login(pstruct['username'], pstruct['password'])
-
+            return pstruct
         except ValueError:
             raise deform.ValidationFailure
 

@@ -92,7 +92,7 @@ class Facture(BaseModel):
             self.facture_id = df.facture_id.apply(lambda x: int(x)).max() + 1
 
         self.montant_ttc, self.montant_tva = Facture.get_montant(self.__getattribute__('montant_ht'),
-                                                                self.__getattribute__('taux_tva'))
+                                                                 self.__getattribute__('taux_tva'))
 
         # Try to add and reset conatct id if failed
         try:
@@ -105,7 +105,7 @@ class Facture(BaseModel):
     def alter(self):
 
         self.montant_ttc, self.montant_tva = Facture.get_montant(self.__getattribute__('montant_ht'),
-                                                                self.__getattribute__('taux_tva'))
+                                                                 self.__getattribute__('taux_tva'))
 
         super(Facture, self).alter()
 
