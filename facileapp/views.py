@@ -199,3 +199,4 @@ def explore():
         return redirect(url_for('login'))
 
     return render_template("explore.html")
+

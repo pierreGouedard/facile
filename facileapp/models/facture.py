@@ -19,7 +19,8 @@ class Facture(BaseModel):
     path = os.path.join(settings.facile_project_path, 'facture.csv')
     l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                              rank=0)]
-    l_documents = [('facture', 'Facture')]
+    l_documents = [('facture', 'Facture'), ('relance1', 'Lettre de relance 1'), ('relance2', 'Lettre de relance 2'),
+                   ('relance3', 'Lettre de relance 3'), ('misede', 'Lettre de mise en demeure')]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2

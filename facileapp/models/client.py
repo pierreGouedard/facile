@@ -14,8 +14,7 @@ class Client(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'client.csv')
     l_index = [StringFields(title='Raison social', name='raison_social', table_reduce=True, rank=0)]
-    l_documents = [('relance', 'Lettre de relance'), ('arpay', 'Accuse de reception de paiement'),
-                   ('med', 'Mise en demeure')]
+    l_documents = [('cmerci', 'Lettre de remerciement')]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
