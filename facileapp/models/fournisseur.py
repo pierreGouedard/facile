@@ -6,6 +6,7 @@ import pandas as pd
 import settings
 from facile.core.fields import StringFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 
 
@@ -13,20 +14,21 @@ class Fournisseur(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'fournisseur.csv')
 
-    l_index = [StringFields(title='Raison social', name='raison_social', show_in_table=True, rank=0)]
+    l_index = [StringFields(title='Raison social', name='raison_social', table_reduce=True, rank=0)]
     l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
+    l_documents = [('fpay', 'Lettre pour paiement'), ('fmerci', 'Lettre de remerciement')]
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title='contact (financier)', name='contact', show_in_table=True, rank=1),
+            [StringFields(title='contact (financier)', name='contact', table_reduce=True, rank=1),
              StringFields(title='Adresse (financier)', name='adresse'),
              StringFields(title='Ville (financier)', name='ville'),
              StringFields(title='Code postal (financier)', name='code_postal'),
-             StringFields(title='tel (financier)', name='num_tel', show_in_table=True, rank=2),
-             StringFields(title='E-mail (financier)', name='mail', show_in_table=True, rank=3)]
+             StringFields(title='tel (financier)', name='num_tel', table_reduce=True, rank=2),
+             StringFields(title='E-mail (financier)', name='mail', table_reduce=True, rank=3)]
 
         return l_fields
 
@@ -68,7 +70,7 @@ class Fournisseur(BaseModel):
         form_man = FormManager(Fournisseur.l_index, Fournisseur.l_fields())
 
         if step % Fournisseur.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+            index_node = StringFields(title='Raison social', name='index', missing=unicode(''),
                                       l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()),
                                       desc="En cas de modification choisir un fournisseur")
             form_man.render_init_form(Fournisseur.action_field, index_node)
@@ -83,20 +85,29 @@ class Fournisseur(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Fournisseur.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Fournisseur.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Fournisseur.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Fournisseur.l_index, Fournisseur.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Fournisseur.l_index, Fournisseur.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Fournisseur.l_index + Fournisseur.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title='Raison social', name='index', l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Fournisseur.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

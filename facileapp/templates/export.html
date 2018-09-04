@@ -1,0 +1,26 @@
+<!-- home.html-->
+
+{% extends "base.html" %}
+{% block title %}Export{% endblock %}
+{% block body %}
+
+<div id="formnav" class="sidenav">
+  <a href="/export?table=employe">Employés</a>
+  <a href="/export?table=client">Clients</a>
+  <a href="/export?table=fournisseur">Fournisseur</a>
+  <a href="/export?table=contact">Contact</a>
+  <a href="/export?table=chantier">Chantier</a>
+  <a href="/export?table=base_prix">Base de prix</a>
+  <a href="/export?table=devis">Devis</a>
+  <a href="/export?table=affaire">Affaires</a>
+  <a href="/export?table=heure">Heures</a>
+  <a href="/export?table=commande">Commande</a>
+  <a href="/export?table=facture">Facture</a>
+</div>
+
+<div class="jumbotron">
+{{ export }}
+</div>
+
+
+{% endblock %}

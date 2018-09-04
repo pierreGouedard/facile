@@ -8,14 +8,14 @@ import copy
 
 class StringFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, l_choices=None, multiple=False, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.name = name
         self.round = round
         self.type = str
         self.desc = desc
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         if widget is not None:
             self.widget = widget
@@ -40,7 +40,7 @@ class StringFields(object):
 
 class IntegerFields(object):
     def __init__(self, title, name, round=1, missing=-1, widget=None, l_choices=None, multiple=False, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.round = round
@@ -48,7 +48,7 @@ class IntegerFields(object):
         self.type = int
         self.desc = desc
 
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         if widget is not None:
             self.widget = widget
@@ -73,7 +73,7 @@ class IntegerFields(object):
 
 class FloatFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, multiple=None, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.round = round
@@ -81,7 +81,7 @@ class FloatFields(object):
         self.type = float
         self.desc = desc
 
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         if widget is not None:
             self.widget = widget
@@ -106,7 +106,7 @@ class FloatFields(object):
 
 class MoneyFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, multiple=None, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.round = round
@@ -114,7 +114,7 @@ class MoneyFields(object):
         self.type = float
         self.desc = desc
 
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         if widget is not None:
             self.widget = widget
@@ -139,14 +139,14 @@ class MoneyFields(object):
 
 class DateFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.name = name
         self.type = str
         self.desc =desc
 
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         self.widget = widget
         self.round = round
@@ -170,14 +170,14 @@ class DateFields(object):
 
 class DateTimeFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None, desc=None,
-                 show_in_table=False, rank=0):
+                 table_reduce=False, rank=0):
 
         self.title = title
         self.name = name
         self.type = str
         self.desc = desc
 
-        self.show_in_table, self.rank = show_in_table, rank
+        self.table_reduce, self.rank, = table_reduce, rank
 
         self.widget = widget
         self.round = round

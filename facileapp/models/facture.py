@@ -7,18 +7,19 @@ from deform.widget import RadioChoiceWidget, HiddenWidget, TextInputWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.client import Client
 from facileapp.models.employe import Employe
-from facileapp.models.base_prix import Base_prix
 
 
 class Facture(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'facture.csv')
-    l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), show_in_table=True,
+    l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                              rank=0)]
+    l_documents = [('facture', 'Facture')]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -27,16 +28,16 @@ class Facture(BaseModel):
     def l_fields():
         l_fields = \
             [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
-                           show_in_table=True, rank=1),
-             StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), show_in_table=True,
+                           table_reduce=True, rank=1),
+             StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), table_reduce=True,
                           rank=2),
              StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
-                          show_in_table=True, rank=3),
+                          table_reduce=True, rank=3),
              StringFields(title='Objet', name='objet'),
              FloatFields(title='Montant facture HT', name='montant_ht'),
              FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
              FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), show_in_table=True, rank=4),
+             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=4),
              IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),
              StringFields(title='Mandat', name='is_mandated',
                           widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_mandated'})),
@@ -129,7 +130,7 @@ class Facture(BaseModel):
         form_man = FormManager(Facture.l_index, Facture.l_fields())
 
         if step % Facture.nb_step_form == 0:
-            index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
+            index_node = IntegerFields(title='Numero de facture', name='index', missing=-1,
                                        l_choices=zip(Facture.get_facture(), Facture.get_facture()),
                                        desc="En cas de modification choisir un numero de facture",)
             form_man.render_init_form(Facture.action_field, index_node)
@@ -144,20 +145,29 @@ class Facture(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Facture.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Facture.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Facture.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Facture.l_index, Facture.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Facture.l_index, Facture.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Facture.l_index + Facture.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title='Numero de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Facture.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

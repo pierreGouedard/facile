@@ -5,9 +5,9 @@ from flask import Markup, session, redirect, url_for, request
 from jinja2 import Template
 
 # Local import
-from facile.forms import login_form
-from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step
-from facile.utils.tables import build_table_form
+from facile.forms import login_form, download_form
+from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form
+from facile.utils.tables import build_table
 from facile.layout import boostrap
 from settings import deform_template_path
 
@@ -46,6 +46,7 @@ def login():
 
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
+
    # Remove the username from the session if it is there
    session.pop('username', None)
    session.pop('rights', None)
@@ -68,7 +69,7 @@ def form():
             web, data = build_form(request.args['table'], request, deform_template_path)
 
             # Get Table
-            table = {'table': build_table_form(request.args['table'])}
+            table = {'table': build_table(request.args['table'])}
 
             # Gather context and render template
             context = {k: Markup(v) for k, v in web.items() + table.items()}
@@ -109,11 +110,85 @@ def form():
         # Generate table
         table = {'table': ''}
         if int(step) % int(request.form['nb_step']) == 0:
-            table = {'table': build_table_form(request.args['table'])}
+            table = {'table': build_table(request.args['table'])}
 
         # Gather context and render template
         context = {k: Markup(v) for k, v in web.items() + table.items()}
         html = render_template(custom_template, **context)
+
+    return html
+
+
+@app.route('/export', methods=['GET', 'POST'])
+def export():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        if request.args:
+
+            # Build title
+            title = "Exporter la table: {}".format(request.args['table'])
+
+            # Get template
+            custom_template = Template(
+                render_template('export.html', export=Markup(boostrap.get_export_layout(title)))
+            )
+
+            # Get form
+            web, data = download_form.DownloadForm(request, deform_template_path).process_form()
+
+            # Get Table
+            table = {'table': build_table(request.args['table'], reduced=False, load_jQuery=True,
+                                          head_class='table-success')}
+
+            # Gather context and render template
+            context = {k: Markup(v) for k, v in web.items() + table.items()}
+            html = render_template(custom_template, **context)
+
+        else:
+            export = Markup('<h1>Page des Exports</h1>'
+                            '<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
+            html = render_template("export.html", **{'export': export})
+    else:
+        # return xlsx of the table
+        import IPython
+        IPython.embed()
+
+    return html
+
+
+@app.route('/document', methods=['GET', 'POST'])
+def document():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        if request.args:
+
+            # Build title
+            title = "Editer les documents de la table: {}".format(request.args['table'])
+
+            # Get template
+            custom_template = Template(
+                render_template('document.html', document=Markup(boostrap.get_document_layout(title)))
+            )
+
+            # Get form
+            web = build_document_form(request.args['table'], request, deform_template_path)
+
+            # Gather context and render template
+            context = {k: Markup(v) for k, v in web.items()}
+            html = render_template(custom_template, **context)
+
+        else:
+            document = Markup('<h1>Page des documents</h1>'
+                              '<p class="lead"> Choisissez un onglet pour editer un document</p>')
+            html = render_template("document.html", **{'document': document})
+    else:
+        # return pdf of the selected document
+        import IPython
+        IPython.embed()
 
     return html
 

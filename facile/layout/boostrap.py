@@ -62,6 +62,31 @@ def get_form_layout(title):
     return layout_form.layout.render()
 
 
+def get_export_layout(title):
+    # Specify rows, columns, there span and content
+    l_rows = [('title', [{'size': h1, 'content': 'title', 'value': title}]),
+              ('table', [{'span': 12, 'content': 'table'}]),
+              ('form', [{'span': 12, 'content': 'form'}])]
+
+    # Create layout and build it from l_rows
+    layout_export = BoostrapLayout(l_rows, init='div', title='view_export')
+    layout_export.build_template()
+
+    return layout_export.layout.render()
+
+
+def get_document_layout(title):
+    # Specify rows, columns, there span and content
+    l_rows = [('title', [{'size': h1, 'content': 'title', 'value': title}]),
+              ('form', [{'span': 12, 'content': 'form'}])]
+
+    # Create layout and build it from l_rows
+    layout_document = BoostrapLayout(l_rows, init='div', title='view_document')
+    layout_document.build_template()
+
+    return layout_document.layout.render()
+
+
 def get_login_layout():
 
     l_rows = [('login', [{'span': 12, 'content': 'form'}])]

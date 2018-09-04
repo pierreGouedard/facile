@@ -7,14 +7,16 @@ import settings
 from facile.core.fields import StringFields, DateFields
 from facile.core.form_processor import FormManager
 from facile.core.base_model import BaseModel
+from facile.core.table_processor import TableManager
 
 
 class Employe(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'employe.csv')
-    l_index = [StringFields(title='Prenom', name='prenom', show_in_table=True, rank=0),
-               StringFields(title='Nom', name='nom', show_in_table=True, rank=1)]
+    l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0),
+               StringFields(title='Nom', name='nom', table_reduce=True, rank=1)]
     l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
+    l_documents = [('convoc', 'Lettre de convocation'), ('miseap', 'Lettre de mise a pied')]
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
@@ -23,7 +25,7 @@ class Employe(BaseModel):
         l_fields = \
             [StringFields(title='N securite social', name='securite_social'),
              StringFields(title='Carte de sejour', name='carte_sejoure'),
-             StringFields(title='Emploi', name='emploie', l_choices=Employe.list('emploi'), show_in_table=True, rank=2),
+             StringFields(title='Emploi', name='emploie', l_choices=Employe.list('emploi'), table_reduce=True, rank=2),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
@@ -31,8 +33,8 @@ class Employe(BaseModel):
              StringFields(title='E-mail', name='mail'),
              StringFields(title="Numero d'entre", name='num_entre'),
              StringFields(title='Qualification', name='qualification'),
-             DateFields(title="date d'entre", name='date_start', show_in_table=True, rank=3),
-             DateFields(title='date de sortie', name='date_end', show_in_table=True, rank=4),
+             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=3),
+             DateFields(title='date de sortie', name='date_end', table_reduce=True, rank=4),
              ]
 
         return l_fields
@@ -102,20 +104,28 @@ class Employe(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Employe.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Employe.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Employe.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Employe.l_index, Employe.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Employe.l_index, Employe.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Employe.l_index + Employe.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title='Nom complet', name='index', l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Employe.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

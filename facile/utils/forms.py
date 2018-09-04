@@ -9,7 +9,7 @@ from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
 from facileapp.models.commande import Commande
 from facileapp.models.heure import Heure
-from facile.forms import mutliform
+from facile.forms import mutliform, document_form
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data=None, validate=True):
@@ -167,3 +167,34 @@ def get_title_from_step(step, data):
             else 'Choisissez une action'
 
     return title
+
+
+def build_document_form(table_key, request, deform_template_path):
+
+    if table_key == 'employe':
+        d_form_data = Employe.form_document_rendering()
+
+    elif table_key == 'fournisseur':
+        d_form_data = Fournisseur.form_document_rendering()
+
+    elif table_key == 'client':
+        d_form_data = Client.form_document_rendering()
+
+    elif table_key == 'affaire':
+        d_form_data = Affaire.form_document_rendering()
+
+    elif table_key == 'devis':
+        d_form_data = Devis.form_document_rendering()
+
+    elif table_key == 'facture':
+        d_form_data = Facture.form_document_rendering()
+
+    elif table_key == 'commande':
+        d_form_data = Commande.form_document_rendering()
+
+    else:
+        raise ValueError('key not understood {}'.format(table_key))
+
+    web, _ = document_form.DocumentForm(request, deform_template_path, **d_form_data).process_form()
+
+    return web

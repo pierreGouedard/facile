@@ -1,7 +1,6 @@
-from dominate.tags import table, col, thead, tr, th, tbody, td
+from dominate.tags import table, col, thead, tr, th, tbody, td, tfoot
 import jinja2
 from flask import render_template_string, Markup
-import pandas as pd
 import settings
 
 
@@ -16,16 +15,20 @@ class Table(object):
     jquery = "<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.js'></script>"
     href = "{{url_for('static', filename='table/%s')}}"
 
-    def __init__(self, column_names, id_table, paginate=True, sort=False, search=False, record_cnt=True,
-                 per_page=False, head_class='table-active', style='camelCase', load_jQuery=False):
+    def __init__(self, column_names, id_table, head_class='table-active', style='underscore', load_jQuery=False,
+                 **kwargs):
 
         self.column_names = list(column_names)
         self.id_table = id_table
+        self.has_footer = kwargs.get('has_footer', False)
+        self.foot_class = kwargs.get('foot_class', 'table-success')
+        self.responsive = kwargs.get('responsive', False)
 
         # Get params
         features = "paginate: {}, sort: {}, pushState: true, search: {}, recordCount: {}, perPageSelect: {}"
-        d_ = {True: 'true', False: 'false'}
-        features = features.format(*[d_[paginate], d_[sort], d_[search], d_[record_cnt], d_[per_page]])
+        features = features.format(*[kwargs.get('paginate', 'false'), kwargs.get('sort', 'false'),
+                                     kwargs.get('search', 'false'), kwargs.get('record_cnt', 'false'),
+                                     kwargs.get('per_page', 'false')])
         features = 'features: {}'.format('{' + features + '}')
 
         table = "defaultColumnIdStyle: '{}', headRowClass: '{}'".format(style, head_class)
@@ -34,7 +37,7 @@ class Table(object):
 
         self.load_jQuery = load_jQuery
 
-    def render_table_from_pandas(self, df):
+    def render_table_from_pandas(self, df, d_footer=None):
 
         # Get static requirements
         context = {'ressource': self.get_table_resources(self.load_jQuery)}
@@ -43,10 +46,21 @@ class Table(object):
         headtable = self.build_header(self.column_names)
         bodytable = self.build_body(df, self.column_names)
 
+        if self.has_footer and d_footer is not None:
+            foottable = self.build_footer(d_footer, self.column_names, self.foot_class)
+        else:
+            foottable = ''
+
+        if self.responsive:
+            resp = 'table-responsive'
+        else:
+            resp = ''
+
         # Update context
         context.update(
-            {'id_table': self.id_table, 'headtable': headtable, 'bodytable': bodytable,
-             'table_js': Markup("<script>$('#{}').dynatable({})</script>".format(self.id_table, self.params))}
+            {'id_table': self.id_table, 'responsive': resp, 'headtable': headtable, 'bodytable': bodytable,
+             'foottable': foottable, 'table_js': Markup("<script>$('#{}').dynatable({})</script>"
+                                                        .format(self.id_table, self.params))}
         )
 
         # render template
@@ -78,8 +92,6 @@ class Table(object):
     def build_header(l_cols):
         html_head = thead()
         with html_head:
-            # for _, s in l_sizes:
-            #     col(width=s)
             with tr():
                 for c in l_cols:
                     th(c)
@@ -91,12 +103,20 @@ class Table(object):
 
         html_body = tbody()
         with html_body:
-            # for c, s in l_sizes:
-            #     col(width=s)
-            with tbody():
-                for index, row in df.iterrows():
-                    with tr():
-                        for name in l_cols:
-                            td(row[name], cls="table-primary")
+            for index, row in df.iterrows():
+                with tr():
+                    for name in l_cols:
+                        td(row[name], cls="table-primary")
 
         return html_body
+
+    @staticmethod
+    def build_footer(row, l_cols, cls):
+
+        html_foot = tfoot(cls=cls)
+        with html_foot:
+            with tr():
+                for name in l_cols:
+                    td(row[name], cls="table-primary")
+
+        return html_foot

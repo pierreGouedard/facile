@@ -16,47 +16,47 @@ from facileapp.models.heure import Heure
 from facile.tables import html_table
 
 
-def build_table_form(table_key):
+def build_table(table_key, reduced=True, load_jQuery=False, head_class="table-active"):
 
     if table_key == 'employe':
-        df_table = Employe.table_rendering()
+        df_table, d_footer, kwargs = Employe.table_rendering(reduced=reduced)
 
     elif table_key == 'fournisseur':
-        df_table = Fournisseur.table_rendering()
+        df_table, d_footer, kwargs = Fournisseur.table_rendering(reduced=reduced)
 
     elif table_key == 'client':
-        df_table = Client.table_rendering()
+        df_table, d_footer, kwargs = Client.table_rendering(reduced=reduced)
 
     elif table_key == 'contact':
-        df_table = Contact.table_rendering()
+        df_table, d_footer, kwargs = Contact.table_rendering(reduced=reduced)
 
     elif table_key == 'chantier':
-        df_table = Chantier.table_rendering()
+        df_table, d_footer, kwargs = Chantier.table_rendering(reduced=reduced)
 
     elif table_key == 'base_prix':
-        df_table = Base_prix.table_rendering()
+        df_table, d_footer, kwargs = Base_prix.table_rendering(reduced=reduced)
 
     elif table_key == 'affaire':
-        df_table = Affaire.table_rendering()
+        df_table, d_footer, kwargs = Affaire.table_rendering(reduced=reduced)
 
     elif table_key == 'devis':
-        df_table = Devis.table_rendering()
+        df_table, d_footer, kwargs = Devis.table_rendering(reduced=reduced)
 
     elif table_key == 'facture':
-        df_table = Facture.table_rendering()
+        df_table, d_footer, kwargs = Facture.table_rendering(reduced=reduced)
 
     elif table_key == 'commande':
-        df_table = Commande.table_rendering()
+        df_table, d_footer, kwargs = Commande.table_rendering(reduced=reduced)
 
     elif table_key == 'heure':
-        df_table = Heure.table_rendering()
+        df_table, d_footer, kwargs = Heure.table_rendering(reduced=reduced)
 
     else:
         raise ValueError('key not understood {}'.format(table_key))
 
-    table = html_table.Table(df_table.columns, 'overview-{}'.format(table_key), head_class="table-active",
-                             load_jQuery=False)
+    table = html_table.Table(df_table.columns, 'overview-{}'.format(table_key), head_class=head_class,
+                             load_jQuery=load_jQuery, **kwargs)
 
-    test = table.render_table_from_pandas(df_table)
+    html = table.render_table_from_pandas(df_table, d_footer=d_footer)
 
-    return test
+    return html

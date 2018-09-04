@@ -7,6 +7,7 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel, ClassProperty
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
@@ -16,7 +17,7 @@ from facileapp.models.employe import Employe
 class Chantier(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'chantier.csv')
-    l_index = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget(), show_in_table=True, rank=0)]
+    l_index = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0)]
     l_subindex = [0, 1]
     l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -26,11 +27,11 @@ class Chantier(BaseModel):
     def l_fields():
         l_fields = \
             [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
-                          show_in_table=True, rank=1),
-             StringFields(title='Nom du chantier', name='nom', show_in_table=True, rank=2),
+                          table_reduce=True, rank=1),
+             StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
              IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
              StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
-                          show_in_table=True, rank=0),
+                          table_reduce=True, rank=0),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
@@ -125,7 +126,7 @@ class Chantier(BaseModel):
         form_man = FormManager(Chantier.l_index, Chantier.l_fields(), l_subindex=Chantier.l_subindex, use_subindex=True)
 
         if step % Chantier.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+            index_node = StringFields(title='Nom du chantier', name='index', missing=unicode(''),
                                       l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()),
                                       desc="En cas de modification choisir un chantier")
             form_man.render_init_form(Chantier.action_field, index_node)
@@ -140,20 +141,17 @@ class Chantier(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Chantier.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Chantier.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Chantier.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Chantier.l_index, Chantier.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Chantier.l_index, Chantier.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Chantier.l_index + Chantier.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
-
-        df = df.loc[:10, [t[0] for t in l_cols]]
-
-        return df
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs

@@ -7,12 +7,13 @@ import settings
 from facile.core.fields import StringFields, FloatFields
 from facile.core.form_processor import FormManager
 from facile.core.base_model import BaseModel
+from facile.core.table_processor import TableManager
 
 
 class Base_prix(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'base_prix.csv')
-    l_index = [StringFields(title="Nom de la base", name='nom', show_in_table=True, rank=0)]
+    l_index = [StringFields(title="Nom de la base", name='nom', table_reduce=True, rank=0)]
     action_field = StringFields(title='Action', name='action',
                                 l_choices=[('Editer une base de prix', 'Editer une base de prix')], round=0)
     nb_step_form = 2
@@ -20,8 +21,8 @@ class Base_prix(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [FloatFields(title='Prix heure BE', name='prix_heure_be', show_in_table=True, rank=1),
-             FloatFields(title='Prix heure Ch', name='prix_heure_ch', show_in_table=True, rank=2)]
+            [FloatFields(title='Prix heure BE', name='prix_heure_be', table_reduce=True, rank=1),
+             FloatFields(title='Prix heure Ch', name='prix_heure_ch', table_reduce=True, rank=2)]
 
         return l_fields
 
@@ -87,7 +88,7 @@ class Base_prix(BaseModel):
         form_man = FormManager(Base_prix.l_index, Base_prix.l_fields())
 
         if step % Base_prix.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+            index_node = StringFields(title='Nom de la base', name='index', missing=unicode(''),
                                       l_choices=Base_prix.list('base'), desc="une base de prix a editer")
             form_man.render_init_form(Base_prix.action_field, index_node)
 
@@ -101,20 +102,17 @@ class Base_prix(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Base_prix.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Base_prix.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Base_prix.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Base_prix.l_index, Base_prix.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Base_prix.l_index, Base_prix.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Base_prix.l_index + Base_prix.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
-
-        df = df.loc[:10, [t[0] for t in l_cols]]
-
-        return df
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs

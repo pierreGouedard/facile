@@ -57,20 +57,16 @@ class Form(object):
                     _ = form.validate_pstruct(pstruct)
                     pstruct = self.validate_(pstruct)
 
-                    # Deffered read only input
-                    pstruct = self.deffered_missing_(pstruct)
+                # Deffered read only input
+                pstruct = self.deffered_missing_(pstruct)
 
-                    # Forrmat entry of spots
-                    if d_format:
-                        for k, f in d_format.items():
-                            if k in pstruct:
-                                pstruct[k] = f(pstruct[k])
+                # Forrmat entry of spots
+                if d_format:
+                    for k, f in d_format.items():
+                        if k in pstruct:
+                            pstruct[k] = f(pstruct[k])
 
-                    html = form.render(pstruct)
-
-                else:
-                    html = form.render(self.appstruct, **kw)
-
+                html = form.render(pstruct)
                 success, form_data = True, self.format_(pstruct)
 
             # the submitted values could not be validated

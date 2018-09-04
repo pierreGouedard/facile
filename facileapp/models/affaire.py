@@ -7,6 +7,7 @@ from deform.widget import HiddenWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 from facileapp.models.chantier import Chantier
 from facileapp.models.employe import Employe
@@ -16,8 +17,9 @@ class Affaire(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'affaire.csv')
 
-    l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget(), show_in_table=True,
+    l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget(), table_reduce=True,
                              rank=1)]
+    l_documents = [('ftravaux', 'Feuille de travaux')]
     l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -27,7 +29,7 @@ class Affaire(BaseModel):
         l_fields = \
             [IntegerFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier')),
              StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'),
-                          show_in_table=True, rank=1)]
+                          table_reduce=True, rank=1)]
 
         return l_fields
 
@@ -93,7 +95,7 @@ class Affaire(BaseModel):
         form_man = FormManager(Affaire.l_index, Affaire.l_fields())
 
         if step % Affaire.nb_step_form == 0:
-            index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
+            index_node = IntegerFields(title="Numero d'affaire", name='index', missing=-1,
                                        l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire()),
                                        desc="En cas de modification choisir un numero d'affaire",)
             form_man.render_init_form(Affaire.action_field, index_node)
@@ -108,20 +110,29 @@ class Affaire(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Affaire.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Affaire.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Affaire.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Affaire.l_index, Affaire.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Affaire.l_index, Affaire.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Affaire.l_index + Affaire.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title="Numero d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Affaire.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

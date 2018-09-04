@@ -7,6 +7,7 @@ from deform.widget import MoneyInputWidget, HiddenWidget, TextInputWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.client import Client
@@ -19,8 +20,9 @@ class Devis(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'devis.csv')
 
-    l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), show_in_table=True,
+    l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
                              rank=0)]
+    l_documents = [('devis', 'Devis')]
     l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 3
@@ -29,11 +31,11 @@ class Devis(BaseModel):
     def l_fields():
         l_fields = \
             [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Devis.list('affaire'),
-                           show_in_table=True, rank=1),
-             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), show_in_table=True, rank=2),
+                           table_reduce=True, rank=1),
+             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True, rank=2),
              IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
              StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
-                          show_in_table=True, rank=3),
+                          table_reduce=True, rank=3),
              IntegerFields(title="Nombre d'heure BE", name='heure_be'),
              IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
              FloatFields(title='Montant achat', name='montant_achat'),
@@ -42,7 +44,7 @@ class Devis(BaseModel):
              DateFields(title='Date de fin', name='date_end'),
              StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
              FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2,
-                         show_in_table=True, rank=4)]
+                         table_reduce=True, rank=4)]
 
         return l_fields
 
@@ -153,7 +155,7 @@ class Devis(BaseModel):
         form_man = FormManager(Devis.l_index, l_fields)
 
         if step % Devis.nb_step_form == 0:
-            index_node = IntegerFields(title='Nom complet', name='index', missing=-1,
+            index_node = IntegerFields(title='Numero de devis', name='index', missing=-1,
                                        l_choices=zip(Devis.get_devis(), Devis.get_devis()),
                                        desc="En cas de modification choisir un numero de devis",)
             form_man.render_init_form(Devis.action_field, index_node)
@@ -168,20 +170,29 @@ class Devis(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Devis.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Devis.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Devis.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Devis.l_index, Devis.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Devis.l_index, Devis.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Devis.l_index + Devis.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title='Numero de devis', name='index', l_choices=zip(Devis.get_devis(), Devis.get_devis())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Devis.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

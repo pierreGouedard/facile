@@ -7,6 +7,7 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.chantier import Chantier
@@ -17,8 +18,9 @@ from facileapp.models.fournisseur import Fournisseur
 class Commande(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'commande.csv')
-    l_index = [IntegerFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), show_in_table=True,
+    l_index = [IntegerFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
                              rank=0)]
+    l_documents = [('comande', 'Resume de Commande')]
     l_actions = map(lambda x: (x.format('une commande'), x.format('une commande')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -27,16 +29,16 @@ class Commande(BaseModel):
     def l_fields():
         l_fields = \
             [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
-                           show_in_table=True, rank=1),
+                           table_reduce=True, rank=1),
              StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur'),
-                          show_in_table=True, rank=2),
+                          table_reduce=True, rank=2),
              IntegerFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
              StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
              FloatFields(title='Montant Commande HT', name='montant_ht'),
              FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
              FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), show_in_table=True, rank=3),
-             IntegerFields(title="Nombre d'article", name='nb_article', show_in_table=True, rank=4),
+             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
+             IntegerFields(title="Nombre d'article", name='nb_article', table_reduce=True, rank=4),
              StringFields(title="Liste des articles", name='l_article'),
              StringFields(title='Mandat', name='is_mandated',
                           widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_mandated'})),
@@ -143,20 +145,29 @@ class Commande(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Commande.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Commande.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Commande.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Commande.l_index, Commande.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Commande.l_index, Commande.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Commande.l_index + Commande.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
 
-        df = df.loc[:10, [t[0] for t in l_cols]]
+    @staticmethod
+    def form_document_rendering():
 
-        return df
+        index_node = StringFields(
+            title='Numero de commande', name='index', l_choices=zip(Commande.get_commande(), Commande.get_commande())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=Commande.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}

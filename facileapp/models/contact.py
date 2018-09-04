@@ -7,6 +7,7 @@ from deform.widget import HiddenWidget
 import settings
 from facile.core.fields import StringFields, IntegerFields
 from facile.core.form_processor import FormManager
+from facile.core.table_processor import TableManager
 from facile.core.base_model import BaseModel
 from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.client import Client
@@ -15,7 +16,7 @@ from facileapp.models.client import Client
 class Contact(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'contact.csv')
-    l_index = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, show_in_table=True,
+    l_index = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                              rank=0)]
     l_subindex = [0, 1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
@@ -25,12 +26,12 @@ class Contact(BaseModel):
     @staticmethod
     def l_fields():
         l_fields = \
-            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), show_in_table=True,
+            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
                           rank=1),
              StringFields(title='Raison social du client', name='raison_social',
-                          l_choices=Contact.list('client') + Contact.list('fournisseur'), show_in_table=True, rank=2),
-             StringFields(title='Nom complet du contact', name='contact', show_in_table=True, rank=3),
-             StringFields(title='Description du contact', name='desc', show_in_table=True, rank=4),
+                          l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
+             StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
+             StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
@@ -137,7 +138,7 @@ class Contact(BaseModel):
         form_man = FormManager(Contact.l_index, Contact.l_fields(), l_subindex=Contact.l_subindex, use_subindex=True)
 
         if step % Contact.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
+            index_node = StringFields(title='Nom du contact', name='index', missing=unicode(''),
                                       l_choices=zip(Contact.get_contact(), Contact.get_contact()),
                                       desc="En cas de modification choisir un contact")
             form_man.render_init_form(Contact.action_field, index_node)
@@ -152,20 +153,17 @@ class Contact(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering():
+    def table_rendering(reduced=True):
         # Load database
         df = Contact.load_db()
 
-        # Sort dataframe by date of maj or creation
-        df['sort_key'] = df[[f.name for f in Contact.l_hfields]]\
-            .apply(lambda row: max([pd.Timestamp(row[f.name]) for f in Contact.l_hfields if row[f.name] != 'None']),
-                   axis=1)
-        df = df.sort_values(by='sort_key', ascending=False).reset_index(drop=True)
+        if reduced:
+            table_man = TableManager(Contact.l_index, Contact.l_fields(), limit=10)
+            df, kwargs = table_man.render_reduce_table(df)
+            d_footer = None
+        else:
+            table_man = TableManager(Contact.l_index, Contact.l_fields())
+            df, d_footer, kwargs = table_man.render_full_table(df)
 
-        # Get columns to display
-        l_cols = sorted([(f.name, f.rank) for f in Contact.l_index + Contact.l_fields() if f.show_in_table],
-                        key=lambda t: t[1])
-
-        df = df.loc[:10, [t[0] for t in l_cols]]
-
-        return df
+        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
+        return df, d_footer, kwargs
