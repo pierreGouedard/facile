@@ -1,0 +1,26 @@
+<div tal:define="css_class css_class|field.widget.css_class;
+                 oid oid|field.oid;
+                 style style|field.widget.style;
+                 type_name type_name|field.widget.type_name;
+                 key key|field.widget.key;"
+      tal:omit-tag="">
+  ${field.start_mapping()}
+  <input type="${type_name}"
+         name="${key}"
+         value="${cstruct}"
+
+         tal:attributes="class string: ${css_class or ''} form-control hasDatepicker;
+                         style style"
+         id="${oid}"/>
+  ${field.end_mapping()}
+  <script type="text/javascript">
+   deform.addCallback(
+    '${oid}',
+     function deform_cb(oid) {
+       if (!Modernizr.inputtypes['date'] ||"${type_name}" != "date" || window.forceDateTimePolyfill){
+         $('#' + oid).pickadate(${options_json});
+       }
+     }
+   );
+  </script>
+</div>
