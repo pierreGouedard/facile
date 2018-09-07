@@ -5,9 +5,10 @@ from flask import Markup, session, redirect, url_for, request
 from jinja2 import Template
 
 # Local import
-from facile.forms import login_form, download_form
+from facile.forms import login, download
 from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form
 from facile.utils.tables import build_table
+from facile.utils.controls import build_controls
 from facile.layout import boostrap
 from settings import deform_template_path
 
@@ -15,18 +16,18 @@ from settings import deform_template_path
 @app.route('/')
 def home():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('log_in'))
 
     return render_template("home.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
-def login():
+def log_in():
     # Create page global layout
     custom_template = Template(render_template('login.html', custom_html=Markup(boostrap.get_login_layout())))
 
     # process request
-    web, data = login_form.LoginForm(request, deform_template_path).process_form()
+    web, data = login.LoginForm(request, deform_template_path).process_form()
 
     if request.method == 'GET':
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
@@ -45,8 +46,7 @@ def login():
 
 
 @app.route('/logout', methods=['GET', 'POST'])
-def logout():
-
+def log_out():
    # Remove the username from the session if it is there
    session.pop('username', None)
    session.pop('rights', None)
@@ -57,7 +57,7 @@ def logout():
 @app.route('/form', methods=['GET', 'POST'])
 def form():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('log_in'))
 
     if request.method == 'GET':
         if request.args:
@@ -122,7 +122,7 @@ def form():
 @app.route('/export', methods=['GET', 'POST'])
 def export():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('log_in'))
 
     if request.method == 'GET':
         if request.args:
@@ -136,11 +136,11 @@ def export():
             )
 
             # Get form
-            web, data = download_form.DownloadForm(request, deform_template_path).process_form()
+            web, data = download.DownloadForm(request, deform_template_path).process_form()
 
             # Get Table
             table = {'table': build_table(request.args['table'], reduced=False, load_jQuery=True,
-                                          head_class='table-success')}
+                                          head_class='table-active')}
 
             # Gather context and render template
             context = {k: Markup(v) for k, v in web.items() + table.items()}
@@ -161,7 +161,7 @@ def export():
 @app.route('/document', methods=['GET', 'POST'])
 def document():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('log_in'))
 
     if request.method == 'GET':
         if request.args:
@@ -193,10 +193,26 @@ def document():
     return html
 
 
-@app.route('/explore', methods=['GET', 'POST'])
-def explore():
+@app.route('/control', methods=['GET', 'POST'])
+def control():
     if 'username' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('log_in'))
 
-    return render_template("explore.html")
+    if request.method == 'GET':
+        if request.args:
+
+            # render controls
+            html = build_controls(table_key=request.args['table'])
+
+        else:
+            control = Markup('<div class="jumbotron">'
+                             '<h1>Page des controles</h1>'
+                              '<p class="lead"> Choisissez un onglet pour visualiser un control</p></div>')
+            html = render_template("control.html", **{'control': control})
+    else:
+        # do smth
+        import IPython
+        IPython.embed()
+
+    return html
 

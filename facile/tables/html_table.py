@@ -21,7 +21,7 @@ class Table(object):
         self.column_names = list(column_names)
         self.id_table = id_table
         self.has_footer = kwargs.get('has_footer', False)
-        self.foot_class = kwargs.get('foot_class', 'table-success')
+        self.foot_class = kwargs.get('foot_class', 'table-active')
         self.responsive = kwargs.get('responsive', False)
 
         # Get params

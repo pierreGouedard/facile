@@ -6,9 +6,9 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
-from facile.core.base_model import BaseModel, ClassProperty
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
+from facile.core.base_model import BaseModel
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
 from facileapp.models.employe import Employe
@@ -24,20 +24,32 @@ class Chantier(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
-                          table_reduce=True, rank=1),
-             StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
-             IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
-             StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
-                          table_reduce=True, rank=0),
-             StringFields(title='Adresse', name='adresse'),
-             StringFields(title='Ville', name='ville'),
-             StringFields(title='Code postal', name='code_postal'),
-             StringFields(title='Le chantier est actif', name='is_active',
-                          widget=RadioChoiceWidget(values=Chantier.list('is_active'), **{'key': 'is_active'}))
-             ]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
+                              table_reduce=True, rank=1),
+                 StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
+                 IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
+                 StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
+                              table_reduce=True, rank=0),
+                 StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='Ville', name='ville'),
+                 StringFields(title='Code postal', name='code_postal'),
+                 StringFields(title='Le chantier est actif', name='is_active',
+                              widget=RadioChoiceWidget(values=Chantier.list('is_active'), **{'key': 'is_active'}))
+                 ]
+        else:
+            l_fields = \
+                [StringFields(title='Raison social du client', name='rs_client', table_reduce=True, rank=1),
+                 StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
+                 IntegerFields(title='Contact exterieur', name='contact_id'),
+                 StringFields(title='Responsable du chantier', name='responsable', table_reduce=True, rank=0),
+                 StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='Ville', name='ville'),
+                 StringFields(title='Code postal', name='code_postal'),
+                 StringFields(title='Le chantier est actif', name='is_active')
+                 ]
 
         return l_fields
 
@@ -50,8 +62,8 @@ class Chantier(BaseModel):
             return Contact.get_contact('client', return_id=True)
 
         elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                       Employe.get_employes(**{'emploie': 'charge affaire'}))
+            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
+                       Employe.get_employes(**{'qualification': 'charge affaire'}))
         elif kw == 'is_active':
             return [('oui', 'Oui'), ('non', 'Non')]
 
@@ -115,7 +127,7 @@ class Chantier(BaseModel):
             raise ValueError(e.message)
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         if index is not None:
             l_subindex = [Chantier.l_fields()[i].name for i in Contact.l_subindex]
@@ -123,35 +135,35 @@ class Chantier(BaseModel):
         else:
             d_index = None
 
-        form_man = FormManager(Chantier.l_index, Chantier.l_fields(), l_subindex=Chantier.l_subindex, use_subindex=True)
+        form_man = FormLoader(Chantier.l_index, Chantier.l_fields(widget=True), l_subindex=Chantier.l_subindex,
+                              use_subindex=True)
 
         if step % Chantier.nb_step_form == 0:
             index_node = StringFields(title='Nom du chantier', name='index', missing=unicode(''),
                                       l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()),
                                       desc="En cas de modification choisir un chantier")
-            form_man.render_init_form(Chantier.action_field, index_node)
+            form_man.load_init_form(Chantier.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Chantier.from_subindex_(d_index).__dict__
 
-            form_man.render(step % Chantier.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Chantier.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Chantier.load_db()
 
         if reduced:
-            table_man = TableManager(Chantier.l_index, Chantier.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Chantier.l_index, Chantier.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Chantier.l_index, Chantier.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Chantier.l_index, Chantier.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs

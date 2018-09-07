@@ -16,7 +16,6 @@ class StringFields(object):
         self.type = str
         self.desc = desc
         self.table_reduce, self.rank, = table_reduce, rank
-
         if widget is not None:
             self.widget = widget
         else:
@@ -26,9 +25,8 @@ class StringFields(object):
                 self.widget = TextInputWidget()
 
         self.mapinit = None
-        self.processing_form = lambda x: str(x) if x else missing
-        self.processing_db = lambda x: str(x)
-
+        self.processing_form = {'form': lambda x: str(x) if x else missing, 'db': lambda x: str(x)}
+        self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
         self.sn = sn(String(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
 
     def set_mode(self):
@@ -59,8 +57,8 @@ class IntegerFields(object):
                 self.widget = None
 
         self.mapinit = None
-        self.processing_form = lambda x: int(x) if x else missing
-        self.processing_db = lambda x: int(x)
+        self.processing_form = {'form': lambda x: int(x) if x else missing, 'db': lambda x: int(x)}
+        self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
 
         self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
 
@@ -73,7 +71,7 @@ class IntegerFields(object):
 
 class FloatFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, multiple=None, desc=None,
-                 table_reduce=False, rank=0):
+                 decimal=100, table_reduce=False, rank=0):
 
         self.title = title
         self.round = round
@@ -92,8 +90,8 @@ class FloatFields(object):
                 self.widget = None
 
         self.mapinit = None
-        self.processing_form = lambda x: float(x) if x else missing
-        self.processing_db = lambda x: float(x)
+        self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
+        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
 
         self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc, missing=missing)
 
@@ -106,7 +104,7 @@ class FloatFields(object):
 
 class MoneyFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, multiple=None, desc=None,
-                 table_reduce=False, rank=0):
+                 decimal=100, table_reduce=False, rank=0):
 
         self.title = title
         self.round = round
@@ -125,8 +123,8 @@ class MoneyFields(object):
                 self.widget = MoneyInputWidget()
 
         self.mapinit = None
-        self.processing_form = lambda x: float(x) if x else missing
-        self.processing_db = lambda x: float(x)
+        self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
+        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
 
         self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc, missing=missing)
 
@@ -144,7 +142,8 @@ class DateFields(object):
         self.title = title
         self.name = name
         self.type = str
-        self.desc =desc
+
+        self.desc = desc
 
         self.table_reduce, self.rank, = table_reduce, rank
 
@@ -152,8 +151,8 @@ class DateFields(object):
         self.round = round
         self.mapinit = mapinit
 
-        self.processing_form = processing_form
-        self.processing_db = lambda x: pd.Timestamp(x)
+        self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
+        self.processing_db = {'upload': lambda x: pd.Timestamp(x).date(), 'download': lambda x: x}
 
         self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, missign=missing, description=desc)
 
@@ -183,14 +182,14 @@ class DateTimeFields(object):
         self.round = round
         self.mapinit = mapinit
 
-        self.processing_form = processing_form
-        self.processing_db = lambda x: pd.Timestamp(x)
+        self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
+        self.processing_db = {'upload': lambda x: pd.Timestamp(x), 'download': lambda x: x}
 
         self.sn = sn(DateTime(), title=self.title, name=name, widget=self.widget, missign=missing, description=desc)
 
     def set_mode(self):
         keyw = {'key_date': '{}-date'.format(self.name),
-               'key_time': '{}-time'.format(self.name)}
+                'key_time': '{}-time'.format(self.name)}
 
         return DateTimeFields(
             self.title, self.name, self.round, widget=DateTimeInputWidget(**keyw), mapinit={'date': None, 'time': None},
@@ -221,8 +220,8 @@ class MappingFields(object):
         self.round = round
         self.mapinit = {f.name: f.mapinit for f in l_fields}
 
-        self.processing_form = lambda x: {f.name: f.processing_form(x[f.name]) for f in self.l_fields}
-        self.processing_db = lambda x: {f.sn.name: f.processing_db(x[f.name]) for f in self.l_fields}
+        self.processing_form = {'form': lambda x: {f.name: f.processing_form(x[f.name]) for f in self.l_fields},
+                                'db': lambda x: {f.sn.name: f.processing_db(x[f.name]) for f in self.l_fields}}
 
         self.sn = Schema(title=self.title, name=name, description=desc, widget=widget)
         for f in self.l_fields:
@@ -245,8 +244,8 @@ class SequenceFields(object):
         self.round = round
 
         self.mapinit = [field.mapinit]
-        self.processing_form = lambda x: [field.processing_form(d) for d in x]
-        self.processing_db = lambda x: [field.processing_db(d) for d in x]
+        self.processing_form = {'form': lambda x: [field.processing_form(d) for d in x],
+                                'db': lambda x: lambda x: [field.processing_db(d) for d in x]}
 
         self.sn = sn(Sequence(), field.sn, name=self.name, title=self.title, description=self.desc, widget=widget)
 

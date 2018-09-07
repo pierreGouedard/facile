@@ -1,0 +1,24 @@
+<!-- home.html-->
+
+{% extends "base.html" %}
+{% block title %}Control{% endblock %}
+{% block body %}
+
+
+<div id="formnav" class="sidenav">
+  <a href="/control?table=employe">Employés</a>
+  <a href="/control?table=client">Clients</a>
+  <a href="/control?table=fournisseur">Fournisseur</a>
+  <a href="/control?table=contact">Contact</a>
+  <a href="/control?table=chantier">Chantier</a>
+  <a href="/control?table=base_prix">Base de prix</a>
+  <a href="/control?table=devis">Devis</a>
+  <a href="/control?table=affaire">Affaires</a>
+  <a href="/control?table=heure">Heures</a>
+  <a href="/control?table=commande">Commande</a>
+  <a href="/control?table=facture">Facture</a>
+</div>
+
+{{ control }}
+
+{% endblock %}

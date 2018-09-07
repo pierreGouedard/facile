@@ -5,9 +5,9 @@ import pandas as pd
 # Local import
 import settings
 from facile.core.fields import StringFields, FloatFields
-from facile.core.form_processor import FormManager
+from facile.core.form_loader import FormLoader
 from facile.core.base_model import BaseModel
-from facile.core.table_processor import TableManager
+from facile.core.table_loader import TableLoader
 
 
 class Base_prix(BaseModel):
@@ -19,7 +19,7 @@ class Base_prix(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
+    def l_fields(widget=False):
         l_fields = \
             [FloatFields(title='Prix heure BE', name='prix_heure_be', table_reduce=True, rank=1),
              FloatFields(title='Prix heure Ch', name='prix_heure_ch', table_reduce=True, rank=2)]
@@ -79,40 +79,39 @@ class Base_prix(BaseModel):
         return df.loc[df['nom'] == base, ['prix_heure_be', 'prix_heure_ch']].iloc[0].to_dict()
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
         if index is not None:
             d_index = {Base_prix.l_index[0].name: index}
         else:
             d_index = None
 
-        form_man = FormManager(Base_prix.l_index, Base_prix.l_fields())
+        form_man = FormLoader(Base_prix.l_index, Base_prix.l_fields(widget=True))
 
         if step % Base_prix.nb_step_form == 0:
             index_node = StringFields(title='Nom de la base', name='index', missing=unicode(''),
                                       l_choices=Base_prix.list('base'), desc="une base de prix a editer")
-            form_man.render_init_form(Base_prix.action_field, index_node)
+            form_man.load_init_form(Base_prix.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Base_prix.from_index_(d_index).__dict__
 
-            form_man.render(step % Base_prix.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Base_prix.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Base_prix.load_db()
 
         if reduced:
-            table_man = TableManager(Base_prix.l_index, Base_prix.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Base_prix.l_index, Base_prix.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Base_prix.l_index, Base_prix.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Base_prix.l_index, Base_prix.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs

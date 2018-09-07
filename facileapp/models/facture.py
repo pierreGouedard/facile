@@ -1,13 +1,13 @@
 # Global imports
 import os
 import pandas as pd
-from deform.widget import RadioChoiceWidget, HiddenWidget, TextInputWidget
+from deform.widget import RadioChoiceWidget, HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
+from facile.core.fields import StringFields, IntegerFields, FloatFields
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.client import Client
@@ -26,24 +26,38 @@ class Facture(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
-                           table_reduce=True, rank=1),
-             StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), table_reduce=True,
-                          rank=2),
-             StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
-                          table_reduce=True, rank=3),
-             StringFields(title='Objet', name='objet'),
-             FloatFields(title='Montant facture HT', name='montant_ht'),
-             FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
-             FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=4),
-             IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),
-             StringFields(title='Mandat', name='is_mandated',
-                          widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_mandated'})),
-             StringFields(title='Encaissement', name='is_payed',
-                          widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_payed'}))]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
+                               table_reduce=True, rank=1),
+                 StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), table_reduce=True,
+                              rank=2),
+                 StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
+                              table_reduce=True, rank=3),
+                 StringFields(title='Objet', name='objet'),
+                 FloatFields(title='Montant facture HT', name='montant_ht'),
+                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
+                 FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
+                 FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=4),
+                 IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),
+                 StringFields(title='Mandat', name='is_mandated',
+                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_mandated'})),
+                 StringFields(title='Encaissement', name='is_payed',
+                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_payed'}))]
+        else:
+            l_fields = \
+                [IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
+                 StringFields(title='Client', name='rs_client', table_reduce=True, rank=2),
+                 StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
+                 StringFields(title='Objet', name='objet'),
+                 FloatFields(title='Montant facture HT', name='montant_ht'),
+                 FloatFields(title='Taux TVA', name='taux_tva'),
+                 FloatFields(title='Montant TVA', name='montant_tva'),
+                 FloatFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=4),
+                 IntegerFields(title='Delai de paiement', name='delai_paiement'),
+                 StringFields(title='Mandat', name='is_mandated'),
+                 StringFields(title='Encaissement', name='is_payed')]
 
         return l_fields
 
@@ -53,8 +67,8 @@ class Facture(BaseModel):
         if kw == 'client':
             return zip(Client.get_clients(), Client.get_clients())
         elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                       Employe.get_employes(**{'emploie': 'charge affaire'}))
+            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
+                       Employe.get_employes(**{'qualification': 'charge affaire'}))
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'statue':
@@ -121,48 +135,47 @@ class Facture(BaseModel):
         return montant_tva + montant_ht, montant_tva
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         if index is not None:
             d_index = {Facture.l_index[0].name: Facture.l_index[0].type(index)}
         else:
             d_index = None
 
-        form_man = FormManager(Facture.l_index, Facture.l_fields())
+        form_man = FormLoader(Facture.l_index, Facture.l_fields(widget=True))
 
         if step % Facture.nb_step_form == 0:
             index_node = IntegerFields(title='Numero de facture', name='index', missing=-1,
                                        l_choices=zip(Facture.get_facture(), Facture.get_facture()),
                                        desc="En cas de modification choisir un numero de facture",)
-            form_man.render_init_form(Facture.action_field, index_node)
+            form_man.load_init_form(Facture.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Facture.from_index_(d_index).__dict__
 
-            form_man.render(step % Facture.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Facture.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Facture.load_db()
 
         if reduced:
-            table_man = TableManager(Facture.l_index, Facture.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Facture.l_index, Facture.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Facture.l_index, Facture.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Facture.l_index, Facture.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_rendering():
+    def form_document_loading():
 
         index_node = StringFields(
             title='Numero de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())

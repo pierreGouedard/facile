@@ -1,4 +1,4 @@
-class FormManager(object):
+class FormLoader(object):
     buttons = ('Retour', 'Suivant')
 
     def __init__(self, l_index, l_fields, l_subindex=[], use_subindex=False, use_groupindex=False):
@@ -9,7 +9,7 @@ class FormManager(object):
         self.use_groupindex = use_groupindex
         self.d_form_data = None
 
-    def render_init_form(self, action_node, index_node):
+    def load_init_form(self, action_node, index_node):
         self.d_form_data = {
             'nodes': [action_node.sn, index_node.sn],
             'buttons': ('Suivant',),
@@ -17,7 +17,7 @@ class FormManager(object):
             'formatting': {}
         }
 
-    def render(self, step,  data_db=None, data_form=None, l_buttons=[]):
+    def load(self, step,  data_db=None, data_form=None, l_buttons=[]):
 
         # Create mask fields
         d_mask_fields = {i: (s.round <= step, s.round == step) for i, s in enumerate(self.l_fields)}
@@ -45,7 +45,7 @@ class FormManager(object):
             self.d_form_data['mapping'] += [('Ajouter', None)]
             for f in l_index + l_fields:
                 if f.name in data_db:
-                    data_db[f.name] = f.processing_db(data_db[f.name])
+                    data_db[f.name] = f.processing_form['db'](data_db[f.name])
 
             self.d_form_data['data'] = data_db
 
@@ -57,7 +57,7 @@ class FormManager(object):
             l_names = [f.name for f in l_index + l_fields] + ['action', 'index']
             self.d_form_data['data'].update({k: v for k, v in data_form.items() if k in l_names})
 
-        self.d_form_data['formatting'] = {f.name: f.processing_form for f in l_index + l_fields}
+        self.d_form_data['formatting'] = {f.name: f.processing_form['form'] for f in l_index + l_fields}
 
     def filter_index(self, d_mask_index):
 

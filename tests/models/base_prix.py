@@ -17,7 +17,7 @@ class TestBasePrix(unittest.TestCase):
                            'prix_heure_be': float(np.random.randint(1000, 2000)) / 100,
                            'prix_heure_ch': float(np.random.randint(500, 1500)) / 100,
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
-                       for i, k in enumerate([t[0] for t in Base_prix.d_list['base']])}
+                       for i, k in enumerate([t[0] for t in Base_prix.list('base')])}
 
         self.path = os.path.join(facile_test_path, 'base_prix.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
@@ -28,11 +28,8 @@ class TestBasePrix(unittest.TestCase):
 
         """
         l_base = Base_prix.get_base(path=self.path)
-        self.assertEqual(len(l_base), len(Base_prix.d_list['base']))
+        self.assertEqual(len(l_base), len(Base_prix.list('base')))
 
-        t = pd.Timestamp.now() - pd.Timedelta(days=90)
-        base = Base_prix.d_month[t.month].format(t.year)
-        self.assertEqual(l_base[0], base)
 
 
 

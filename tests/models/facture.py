@@ -17,7 +17,7 @@ class TestFacture(unittest.TestCase):
         self.facture_id = np.random.randint(100000, 999999)
         self.d_init = {0: {'facture_id': self.facture_id, 'affaire_id': 123456, 'rs_client': 'Dassault aviation',
                            'responsable': 'Jean Dujardin', 'objet': 'facture num 1', 'montant_ht': 15000,
-                           'taux_tva': 0.196, 'montant_ttc': 17940.0, 'montant_tva': 2940.0, 'delai_paiement': '3 mois',
+                           'taux_tva': 0.196, 'montant_ttc': 17940.0, 'montant_tva': 2940.0, 'delai_paiement': 3,
                            'is_mandated': 'non', 'is_payed': 'non', 'creation_date': str(pd.Timestamp.now()),
                            'maj_date': str(pd.Timestamp.now())}
                        }
@@ -37,7 +37,7 @@ class TestFacture(unittest.TestCase):
             'taux_tva': 0.196,
             'montant_ttc': 17940.0,
             'montant_tva': 2940.0,
-            'delai_paiement': '3 mois',
+            'delai_paiement': 3,
             'is_mandated': 'non',
             'is_payed': 'non',
         }

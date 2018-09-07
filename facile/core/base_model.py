@@ -5,18 +5,14 @@ import pandas as pd
 from facile.core.fields import StringFields
 
 
-class ClassProperty (property):
-    """Subclass property to make classmethod properties possible"""
-    def __get__(self, cls, owner):
-        return self.fget.__get__(None, owner)()
-
-
 class BaseModel(object):
     path = ''
     l_index, l_subindex = [], []
     l_hfields = [StringFields(name='creation_date', title='creation_date', round=0),
                  StringFields(name='maj_date', title='maj_date', round=0)]
     l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
+    l_documents = [('convoc', 'Lettre de convocation'), ('miseap', 'Lettre de mise a pied')]
+    l_apps = ['repqual', 'repemp']
 
     def __init__(self, d_index, d_fields, d_hfields={}, path=None):
         for f in self.l_index:
@@ -155,3 +151,14 @@ class BaseModel(object):
 
         # Save it
         df.reset_index(drop=True).to_csv(self.path, index=None)
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {'noapp': {'rows': [('title', [{'content': 'title',
+                                                         'value': 'Aucun controle disponnible',
+                                                         'cls': 'text-center'}]
+                                              )]
+                                    }
+                          }
+
+        return d_control_data

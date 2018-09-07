@@ -6,12 +6,12 @@ from deform.widget import MoneyInputWidget, HiddenWidget, TextInputWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
-from facileapp.models.affaire import Affaire
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
+from facileapp.models.chantier import Chantier
 from facileapp.models.employe import Employe
 from facileapp.models.base_prix import Base_prix
 
@@ -28,23 +28,38 @@ class Devis(BaseModel):
     nb_step_form = 3
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Devis.list('affaire'),
-                           table_reduce=True, rank=1),
-             StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True, rank=2),
-             IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
-             StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
-                          table_reduce=True, rank=3),
-             IntegerFields(title="Nombre d'heure BE", name='heure_be'),
-             IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
-             FloatFields(title='Montant achat', name='montant_achat'),
-             FloatFields(title='Coefficient achat', name='coef_achat'),
-             DateFields(title='Date de debut', name='date_start'),
-             DateFields(title='Date de fin', name='date_end'),
-             StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-             FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2,
-                         table_reduce=True, rank=4)]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True,
+                              rank=1),
+                 IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
+                 IntegerFields(title='Chantier', name='chantier_id', l_choices=Devis.list('chantier')),
+                 StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
+                              table_reduce=True, rank=2),
+                 IntegerFields(title="Nombre d'heure BE", name='heure_be', l_choices=zip(range(9000), range(9000))),
+                 IntegerFields(title="Nombre d'heure Ch", name='heure_ch', l_choices=zip(range(1000), range(1000))),
+                 FloatFields(title='Montant achat', name='montant_achat'),
+                 FloatFields(title='Coefficient achat', name='coef_achat'),
+                 DateFields(title='Date de debut', name='date_start'),
+                 DateFields(title='Date de fin', name='date_end'),
+                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
+                 FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2,
+                             table_reduce=True, rank=3)]
+        else:
+            l_fields = \
+                [StringFields(title='Client', name='rs_client', table_reduce=True, rank=1),
+                 IntegerFields(title='Contact', name='contact_id'),
+                 IntegerFields(title='Chantier', name='chantier_id'),
+                 StringFields(title='Responsable', name='responsable', table_reduce=True, rank=2),
+                 IntegerFields(title="Nombre d'heure BE", name='heure_be'),
+                 IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
+                 FloatFields(title='Montant achat', name='montant_achat'),
+                 FloatFields(title='Coefficient achat', name='coef_achat'),
+                 DateFields(title='Date de debut', name='date_start'),
+                 DateFields(title='Date de fin', name='date_end'),
+                 StringFields(title='Base de prix', name='base_prix'),
+                 FloatFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
 
         return l_fields
 
@@ -55,11 +70,11 @@ class Devis(BaseModel):
             return zip(Client.get_clients(), Client.get_clients())
         elif kw == 'contact':
             return Contact.get_contact('client', return_id=True)
+        elif kw == 'chantier':
+            return Chantier.get_chantier(return_id=True)
         elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'emploie': 'charge affaire'}),
-                       Employe.get_employes(**{'emploie': 'charge affaire'}))
-        elif kw == 'affaire':
-            return [(-1, 'NA')] + zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
+            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
+                       Employe.get_employes(**{'qualification': 'charge affaire'}))
         elif kw == 'base_prix':
             return Base_prix.list('base')
         else:
@@ -128,7 +143,7 @@ class Devis(BaseModel):
         return price
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         if index is not None:
             d_index = {Devis.l_index[0].name: Devis.l_index[0].type(index)}
@@ -147,46 +162,45 @@ class Devis(BaseModel):
             l_fields = [
                 FloatFields(title="Prix heure Ch", name='prix_heure_ch', round=2, widget=TextInputWidget(readonly=True)),
                 FloatFields(title="Prix heure Ch", name='prix_heure_be', round=2, widget=TextInputWidget(readonly=True))
-            ] + Devis.l_fields()
+            ] + Devis.l_fields(widget=True)
 
         else:
-            l_fields = Devis.l_fields()
+            l_fields = Devis.l_fields(widget=True)
 
-        form_man = FormManager(Devis.l_index, l_fields)
+        form_man = FormLoader(Devis.l_index, l_fields)
 
         if step % Devis.nb_step_form == 0:
             index_node = IntegerFields(title='Numero de devis', name='index', missing=-1,
                                        l_choices=zip(Devis.get_devis(), Devis.get_devis()),
                                        desc="En cas de modification choisir un numero de devis",)
-            form_man.render_init_form(Devis.action_field, index_node)
+            form_man.load_init_form(Devis.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Devis.from_index_(d_index).__dict__
 
-            form_man.render(step % Devis.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Devis.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Devis.load_db()
 
         if reduced:
-            table_man = TableManager(Devis.l_index, Devis.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Devis.l_index, Devis.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Devis.l_index, Devis.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Devis.l_index, Devis.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_rendering():
+    def form_document_loading():
 
         index_node = StringFields(
             title='Numero de devis', name='index', l_choices=zip(Devis.get_devis(), Devis.get_devis())

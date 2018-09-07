@@ -6,8 +6,8 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.chantier import Chantier
@@ -26,24 +26,40 @@ class Commande(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
-                           table_reduce=True, rank=1),
-             StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur'),
-                          table_reduce=True, rank=2),
-             IntegerFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
-             StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
-             FloatFields(title='Montant Commande HT', name='montant_ht'),
-             FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
-             FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-             FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
-             IntegerFields(title="Nombre d'article", name='nb_article', table_reduce=True, rank=4),
-             StringFields(title="Liste des articles", name='l_article'),
-             StringFields(title='Mandat', name='is_mandated',
-                          widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_mandated'})),
-             StringFields(title='Paiement', name='is_payed',
-                          widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_payed'}))]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
+                               table_reduce=True, rank=1),
+                 StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur'),
+                              table_reduce=True, rank=2),
+                 IntegerFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
+                 StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
+                 FloatFields(title='Montant Commande HT', name='montant_ht'),
+                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
+                 FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
+                 FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
+                 IntegerFields(title="Nombre d'article", name='nb_article', l_choices=zip(range(100), range(100)),
+                               table_reduce=True, rank=4),
+                 StringFields(title="Liste des articles", name='l_article'),
+                 StringFields(title='Mandat', name='is_mandated',
+                              widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_mandated'})),
+                 StringFields(title='Paiement', name='is_payed',
+                              widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_payed'}))]
+        else:
+            l_fields = \
+                [IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
+                 StringFields(title='Fournisseur', name='rs_fournisseur', table_reduce=True, rank=2),
+                 IntegerFields(title='Chantier', name='chantier_id'),
+                 StringFields(title='Responsable reception', name='responsable'),
+                 FloatFields(title='Montant Commande HT', name='montant_ht'),
+                 FloatFields(title='Taux TVA', name='taux_tva'),
+                 FloatFields(title='Montant TVA', name='montant_tva'),
+                 FloatFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
+                 IntegerFields(title="Nombre d'article", name='nb_article', table_reduce=True, rank=4),
+                 StringFields(title="Liste des articles", name='l_article'),
+                 StringFields(title='Mandat', name='is_mandated'),
+                 StringFields(title='Paiement', name='is_payed')]
 
         return l_fields
 
@@ -120,48 +136,47 @@ class Commande(BaseModel):
         return montant_tva + montant_ht, montant_tva
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         if index is not None:
             d_index = {Commande.l_index[0].name: Commande.l_index[0].type(index)}
         else:
             d_index = None
 
-        form_man = FormManager(Commande.l_index, Commande.l_fields())
+        form_man = FormLoader(Commande.l_index, Commande.l_fields(widget=True))
 
         if step % Commande.nb_step_form == 0:
             index_node = IntegerFields(title='Numero de commande', name='index', missing=-1,
                                        l_choices=zip(Commande.get_commande(), Commande.get_commande()),
                                        desc="En cas de modification choisir un numero de commande",)
-            form_man.render_init_form(Commande.action_field, index_node)
+            form_man.load_init_form(Commande.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Commande.from_index_(d_index).__dict__
 
-            form_man.render(step % Commande.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Commande.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Commande.load_db()
 
         if reduced:
-            table_man = TableManager(Commande.l_index, Commande.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Commande.l_index, Commande.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Commande.l_index, Commande.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Commande.l_index, Commande.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_rendering():
+    def form_document_loading():
 
         index_node = StringFields(
             title='Numero de commande', name='index', l_choices=zip(Commande.get_commande(), Commande.get_commande())

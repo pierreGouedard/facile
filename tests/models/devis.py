@@ -15,12 +15,12 @@ __maintainer__ = 'Pierre Gouedard'
 class TestDevis(unittest.TestCase):
     def setUp(self):
         self.devis_id = np.random.randint(100000, 999999)
-        self.d_init = {0: {'devis_id': self.devis_id, 'affaire_id': -1, 'rs_client': 'Dassault aviation',
-                           'contact_id': 0, 'responsable': 'Jean Dujardin', 'heure_be': np.random.randint(5, 30),
-                           'heure_ch': np.random.randint(50, 100), 'montant_achat': np.random.randint(1000, 50000),
-                           'coef_achat': 1.5 + np.random.randn(), 'date_start': '2018-01-01', 'date_end': '2018-03-01',
-                           'base_prix': 'Mai 2018', 'price': 0, 'creation_date': str(pd.Timestamp.now()),
-                           'maj_date': str(pd.Timestamp.now())}
+        self.d_init = {0: {'devis_id': self.devis_id, 'rs_client': 'Dassault aviation',
+                           'contact_id': 0, 'chantier_id': 0, 'responsable': 'Jean Dujardin',
+                           'heure_be': np.random.randint(5, 30), 'heure_ch': np.random.randint(50, 100),
+                           'montant_achat': np.random.randint(1000, 50000), 'coef_achat': 1.5 + np.random.randn(),
+                           'date_start': '2018-01-01', 'date_end': '2018-03-01', 'base_prix': 'Mai 2018', 'price': 0,
+                           'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
                        }
         self.path = os.path.join(facile_test_path, 'devis.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
@@ -30,9 +30,9 @@ class TestDevis(unittest.TestCase):
         }
 
         self.d_data = {
-            'affaire_id': -1,
             'rs_client': 'Dassault aviation',
             'contact_id': 0,
+            'chantier_id': 0,
             'responsable': 'Jean Dujardin',
             'heure_be': np.random.randint(5, 30),
             'heure_ch': np.random.randint(50, 100),

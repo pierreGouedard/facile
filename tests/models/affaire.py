@@ -16,7 +16,7 @@ class TestAffaire(unittest.TestCase):
     def setUp(self):
         self.affaire_id = 123456
         self.d_init = {0: {'affaire_id': self.affaire_id,
-                           'chantier_id': 0, 'responsable': 'Jean Dujardin', 'creation_date': str(pd.Timestamp.now()),
+                           'devis_id': 0, 'responsable': 'Jean Dujardin', 'creation_date': str(pd.Timestamp.now()),
                            'maj_date': str(pd.Timestamp.now())}
                        }
         self.path = os.path.join(facile_test_path, 'affaire.csv')
@@ -28,7 +28,7 @@ class TestAffaire(unittest.TestCase):
 
         self.d_data = {
             'contact': 'Departement financier',
-            'chantier_id': 0,
+            'devis_id': 0,
             'responsable': 'Jean Dujardin'
         }
 

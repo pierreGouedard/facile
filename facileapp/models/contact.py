@@ -6,8 +6,8 @@ from deform.widget import HiddenWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.client import Client
@@ -24,19 +24,31 @@ class Contact(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
-                          rank=1),
-             StringFields(title='Raison social du client', name='raison_social',
-                          l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
-             StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
-             StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
-             StringFields(title='Adresse', name='adresse'),
-             StringFields(title='Ville', name='ville'),
-             StringFields(title='Code postal', name='code_postal'),
-             StringFields(title='tel', name='num_tel'),
-             StringFields(title='E-mail', name='mail')]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
+                              rank=1),
+                 StringFields(title='Raison social du client', name='raison_social',
+                              l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
+                 StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
+                 StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
+                 StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='Ville', name='ville'),
+                 StringFields(title='Code postal', name='code_postal'),
+                 StringFields(title='tel', name='num_tel'),
+                 StringFields(title='E-mail', name='mail')]
+        else:
+            l_fields = \
+                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1),
+                 StringFields(title='Raison social du client', name='raison_social', table_reduce=True, rank=2),
+                 StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
+                 StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
+                 StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='Ville', name='ville'),
+                 StringFields(title='Code postal', name='code_postal'),
+                 StringFields(title='tel', name='num_tel'),
+                 StringFields(title='E-mail', name='mail')]
 
         return l_fields
 
@@ -127,7 +139,7 @@ class Contact(BaseModel):
             raise ValueError(e.message)
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         if index is not None:
             l_subindex = [Contact.l_fields()[i].name for i in Contact.l_subindex]
@@ -135,35 +147,35 @@ class Contact(BaseModel):
         else:
             d_index = None
 
-        form_man = FormManager(Contact.l_index, Contact.l_fields(), l_subindex=Contact.l_subindex, use_subindex=True)
+        form_man = FormLoader(Contact.l_index, Contact.l_fields(widget=True), l_subindex=Contact.l_subindex,
+                              use_subindex=True)
 
         if step % Contact.nb_step_form == 0:
             index_node = StringFields(title='Nom du contact', name='index', missing=unicode(''),
                                       l_choices=zip(Contact.get_contact(), Contact.get_contact()),
                                       desc="En cas de modification choisir un contact")
-            form_man.render_init_form(Contact.action_field, index_node)
+            form_man.load_init_form(Contact.action_field, index_node)
 
         else:
             data_db = None
             if d_index is not None:
                 data_db = Contact.from_subindex_(d_index).__dict__
 
-            form_man.render(step % Contact.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Contact.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Contact.load_db()
 
         if reduced:
-            table_man = TableManager(Contact.l_index, Contact.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Contact.l_index, Contact.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Contact.l_index, Contact.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Contact.l_index, Contact.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs

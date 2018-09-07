@@ -5,14 +5,14 @@ import pandas as pd
 from facile.core.base_model import BaseModel
 
 
-class TableManager(object):
+class TableLoader(object):
 
     def __init__(self, l_index, l_fields, limit=None):
         self.l_index = l_index
         self.l_fields = l_fields
         self.limit = limit
 
-    def render_reduce_table(self, df):
+    def load_reduce_table(self, df):
         # Sort database
         df = self.sort_df(df)
 
@@ -26,20 +26,25 @@ class TableManager(object):
 
         return df,  {'paginate': 'true', 'record_cnt': 'true'}
 
-    def render_full_table(self, df):
+    def load_full_table(self, df, l_extra_cols=None):
         # Sort database
         df = self.sort_df(df)
 
         # Get columns to display and corresponding sizes
         l_cols = [f.name for f in self.l_index + self.l_fields]
 
+        if l_extra_cols is not None:
+            l_cols += l_extra_cols
+
+        df = df[l_cols]
+
         # build footer
         d_footer = {}
         for col, s in df.iteritems():
             d_footer[col] = '_' * (2 + s.apply(lambda x: len(str(x))).max())
 
-        return df[l_cols], d_footer, {'paginate': 'true', 'sort': 'true', 'search': 'true', 'record_cnt': 'true',
-                                      'per_page': 'true', 'has_footer': True, 'responsive': True}
+        return df, d_footer, {'paginate': 'true', 'sort': 'true', 'search': 'true', 'record_cnt': 'true',
+                              'per_page': 'true', 'has_footer': True, 'responsive': True}
 
     @staticmethod
     def sort_df(df):

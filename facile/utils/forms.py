@@ -9,7 +9,7 @@ from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
 from facileapp.models.commande import Commande
 from facileapp.models.heure import Heure
-from facile.forms import mutliform, document_form
+from facile.forms import mutlistep, document
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data=None, validate=True):
@@ -20,54 +20,53 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
         index = None
 
     if table_key == 'employe':
-        d_form_data = Employe.form_rendering(step, index, data)
+        d_form_data = Employe.form_loading(step, index, data)
         nb_step_form = Employe.nb_step_form
 
     elif table_key == 'fournisseur':
-        d_form_data = Fournisseur.form_rendering(step, index, data)
+        d_form_data = Fournisseur.form_loading(step, index, data)
         nb_step_form = Fournisseur.nb_step_form
 
     elif table_key == 'client':
-        d_form_data = Client.form_rendering(step, index, data)
+        d_form_data = Client.form_loading(step, index, data)
         nb_step_form = Fournisseur.nb_step_form
 
     elif table_key == 'contact':
-        d_form_data = Contact.form_rendering(step, index, data)
+        d_form_data = Contact.form_loading(step, index, data)
         nb_step_form = Contact.nb_step_form
 
     elif table_key == 'chantier':
-        d_form_data = Chantier.form_rendering(step, index, data)
+        d_form_data = Chantier.form_loading(step, index, data)
         nb_step_form = Chantier.nb_step_form
 
     elif table_key == 'base_prix':
-        d_form_data = Base_prix.form_rendering(step, index, data)
+        d_form_data = Base_prix.form_loading(step, index, data)
         nb_step_form = Base_prix.nb_step_form
 
     elif table_key == 'affaire':
-        d_form_data = Affaire.form_rendering(step, index, data)
+        d_form_data = Affaire.form_loading(step, index, data)
         nb_step_form = Affaire.nb_step_form
 
     elif table_key == 'devis':
-        d_form_data = Devis.form_rendering(step, index, data)
+        d_form_data = Devis.form_loading(step, index, data)
         nb_step_form = Devis.nb_step_form
 
     elif table_key == 'facture':
-        d_form_data = Facture.form_rendering(step, index, data)
+        d_form_data = Facture.form_loading(step, index, data)
         nb_step_form = Facture.nb_step_form
 
     elif table_key == 'commande':
-        d_form_data = Commande.form_rendering(step, index, data)
+        d_form_data = Commande.form_loading(step, index, data)
         nb_step_form = Commande.nb_step_form
 
     elif table_key == 'heure':
-
-        d_form_data = Heure.form_rendering(step, index, data)
+        d_form_data = Heure.form_loading(step, index, data)
         nb_step_form = Heure.nb_step_form
 
     else:
         raise ValueError('key not understood {}'.format(table_key))
 
-    web, data = mutliform.MultipleStepForm(request, deform_template_path, step, nb_step_form, **d_form_data)\
+    web, data = mutlistep.MultipleStepForm(request, deform_template_path, step, nb_step_form, **d_form_data)\
         .process_form(force_get=force_get, validate=validate, d_format=d_form_data['formatting'])
 
     return web, data
@@ -132,14 +131,15 @@ def process_form(table_key, d_data, action):
 
 def generic_process_form(l_index, l_fields, model, action, d_data=None):
     if 'Ajouter' in action:
-        model({f.name: f.type(d_data[f.name]) for f in l_index}, {f.name: f.type(d_data[f.name]) for f in l_fields}) \
+        model({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index},
+              {f.name: f.type(f.processing_db(d_data[f.name])) for f in l_fields}) \
             .add()
     elif 'Suprimer' in action:
-        model.from_index_({f.name: f.type(d_data[f.name]) for f in l_index}).delete()
+        model.from_index_({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index}).delete()
     else:
-        model_ = model.from_index_({f.name: f.type(d_data[f.name]) for f in l_index})
+        model_ = model.from_index_({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index})
         for f in l_fields:
-            model_.__setattr__(f.name, f.type(d_data[f.name]))
+            model_.__setattr__(f.name, f.type(f.processing_db(d_data[f.name])))
         model_.alter()
 
 
@@ -172,29 +172,29 @@ def get_title_from_step(step, data):
 def build_document_form(table_key, request, deform_template_path):
 
     if table_key == 'employe':
-        d_form_data = Employe.form_document_rendering()
+        d_form_data = Employe.form_document_loading()
 
     elif table_key == 'fournisseur':
-        d_form_data = Fournisseur.form_document_rendering()
+        d_form_data = Fournisseur.form_document_loading()
 
     elif table_key == 'client':
-        d_form_data = Client.form_document_rendering()
+        d_form_data = Client.form_document_loading()
 
     elif table_key == 'affaire':
-        d_form_data = Affaire.form_document_rendering()
+        d_form_data = Affaire.form_document_loading()
 
     elif table_key == 'devis':
-        d_form_data = Devis.form_document_rendering()
+        d_form_data = Devis.form_document_loading()
 
     elif table_key == 'facture':
-        d_form_data = Facture.form_document_rendering()
+        d_form_data = Facture.form_document_loading()
 
     elif table_key == 'commande':
-        d_form_data = Commande.form_document_rendering()
+        d_form_data = Commande.form_document_loading()
 
     else:
         raise ValueError('key not understood {}'.format(table_key))
 
-    web, _ = document_form.DocumentForm(request, deform_template_path, **d_form_data).process_form()
+    web, _ = document.DocumentForm(request, deform_template_path, **d_form_data).process_form()
 
     return web

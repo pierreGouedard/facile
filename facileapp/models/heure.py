@@ -6,8 +6,8 @@ from deform.widget import HiddenWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields, MappingFields, SequenceFields
-from facile.core.form_processor import FormManager
-from facile.core.table_processor import TableManager
+from facile.core.form_loader import FormLoader
+from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.employe import Employe
@@ -27,22 +27,32 @@ class Heure(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields():
-        l_fields = \
-            [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
-                          rank=1),
-             IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
-                           table_reduce=True,  rank=2),
-             StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe'), table_reduce=True,
-                          rank=3),
-             IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0, table_reduce=True, rank=4),
-             IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0, table_reduce=True, rank=5)]
+    def l_fields(widget=False):
+        if widget:
+            l_fields = \
+                [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
+                              rank=1),
+                 IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
+                               table_reduce=True,  rank=2),
+                 StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe'), table_reduce=True,
+                              rank=3),
+                 IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', l_choices=zip(range(100), range(100)),
+                               missing=0, table_reduce=True, rank=4),
+                 IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', l_choices=zip(range(100), range(100)),
+                               missing=0, table_reduce=True, rank=5)]
+        else:
+            l_fields = \
+                [StringFields(title="Semaine", name='semaine', table_reduce=True, rank=1),
+                 IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True,  rank=2),
+                 StringFields(title="Nom de l'employe", name='employe', table_reduce=True, rank=3),
+                 IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0, table_reduce=True, rank=4),
+                 IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0, table_reduce=True, rank=5)]
 
         return l_fields
 
     @staticmethod
     def sequence_field():
-        mapping_heure = MappingFields('Heure', 'heure', 'heure', Heure.l_index + Heure.l_fields())
+        mapping_heure = MappingFields('Heure', 'heure', 'heure', Heure.l_index + Heure.l_fields(widget=True))
         sequence_field = SequenceFields('Liste des heures', 'heure', mapping_heure)
         return sequence_field
 
@@ -117,18 +127,18 @@ class Heure(BaseModel):
         super(Heure, self).alter()
 
     @staticmethod
-    def form_rendering(step, index=None, data=None):
+    def form_loading(step, index=None, data=None):
 
         d_index = {
             Heure.l_fields()[Heure.l_groupindex[0]].name: Heure.l_fields()[Heure.l_groupindex[0]].type(index)
         }
 
-        form_man = FormManager([], [Heure.sequence_field()], use_groupindex=True)
+        form_man = FormLoader([], [Heure.sequence_field()], use_groupindex=True)
 
         if step % Heure.nb_step_form == 0:
             index_node = StringFields(title='Semaine', name='index', missing=-1,
                                       l_choices=zip(Heure.list('week'), Heure.list('week')))
-            form_man.render_init_form(Heure.action_field, index_node)
+            form_man.load_init_form(Heure.action_field, index_node)
 
         else:
 
@@ -138,21 +148,20 @@ class Heure(BaseModel):
                     [{k: v for k, v in h.__dict__.items() if k in l_names} for h in Heure.from_groupindex_(d_index)]
             }
 
-            form_man.render(step % Heure.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(step % Heure.nb_step_form, data_db=data_db, data_form=data)
         return form_man.d_form_data
 
     @staticmethod
-    def table_rendering(reduced=True):
+    def table_loading(reduced=True):
         # Load database
         df = Heure.load_db()
 
         if reduced:
-            table_man = TableManager(Heure.l_index, Heure.l_fields(), limit=10)
-            df, kwargs = table_man.render_reduce_table(df)
+            table_man = TableLoader(Heure.l_index, Heure.l_fields(), limit=10)
+            df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:
-            table_man = TableManager(Heure.l_index, Heure.l_fields())
-            df, d_footer, kwargs = table_man.render_full_table(df)
+            table_man = TableLoader(Heure.l_index, Heure.l_fields())
+            df, d_footer, kwargs = table_man.load_full_table(df)
 
-        df = pd.concat([df.copy() for _ in range(9)], ignore_index=True)
         return df, d_footer, kwargs
