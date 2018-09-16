@@ -2,20 +2,12 @@
 
 # Local import
 from facile.core.table_loader import TableLoader
+from facileapp.models.views.base_view import BaseView
 from facileapp.models.devis import Devis
 from facileapp.models.affaire import Affaire
 from facileapp.models.facture import Facture
 from facileapp.models.commande import Commande
 from facileapp.models.heure import Heure
-
-
-class BaseView(object):
-    main_model = []
-    l_models = []
-
-    @staticmethod
-    def load_view():
-        raise NotImplementedError
 
 
 class FeuilleTravaux(BaseView):
@@ -99,3 +91,55 @@ class FeuilleTravaux(BaseView):
     @staticmethod
     def document_loading():
         raise NotImplementedError
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {}
+        df = FeuilleTravaux.load_view()
+
+        d_name = {True: 'Cloture', False: 'En cours'}
+        df_state = df[['affaire_id', 'montant_encaisse', 'montant_facture']]
+        df_state['state'] = df_state[['montant_encaisse', 'montant_facture']]\
+            .apply(lambda r: d_name[r['montant_encaisse'] == r['montant_facture']], axis=1)
+
+        # App 1 repartition statue of Affaires
+        df_state = df_state[['affaire_id', 'state']].groupby('state')\
+            .count()\
+            .reset_index()\
+            .rename(columns={'state': 'name', 'affaire_id': 'value'})
+
+        d_control_data['repstate'] = {
+            'plot': {'k': 'pie', 'd': df_state, 'o': {'hover': True}},
+            'rows': [('title', [{'content': 'title', 'value': 'Repartition des affaire', 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+                }
+
+        # App 2 amount of digned affaire by charge d'aff
+        df_chardaff = df[['responsable', 'montant_facture']].groupby('responsable')\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'responsable': 'label'})
+
+        d_control_data['affaireresp'] = {
+            'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'montant_facture'}},
+            'rows': [('title', [{'content': 'title', 'value': "Affaire facture par charge d'affaire", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 1
+        }
+
+        # App 3 amount of digned affaire by cient
+        df_client = df[['rs_client_devis', 'montant_facture']].groupby('rs_client_devis') \
+            .sum() \
+            .reset_index() \
+            .rename(columns={'rs_client_devis': 'label'})
+
+        d_control_data['affaireclient'] = {
+            'plot': {'k': 'bar', 'd': df_client, 'o': {'val_col': 'montant_facture'}},
+            'rows': [('title',
+                      [{'content': 'title', 'value': "Affaire facture par client", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 2
+        }
+
+        return d_control_data

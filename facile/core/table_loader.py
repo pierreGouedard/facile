@@ -27,8 +27,10 @@ class TableLoader(object):
         return df,  {'paginate': 'true', 'record_cnt': 'true'}
 
     def load_full_table(self, df, l_extra_cols=None):
-        # Sort database
-        df = self.sort_df(df)
+
+        if not df.empty:
+            # Sort database
+            df = self.sort_df(df)
 
         # Get columns to display and corresponding sizes
         l_cols = [f.name for f in self.l_index + self.l_fields]
@@ -41,7 +43,10 @@ class TableLoader(object):
         # build footer
         d_footer = {}
         for col, s in df.iteritems():
-            d_footer[col] = '_' * (2 + s.apply(lambda x: len(str(x))).max())
+            if not s.empty:
+                d_footer[col] = '_' * (2 + s.apply(lambda x: len(str(x))).max())
+            else:
+                d_footer[col] = '_' * len(col)
 
         return df, d_footer, {'paginate': 'true', 'sort': 'true', 'search': 'true', 'record_cnt': 'true',
                               'per_page': 'true', 'has_footer': True, 'responsive': True}

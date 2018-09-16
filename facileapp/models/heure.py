@@ -11,6 +11,7 @@ from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.employe import Employe
+from facile.utils import dates
 
 
 class Heure(BaseModel):
@@ -63,8 +64,7 @@ class Heure(BaseModel):
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'week':
-            t_now = pd.Timestamp.now()
-            current_monday = (t_now - pd.Timedelta(days=t_now.weekday())).date()
+            current_monday = dates.get_current_start_date()
             l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=70),
                                        end=current_monday + pd.Timedelta(days=70),
                                        freq='w')
@@ -141,7 +141,6 @@ class Heure(BaseModel):
             form_man.load_init_form(Heure.action_field, index_node)
 
         else:
-
             l_names = [f.name for f in Heure.l_fields() + Heure.l_index]
             data_db = {
                 Heure.sequence_field().name:
@@ -165,3 +164,63 @@ class Heure(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {}
+        df = Heure.load_db()
+
+        # App 1 heure de la semaine en cours par employe
+        semaine = dates.get_current_start_date() - pd.Timedelta(days=7)
+        df_ = df.loc[df.semaine == str(semaine)]
+        df_heures = df_[['employe', 'nb_heure_be', 'nb_heure_ch']].groupby(['employe'])\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'employe': 'label'})
+
+        d_control_data['heuresemaine'] = {
+            'plot': {'k': 'stack_bar', 'd': df_heures, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
+            'rows': [('title', [{'content': 'title', 'value': 'Heure de la semaine {}'.format(semaine), 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+                }
+
+        # App 2 & 3 heure de l'annee en cours par employe et par semaine
+        df_heures_emp = df[['employe', 'nb_heure_be', 'nb_heure_ch']].groupby(['employe'])\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'employe': 'label'})
+
+        d_control_data['heuresannecumul'] = {
+            'plot': {'k': 'stack_bar', 'd': df_heures_emp, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
+            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par employe)", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 1
+                }
+
+        # App 3 heure de l'anne en cours par affaire
+        df_heures_week = df[['semaine', 'nb_heure_be', 'nb_heure_ch']].groupby(['semaine'])\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'semaine': 'label'})
+
+        d_control_data['heuresanne'] = {
+            'plot': {'k': 'stack_bar', 'd': df_heures_week, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
+            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par semaine", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 2
+                }
+
+        # App 4 heure de l'anne en cours par affaire
+        df_heures_aff = df[['affaire_id', 'nb_heure_be', 'nb_heure_ch']].groupby(['affaire_id'])\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'affaire_id': 'label'})
+
+        d_control_data['heuresaffaire'] = {
+            'plot': {'k': 'stack_bar', 'd': df_heures_aff, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
+            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par affaire", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 3
+        }
+        return d_control_data

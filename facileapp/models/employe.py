@@ -35,11 +35,11 @@ class Employe(BaseModel):
              StringFields(title="Numero d'entre", name='num_entre'),
              StringFields(title='Qualification', name='qualification'),
              DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=3),
-             DateFields(title='date de sortie', name='date_end', table_reduce=True, rank=4),
+             DateFields(title='date de sortie', name='date_end', table_reduce=True, rank=4, missing='1970-01-01'),
              ]
         if widget:
             l_fields[2] = StringFields(title='Emploi', name='emploie', l_choices=Employe.list('emploi'),
-                                       table_reduce=True, rank=2),
+                                       table_reduce=True, rank=2)
 
         return l_fields
 
@@ -148,7 +148,8 @@ class Employe(BaseModel):
         d_control_data['repqual'] = {
             'plot': {'k': 'pie', 'd': df_qual, 'o': {'hover': True}},
             'rows': [('title', [{'content': 'title', 'value': 'Repartition des qualifications', 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])]
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
                 }
 
         df_empl = df[['prenom', 'emploie']].groupby('emploie')\
@@ -160,7 +161,8 @@ class Employe(BaseModel):
         d_control_data['repempl'] = {
             'plot': {'k': 'pie', 'd': df_empl, 'o': {'hover': True}},
             'rows': [('title', [{'content': 'title', 'value': 'Repartition des emploie', 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])]
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 1
                 }
 
         return d_control_data

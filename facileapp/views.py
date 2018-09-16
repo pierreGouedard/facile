@@ -103,8 +103,9 @@ def form():
             web, data = build_form(request.args['table'], request, deform_template_path, step=step, force_get=True,
                                    data=data['form_data'])
         else:
+            step = request.form['step']
             d_data = {k: request.form.get(k, '') for k in ['action', 'nb_step', 'index']}
-            title = get_title_from_step(int(request.form['step']), d_data)
+            title = get_title_from_step(int(step), d_data)
             custom_template = Template(render_template('form.html', form=Markup(boostrap.get_form_layout(title))))
 
         # Generate table

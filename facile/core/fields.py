@@ -136,8 +136,8 @@ class MoneyFields(object):
 
 
 class DateFields(object):
-    def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None, desc=None,
-                 table_reduce=False, rank=0):
+    def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None,
+                 desc=None, table_reduce=False, rank=0):
 
         self.title = title
         self.name = name
@@ -220,8 +220,8 @@ class MappingFields(object):
         self.round = round
         self.mapinit = {f.name: f.mapinit for f in l_fields}
 
-        self.processing_form = {'form': lambda x: {f.name: f.processing_form(x[f.name]) for f in self.l_fields},
-                                'db': lambda x: {f.sn.name: f.processing_db(x[f.name]) for f in self.l_fields}}
+        self.processing_form = {'form': lambda x: {f.name: f.processing_form['db'](x[f.name]) for f in self.l_fields},
+                                'db': lambda x: {f.sn.name: f.processing_form['db'](x[f.name]) for f in self.l_fields}}
 
         self.sn = Schema(title=self.title, name=name, description=desc, widget=widget)
         for f in self.l_fields:
@@ -244,8 +244,8 @@ class SequenceFields(object):
         self.round = round
 
         self.mapinit = [field.mapinit]
-        self.processing_form = {'form': lambda x: [field.processing_form(d) for d in x],
-                                'db': lambda x: lambda x: [field.processing_db(d) for d in x]}
+        self.processing_form = {'form': lambda x: [field.processing_form['db'](d) for d in x],
+                                'db': lambda x: [field.processing_form['db'](d) for d in x]}
 
         self.sn = sn(Sequence(), field.sn, name=self.name, title=self.title, description=self.desc, widget=widget)
 

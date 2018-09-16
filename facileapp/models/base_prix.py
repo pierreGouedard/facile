@@ -27,17 +27,23 @@ class Base_prix(BaseModel):
         return l_fields
 
     @staticmethod
-    def list(kw):
+    def list(kw, **kwargs):
 
         d_month = {1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}',
                    7: 'Juillet {}', 8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}',
                    12: 'Decembre {}'}
 
         if kw == 'base':
-            l_dates = pd.DatetimeIndex(start=pd.Timestamp.now().date() - pd.Timedelta(days=90),
-                                       end=pd.Timestamp.now().date() + pd.Timedelta(days=90),
+            l_dates = pd.DatetimeIndex(start=pd.Timestamp.now().date() - pd.Timedelta(days=kwargs.get('b', 90)),
+                                       end=pd.Timestamp.now().date() + pd.Timedelta(days=kwargs.get('a', 90)),
                                        freq='M')
             return [(d_month[t.month].format(t.year), d_month[t.month].format(t.year)) for t in l_dates]
+
+        if kw == 'base_date':
+            l_dates = pd.DatetimeIndex(start=pd.Timestamp.now().date() - pd.Timedelta(days=kwargs.get('b', 90)),
+                                       end=pd.Timestamp.now().date() + pd.Timedelta(days=kwargs.get('a', 90)),
+                                       freq='M')
+            return [(d_month[t.month].format(t.year), t) for t in l_dates]
 
         elif kw == 'current_base':
             t = pd.Timestamp.now().date()
@@ -115,3 +121,23 @@ class Base_prix(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {}
+        df = Base_prix.load_db()
+
+        d_filter = dict(zip([t[0] for t in Base_prix.list('base_date', **{'b': 300, 'a': 0})], [True] * 10))
+        d_transform = dict(Base_prix.list('base_date', **{'b': 300, 'a': 0}))
+
+        df_ = df.loc[df.nom.apply(lambda x: d_filter.get(x, False)), ['nom', 'prix_heure_ch', 'prix_heure_be']]
+        df_['nom'] = df_.nom.apply(lambda x: d_transform[x])
+
+        d_control_data['repqual'] = {
+            'plot': {'k': 'series', 'd': df_.set_index('nom', drop=True)},
+            'rows': [('title', [{'content': 'title', 'value': 'Evolution de la base de prix', 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+                }
+
+        return d_control_data

@@ -186,3 +186,55 @@ class Commande(BaseModel):
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {}
+        df = Commande.load_db()
+
+        # App 1 Commande en cours par affaire
+        df_com_aff = df[['affaire_id', 'montant_ttc']].groupby(['affaire_id'])\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'affaire_id': 'label'})
+
+        d_control_data['comaffaire'] = {
+            'plot': {'k': 'bar', 'd': df_com_aff, 'o': {'val_col': 'montant_ttc'}},
+            'rows': [('title', [{'content': 'title', 'value': "Commande par affaire", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+        }
+
+        # Load table manager
+        table_man = TableLoader(Commande.l_index, Commande.l_fields())
+
+        # App 2 table of command waiting for mandat
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_mandated == 'no'])
+
+        d_control_data['tablenomandat'] = {
+            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
+            'rows': [('title', [{'content': 'title', 'value': 'Commande en attente de mandat', 'cls': 'text-center'}]),
+                     ('Table', [{'content': 'table'}])],
+            'rank': 1
+                }
+        # App 3 table of command waiting for payment
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_mandated == 'yes') & (df.is_payed == 'no')])
+
+        d_control_data['tablenopayement'] = {
+            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'mandat'},
+            'rows': [('title', [{'content': 'title', 'value': 'Commandes a payer', 'cls': 'text-center'}]),
+                     ('Table', [{'content': 'table'}])],
+            'rank': 2
+                }
+
+        # App 4 table of Commande payed
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_payed == 'yes'])
+
+        d_control_data['tablepayment'] = {
+            'table': {'df': df_, 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'payement'},
+            'rows': [('title', [{'content': 'title', 'value': 'Commandes payees', 'cls': 'text-center'}]),
+                     ('Table', [{'content': 'table'}])],
+            'rank': 3
+                }
+
+        return d_control_data

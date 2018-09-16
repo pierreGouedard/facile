@@ -20,6 +20,12 @@ class PlotRerenderer(object):
 
         if self.key == 'pie':
             bokeh_plot = bp.plot_pie(data, **kwargs)
+        elif self.key == 'bar':
+            bokeh_plot = bp.bar_plot(data, val_col=kwargs['val_col'])
+        elif self.key == 'stack_bar':
+            bokeh_plot = bp.stack_bar_plot(data, cat_cols=kwargs['cat_cols'])
+        elif self.key == 'series':
+            bokeh_plot = bp.plot_series(data)
         else:
             raise NotImplementedError('{} not implemented yet')
 

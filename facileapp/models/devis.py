@@ -44,7 +44,7 @@ class Devis(BaseModel):
                  DateFields(title='Date de debut', name='date_start'),
                  DateFields(title='Date de fin', name='date_end'),
                  StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-                 FloatFields(title='Prix', name='price', widget=MoneyInputWidget(readonly=True), round=2,
+                 FloatFields(title='Prix', name='price', round=2,
                              table_reduce=True, rank=3)]
         else:
             l_fields = \
@@ -157,11 +157,11 @@ class Devis(BaseModel):
                                         float(data.get('montant_achat', 0)))
 
             data.update({k: v for k, v in Base_prix.get_price(data.get('base_prix', 'Janvier 2018')).items() +
-                         [('price', price)]})
+                        [('price', price)]})
 
             l_fields = [
-                FloatFields(title="Prix heure Ch", name='prix_heure_ch', round=2, widget=TextInputWidget(readonly=True)),
-                FloatFields(title="Prix heure Ch", name='prix_heure_be', round=2, widget=TextInputWidget(readonly=True))
+                FloatFields(title="Prix heure Ch", name='prix_heure_ch', round=2),
+                FloatFields(title="Prix heure Ch", name='prix_heure_be', round=2)
             ] + Devis.l_fields(widget=True)
 
         else:
@@ -210,3 +210,22 @@ class Devis(BaseModel):
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
+
+    @staticmethod
+    def control_loading():
+        d_control_data = {}
+        df = Devis.load_db()
+
+        # App 2 amount of digned affaire by charge d'aff
+        df_chardaff = df[['responsable', 'price']].groupby('responsable')\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'responsable': 'label'})
+
+        d_control_data['devisresp'] = {
+            'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'price'}},
+            'rows': [('title', [{'content': 'title', 'value': "Devis envoye par charge d'affaire", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+        }
+        return d_control_data

@@ -157,7 +157,8 @@ class BaseModel(object):
         d_control_data = {'noapp': {'rows': [('title', [{'content': 'title',
                                                          'value': 'Aucun controle disponnible',
                                                          'cls': 'text-center'}]
-                                              )]
+                                              )],
+                                    'rank': 0
                                     }
                           }
 

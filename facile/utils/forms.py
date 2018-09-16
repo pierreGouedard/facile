@@ -131,15 +131,15 @@ def process_form(table_key, d_data, action):
 
 def generic_process_form(l_index, l_fields, model, action, d_data=None):
     if 'Ajouter' in action:
-        model({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index},
-              {f.name: f.type(f.processing_db(d_data[f.name])) for f in l_fields}) \
+        model({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index},
+              {f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_fields}) \
             .add()
     elif 'Suprimer' in action:
-        model.from_index_({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index}).delete()
+        model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index}).delete()
     else:
-        model_ = model.from_index_({f.name: f.type(f.processing_db(d_data[f.name])) for f in l_index})
+        model_ = model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index})
         for f in l_fields:
-            model_.__setattr__(f.name, f.type(f.processing_db(d_data[f.name])))
+            model_.__setattr__(f.name, f.type(f.processing_db["upload"](d_data[f.name])))
         model_.alter()
 
 

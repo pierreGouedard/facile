@@ -142,3 +142,4 @@ class Affaire(BaseModel):
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
+

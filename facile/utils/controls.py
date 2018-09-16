@@ -4,10 +4,7 @@ from jinja2 import Template
 
 # Local import
 from facileapp.models.employe import Employe
-from facileapp.models.fournisseur import Fournisseur
-from facileapp.models.client import Client
-from facileapp.models.contact import Contact
-from facileapp.models.chantier import Chantier
+from facileapp.models.views.feuille_travaux import FeuilleTravaux
 from facileapp.models.base_prix import Base_prix
 from facileapp.models.affaire import Affaire
 from facileapp.models.devis import Devis
@@ -16,80 +13,39 @@ from facileapp.models.commande import Commande
 from facileapp.models.heure import Heure
 from facile.layout import boostrap
 from facile.core.plot_renderer import PlotRerenderer
+from facile.tables.html_table import Table
 
 
 def build_controls(table_key):
 
     if table_key == 'employe':
-
         d_control_data = Employe.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
-
-    elif table_key == 'fournisseur':
-        d_control_data = Fournisseur.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
-
-    elif table_key == 'client':
-        d_control_data = Client.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
-
-    elif table_key == 'contact':
-        d_control_data = Contact.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
-
-    elif table_key == 'chantier':
-        d_control_data = Chantier.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     elif table_key == 'base_prix':
         d_control_data = Base_prix.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     elif table_key == 'affaire':
-        d_control_data = Affaire.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
+        d_control_data = FeuilleTravaux.control_loading()
 
     elif table_key == 'devis':
         d_control_data = Devis.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     elif table_key == 'facture':
         d_control_data = Facture.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     elif table_key == 'commande':
         d_control_data = Commande.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     elif table_key == 'heure':
         d_control_data = Heure.control_loading()
-        template_app_container = Template(
-            render_template('control.html', control=Markup(boostrap.get_control_layout(d_control_data.keys())))
-        )
 
     else:
         raise ValueError('key not understood {}'.format(table_key))
 
+    l_apps = map(lambda (k, v): k, sorted(d_control_data.items(), key=lambda (k, v): v['rank']))
+    template_app_container = Template(
+        render_template('control.html', control=Markup(boostrap.get_control_layout(l_apps)))
+    )
     html = generic_control_renderer(d_control_data, template_app_container)
 
     return html
@@ -108,7 +64,9 @@ def generic_control_renderer(d_control_data, template_app_container):
                     plot_data = d_data['plot']
 
                 elif d['content'] == 'table':
-                    print 'TODO'
+                    d_ = d_data['table']
+                    table = Table(d_['df'].columns, 'overview-{}'.format(d_['key']), load_jQuery=True, **d_['kwargs'])
+                    d_context['table'] = Markup(table.render_table_from_pandas(d_['df'], d_footer=d_['d_footer']))
 
                 elif d['content'] == 'form':
                     print 'TODO'

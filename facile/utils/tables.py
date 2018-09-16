@@ -1,20 +1,19 @@
 # Global import
 
 # Local import
-from facileapp.models.employe import Employe
-from facileapp.models.fournisseur import Fournisseur
-from facileapp.models.client import Client
-from facileapp.models.contact import Contact
-from facileapp.models.chantier import Chantier
-from facileapp.models.base_prix import Base_prix
-from facileapp.models.affaire import Affaire
-from facileapp.models.feuille_travaux import FeuilleTravaux
-from facileapp.models.devis import Devis
-from facileapp.models.facture import Facture
-from facileapp.models.commande import Commande
-from facileapp.models.heure import Heure
-
 from facile.tables import html_table
+from facileapp.models.affaire import Affaire
+from facileapp.models.base_prix import Base_prix
+from facileapp.models.chantier import Chantier
+from facileapp.models.client import Client
+from facileapp.models.commande import Commande
+from facileapp.models.contact import Contact
+from facileapp.models.devis import Devis
+from facileapp.models.employe import Employe
+from facileapp.models.facture import Facture
+from facileapp.models.fournisseur import Fournisseur
+from facileapp.models.heure import Heure
+from facileapp.models.views.feuille_travaux import FeuilleTravaux
 
 
 def build_table(table_key, reduced=True, load_jQuery=False, head_class="table-active"):
