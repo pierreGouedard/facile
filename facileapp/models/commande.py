@@ -18,8 +18,8 @@ from facileapp.models.fournisseur import Fournisseur
 class Commande(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'commande.csv')
-    l_index = [IntegerFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
-                             rank=0)]
+    l_index = [StringFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
+                            rank=0)]
     l_documents = [('comande', 'Resume de Commande')]
     l_actions = map(lambda x: (x.format('une commande'), x.format('une commande')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -29,11 +29,11 @@ class Commande(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
-                               table_reduce=True, rank=1),
+                [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
+                              table_reduce=True, rank=1),
                  StringFields(title='Fournisseur', name='rs_fournisseur', l_choices=Commande.list('fournisseur'),
                               table_reduce=True, rank=2),
-                 IntegerFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
+                 StringFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
                  StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
                  FloatFields(title='Montant Commande HT', name='montant_ht'),
                  FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
@@ -42,15 +42,15 @@ class Commande(BaseModel):
                  IntegerFields(title="Nombre d'article", name='nb_article', l_choices=zip(range(100), range(100)),
                                table_reduce=True, rank=4),
                  StringFields(title="Liste des articles", name='l_article'),
-                 StringFields(title='Mandat', name='is_mandated',
-                              widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_mandated'})),
+                 StringFields(title='Visa', name='is_visa',
+                              widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_visa'})),
                  StringFields(title='Paiement', name='is_payed',
                               widget=RadioChoiceWidget(values=Commande.list('statue'), **{'key': 'is_payed'}))]
         else:
             l_fields = \
-                [IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
+                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
                  StringFields(title='Fournisseur', name='rs_fournisseur', table_reduce=True, rank=2),
-                 IntegerFields(title='Chantier', name='chantier_id'),
+                 StringFields(title='Chantier', name='chantier_id'),
                  StringFields(title='Responsable reception', name='responsable'),
                  FloatFields(title='Montant Commande HT', name='montant_ht'),
                  FloatFields(title='Taux TVA', name='taux_tva'),
@@ -58,7 +58,7 @@ class Commande(BaseModel):
                  FloatFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
                  IntegerFields(title="Nombre d'article", name='nb_article', table_reduce=True, rank=4),
                  StringFields(title="Liste des articles", name='l_article'),
-                 StringFields(title='Mandat', name='is_mandated'),
+                 StringFields(title='Visa', name='is_visa'),
                  StringFields(title='Paiement', name='is_payed')]
 
         return l_fields
@@ -73,7 +73,7 @@ class Commande(BaseModel):
         elif kw == 'employe':
             return zip(Employe.get_employes(), Employe.get_employes())
         elif kw == 'affaire':
-            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
+            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
         elif kw == 'statue':
             return [('oui', 'Oui'), ('non', 'Non')]
         elif kw == 'tva':
@@ -110,7 +110,7 @@ class Commande(BaseModel):
         commande_id_ = self.commande_id
 
         if self.commande_id == -1 or self.commande_id is None:
-            self.commande_id = df.commande_id.apply(lambda x: int(x)).max() + 1
+            self.commande_id = 'CM{0:0=4d}'.format(df.commande_id.apply(lambda x: int(x.replace('CM', ''))).max() + 1)
 
         self.montant_ttc, self.montant_tva = Commande.get_montant(self.__getattribute__('montant_ht'),
                                                                   self.__getattribute__('taux_tva'))

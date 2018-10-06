@@ -33,8 +33,8 @@ class Heure(BaseModel):
             l_fields = \
                 [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
                               rank=1),
-                 IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
-                               table_reduce=True,  rank=2),
+                 StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
+                              table_reduce=True,  rank=2),
                  StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe'), table_reduce=True,
                               rank=3),
                  IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', l_choices=zip(range(100), range(100)),
@@ -44,7 +44,7 @@ class Heure(BaseModel):
         else:
             l_fields = \
                 [StringFields(title="Semaine", name='semaine', table_reduce=True, rank=1),
-                 IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True,  rank=2),
+                 StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True,  rank=2),
                  StringFields(title="Nom de l'employe", name='employe', table_reduce=True, rank=3),
                  IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0, table_reduce=True, rank=4),
                  IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0, table_reduce=True, rank=5)]
@@ -62,7 +62,7 @@ class Heure(BaseModel):
         if kw == 'employe':
             return zip(Employe.get_employes(), Employe.get_employes())
         elif kw == 'affaire':
-            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
+            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
         elif kw == 'week':
             current_monday = dates.get_current_start_date()
             l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=70),

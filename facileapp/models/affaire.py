@@ -5,7 +5,7 @@ from deform.widget import HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields
+from facile.core.fields import StringFields, IntegerFields, FloatFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -16,10 +16,15 @@ from facileapp.models.employe import Employe
 class Affaire(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'affaire.csv')
-    l_index = [IntegerFields(title="Numero d'affaire", name='affaire_id', widget=HiddenWidget(), table_reduce=True,
-                             rank=0)]
+    l_index = [StringFields(title="Numero d'affaire", name='affaire_num', widget=HiddenWidget(), table_reduce=True,
+                            rank=0),
+               StringFields(title="Indice de l'affaire", name='affaire_ind', widget=HiddenWidget(), table_reduce=True,
+                            rank=1)
+               ]
     l_documents = [('ftravaux', 'Feuille de travaux')]
-    l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions)
+    l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions) + \
+        [('Ajouter une affaire secondaire', 'Ajouter une affaire secondaire')]
+
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
@@ -27,15 +32,17 @@ class Affaire(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [IntegerFields(title="Numero de devis", name='devis_id', l_choices=Affaire.list('devis'), table_reduce=True,
-                               rank=1),
+                [StringFields(title="Numero de devis", name='devis_id', l_choices=Affaire.list('devis'), table_reduce=True,
+                               rank=2),
                 StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'),
-                             table_reduce=True, rank=2)]
+                             table_reduce=True, rank=3),
+                FloatFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
 
         else:
             l_fields = \
-                [IntegerFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=1),
-                StringFields(title='Responsable', name='responsable', table_reduce=True, rank=2)]
+                [StringFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=2),
+                 StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
+                 FloatFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
 
         return l_fields
 
@@ -70,42 +77,63 @@ class Affaire(BaseModel):
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
     @staticmethod
-    def get_affaire(path=None):
-        return Affaire.load_db(path)['affaire_id'].unique()
+    def get_affaire(path=None, sep=' '):
+        df = Affaire.load_db(path)
+        return df[['affaire_num', 'affaire_ind']]\
+            .apply(lambda r: '{}'.format(sep).join([r['affaire_num'], r['affaire_ind']]), axis=1)\
+            .unique()
 
     def add(self):
         df = self.load_db(self.path)
 
         # Save current contact id
-        affaire_id_ = self.affaire_id
+        affaire_num_ = self.affaire_num
+        affaire_ind_ = self.affaire_ind
+        code_year = str(pd.Timestamp.now().year)[-2:]
 
-        if self.affaire_id == -1 or self.affaire_id is None:
-            self.affaire_id = df.affaire_id.apply(lambda x: int(x)).max() + 1
+        if self.affaire_num == '' or self.affaire_num is None:
+            self.affaire_num = 'AF{}'.format(code_year) + '{0:0=4d}'.format(
+                df.affaire_num.apply(lambda x: int(x.replace('AF{}'.format(code_year), ''))).max() + 1
+            )
+
+        if self.affaire_ind == '' or self.affaire_ind is None:
+            df_sub = df.loc[df.affaire_num == self.affaire_num]
+            if not df_sub.empty:
+                self.affaire_ind = '{0:0=3d}'.format(int(df_sub.affaire_ind.apply(lambda x: int(x)).max() + 1))
+            else:
+                self.affaire_ind = '{0:0=3d}'.format(1)
 
         # Try to add and reset conatct id if failed
         try:
             super(Affaire, self).add()
         except ValueError, e:
-            self.affaire_id = affaire_id_
+            self.affaire_num = affaire_num_
+            self.affaire_ind = affaire_ind_
+
             raise ValueError(e.message)
 
     @staticmethod
     def form_loading(step, index=None, data=None):
-
         if index is not None:
-            d_index = {Affaire.l_index[0].name: Affaire.l_index[0].type(index)}
+            l_index = [sch.name for sch in Affaire.l_index]
+            d_index = {k: v for k, v in zip(l_index, index.split('-'))}
         else:
             d_index = None
 
         form_man = FormLoader(Affaire.l_index, Affaire.l_fields(widget=True))
 
         if step % Affaire.nb_step_form == 0:
-            index_node = IntegerFields(title="Numero d'affaire", name='index', missing=-1,
-                                       l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire()),
-                                       desc="En cas de modification choisir un numero d'affaire",)
+            index_node = StringFields(title="Numero d'affaire", name='index', missing=-1,
+                                      l_choices=zip(Affaire.get_affaire(sep='-'), Affaire.get_affaire(sep=' - ')),
+                                      desc="En cas de modification: choisir un numero d'affair.\n"
+                                            "En cas d'affaire secondaire: choisir le numero assortie de l'indice "
+                                            "le plus eleve")
             form_man.load_init_form(Affaire.action_field, index_node)
 
         else:
+            if 'Ajouter une affaire secondaire' == data['action'] and 'affaire_num' not in data:
+                data['affaire_num'] = d_index['affaire_num']
+
             data_db = None
             if d_index is not None:
                 data_db = Affaire.from_index_(d_index).__dict__

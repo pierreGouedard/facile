@@ -17,8 +17,8 @@ from facileapp.models.employe import Employe
 class Facture(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'facture.csv')
-    l_index = [IntegerFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
-                             rank=0)]
+    l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
+                            rank=0)]
     l_documents = [('facture', 'Facture'), ('relance1', 'Lettre de relance 1'), ('relance2', 'Lettre de relance 2'),
                    ('relance3', 'Lettre de relance 3'), ('misede', 'Lettre de mise en demeure')]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
@@ -29,34 +29,29 @@ class Facture(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [IntegerFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
+                [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
                                table_reduce=True, rank=1),
+                 StringFields(title='Type', name='type', l_choices=Facture.list('type'), table_reduce=True),
                  StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), table_reduce=True,
                               rank=2),
                  StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
                               table_reduce=True, rank=3),
                  StringFields(title='Objet', name='objet'),
                  FloatFields(title='Montant facture HT', name='montant_ht'),
-                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Facture.list('tva')),
-                 FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-                 FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=4),
-                 IntegerFields(title='Delai de paiement', name='delai_paiement', l_choices=Facture.list('delai')),
-                 StringFields(title='Mandat', name='is_mandated',
-                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_mandated'})),
+                 IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation')),
+                 StringFields(title='Visa', name='is_visa',
+                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_visa'})),
                  StringFields(title='Encaissement', name='is_payed',
                               widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_payed'}))]
         else:
             l_fields = \
-                [IntegerFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
+                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
                  StringFields(title='Client', name='rs_client', table_reduce=True, rank=2),
                  StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
                  StringFields(title='Objet', name='objet'),
                  FloatFields(title='Montant facture HT', name='montant_ht'),
-                 FloatFields(title='Taux TVA', name='taux_tva'),
-                 FloatFields(title='Montant TVA', name='montant_tva'),
-                 FloatFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=4),
-                 IntegerFields(title='Delai de paiement', name='delai_paiement'),
-                 StringFields(title='Mandat', name='is_mandated'),
+                 IntegerFields(title='Numero de situation', name='situation'),
+                 StringFields(title='Visa', name='is_visa'),
                  StringFields(title='Encaissement', name='is_payed')]
 
         return l_fields
@@ -70,13 +65,13 @@ class Facture(BaseModel):
             return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
                        Employe.get_employes(**{'qualification': 'charge affaire'}))
         elif kw == 'affaire':
-            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
+            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
         elif kw == 'statue':
             return [('oui', 'Oui'), ('non', 'Non')]
-        elif kw == 'delai':
-            return [(i, '{} mois'.format(i)) for i in range(12)]
-        elif kw == 'tva':
-            return [(0.2, '20%'), (0.1, '10%'), (0.055, '5,5%'), (0.021, '2,1%')]
+        elif kw == 'situation':
+            return [(i, 'Situation numero {}'.format(i)) for i in range(6)]
+        elif kw == 'type':
+            return [('facture', 'Facture'), ('avoir', 'Avoir')]
         else:
             return []
 
@@ -105,14 +100,19 @@ class Facture(BaseModel):
     def add(self):
         df = self.load_db(self.path)
 
-        # Save current contact id
+        # Save current facture id
         facture_id_ = self.facture_id
 
         if self.facture_id == -1 or self.facture_id is None:
-            self.facture_id = df.facture_id.apply(lambda x: int(x)).max() + 1
+            df = df.loc[df.type == self.type]
 
-        self.montant_ttc, self.montant_tva = Facture.get_montant(self.__getattribute__('montant_ht'),
-                                                                 self.__getattribute__('taux_tva'))
+            if self.type == 'facture':
+                self.facture_id = 'FC{0:0=4d}'.format(df.facture_id.apply(lambda x: int(x.replace('FC', ''))).max() + 1)
+
+            else:
+                self.facture_id = 'AV{0:0=4d}'.format(df.facture_id.apply(lambda x: int(x.replace('AV', ''))).max() + 1)
+                if self.montant_ht > 0:
+                    self.montant_ht *= -1
 
         # Try to add and reset conatct id if failed
         try:
@@ -121,18 +121,6 @@ class Facture(BaseModel):
         except ValueError, e:
             self.facture_id = facture_id_
             raise ValueError(e.message)
-
-    def alter(self):
-
-        self.montant_ttc, self.montant_tva = Facture.get_montant(self.__getattribute__('montant_ht'),
-                                                                 self.__getattribute__('taux_tva'))
-
-        super(Facture, self).alter()
-
-    @staticmethod
-    def get_montant(montant_ht, taux_tva):
-        montant_tva = taux_tva * montant_ht
-        return montant_tva + montant_ht, montant_tva
 
     @staticmethod
     def form_loading(step, index=None, data=None):

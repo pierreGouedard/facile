@@ -54,7 +54,7 @@ def log_out():
    return redirect(url_for('home'))
 
 
-@app.route('/form', methods=['GET', 'POST'])
+@app.route('/forms', methods=['GET', 'POST'])
 def form():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -120,7 +120,7 @@ def form():
     return html
 
 
-@app.route('/export', methods=['GET', 'POST'])
+@app.route('/exports', methods=['GET', 'POST'])
 def export():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -159,7 +159,7 @@ def export():
     return html
 
 
-@app.route('/document', methods=['GET', 'POST'])
+@app.route('/documents', methods=['GET', 'POST'])
 def document():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -194,7 +194,7 @@ def document():
     return html
 
 
-@app.route('/control', methods=['GET', 'POST'])
+@app.route('/controls', methods=['GET', 'POST'])
 def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))

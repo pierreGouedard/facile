@@ -20,7 +20,7 @@ class Devis(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'devis.csv')
 
-    l_index = [IntegerFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
                              rank=0)]
     l_documents = [('devis', 'Devis')]
     l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
@@ -33,8 +33,8 @@ class Devis(BaseModel):
             l_fields = \
                 [StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True,
                               rank=1),
-                 IntegerFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
-                 IntegerFields(title='Chantier', name='chantier_id', l_choices=Devis.list('chantier')),
+                 StringFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
+                 StringFields(title='Chantier', name='chantier_id', l_choices=Devis.list('chantier')),
                  StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
                               table_reduce=True, rank=2),
                  IntegerFields(title="Nombre d'heure BE", name='heure_be', l_choices=zip(range(9000), range(9000))),
@@ -49,8 +49,8 @@ class Devis(BaseModel):
         else:
             l_fields = \
                 [StringFields(title='Client', name='rs_client', table_reduce=True, rank=1),
-                 IntegerFields(title='Contact', name='contact_id'),
-                 IntegerFields(title='Chantier', name='chantier_id'),
+                 StringFields(title='Contact', name='contact_id'),
+                 StringFields(title='Chantier', name='chantier_id'),
                  StringFields(title='Responsable', name='responsable', table_reduce=True, rank=2),
                  IntegerFields(title="Nombre d'heure BE", name='heure_be'),
                  IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
@@ -109,7 +109,7 @@ class Devis(BaseModel):
         devis_id_ = self.devis_id
 
         if self.devis_id == -1 or self.devis_id is None:
-            self.devis_id = df.devis_id.apply(lambda x: int(x)).max() + 1
+            self.devis_id = 'DV{0:0=4d}'.format(df.devis_id.apply(lambda x: int(x.replace('DV', ''))).max() + 1)
 
         self.price = Devis.compute_price({'be': self.__getattribute__('heure_be'),
                                           'ch': self.__getattribute__('heure_ch')},

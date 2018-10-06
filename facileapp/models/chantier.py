@@ -17,7 +17,7 @@ from facileapp.models.employe import Employe
 class Chantier(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'chantier.csv')
-    l_index = [IntegerFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0)]
+    l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0)]
     l_subindex = [0, 1]
     l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -30,7 +30,7 @@ class Chantier(BaseModel):
                 [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
                               table_reduce=True, rank=1),
                  StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
-                 IntegerFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
+                 StringFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
                  StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
                               table_reduce=True, rank=0),
                  StringFields(title='Adresse', name='adresse'),
@@ -43,7 +43,7 @@ class Chantier(BaseModel):
             l_fields = \
                 [StringFields(title='Raison social du client', name='rs_client', table_reduce=True, rank=1),
                  StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
-                 IntegerFields(title='Contact exterieur', name='contact_id'),
+                 StringFields(title='Contact exterieur', name='contact_id'),
                  StringFields(title='Responsable du chantier', name='responsable', table_reduce=True, rank=0),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
@@ -117,7 +117,7 @@ class Chantier(BaseModel):
         chantier_id_ = self.chantier_id
 
         if self.chantier_id == -1 or self.chantier_id is None:
-            self.chantier_id = df.chantier_id.apply(lambda x: int(x)).max() + 1
+            self.chantier_id = 'CH{0:0=4d}'.format(df.chantier_id.apply(lambda x: int(x.replace('CH', ''))).max() + 1)
 
         # Try to add and reset conatct id if failed
         try:

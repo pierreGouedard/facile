@@ -16,8 +16,8 @@ from facileapp.models.client import Client
 class Contact(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'contact.csv')
-    l_index = [IntegerFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
-                             rank=0)]
+    l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
+                            rank=0)]
     l_subindex = [0, 1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -125,15 +125,17 @@ class Contact(BaseModel):
 
     def add(self):
         df = self.load_db(self.path)
+
         # Save current contact id
         contact_id_ = self.contact_id
 
         if self.contact_id == -1 or self.contact_id is None:
-            self.contact_id = df.contact_id.apply(lambda x: int(x)).max() + 1
+            self.contact_id = 'CT{0:0=4d}'.format(df.contact_id.apply(lambda x: int(x.replace('CT', ''))).max() + 1)
 
-        # Try to add and reset conatct id if failed
+        # Try to add and reset contact id if failed
         try:
             super(Contact, self).add()
+
         except ValueError, e:
             self.contact_id = contact_id_
             raise ValueError(e.message)

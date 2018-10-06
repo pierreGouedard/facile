@@ -28,47 +28,57 @@ class FeuilleTravaux(BaseView):
                       on='devis_id', how='left')
 
         # Join billing information
+        # TODO: separate situations
         df_facture = Facture.load_db()
+        df_facture['affaire_num'] = df_facture.affaire_id.apply(lambda x: x.split('-')[0])
+        df_facture['affaire_ind'] = df_facture.affaire_id.apply(lambda x: x.split('-')[1])
 
-        df_facture_ = df_facture[['affaire_id', 'montant_ttc']]\
-            .groupby(['affaire_id'])\
+        df_facture_ = df_facture[['affaire_num', 'affaire_ind', 'montant_ht']]\
+            .groupby(['affaire_num', 'affaire_ind'])\
             .sum()\
-            .rename(columns={'montant_ttc': 'montant_facture'})\
+            .rename(columns={'montant_ht': 'montant_facture'})\
             .reset_index()
 
-        df = df.merge(df_facture_, on='affaire_id', how='left')
+        df = df.merge(df_facture_, on=['affaire_num', 'affaire_ind'], how='left')
         df = df.fillna({'montant_facture': 0.0})
 
-        df_encaisse = df_facture[['affaire_id', 'is_payed', 'montant_ttc']]\
-            .groupby(['affaire_id', 'is_payed'])\
+        df_encaisse = df_facture[['affaire_num', 'affaire_ind', 'is_payed', 'montant_ht']]\
+            .groupby(['affaire_num', 'affaire_ind', 'is_payed'])\
             .sum()\
-            .rename(columns={'montant_ttc': 'montant_encaisse'})\
-            .reset_index(level=0)\
+            .rename(columns={'montant_ht': 'montant_encaisse'})\
+            .reset_index(level=[0, 1])\
             .loc['yes', :]\
             .reset_index(drop=True)
 
-        df = df.merge(df_encaisse, on='affaire_id', how='left')
+        df = df.merge(df_encaisse, on=['affaire_num', 'affaire_ind'], how='left')
         df = df.fillna({'montant_encaisse': 0.0})
 
         # Join command information
         df_commande = Commande.load_db()
-        df_commande = df_commande[['affaire_id', 'montant_ttc']]\
-            .groupby(['affaire_id'])\
+        df_commande['affaire_num'] = df_commande.affaire_id.apply(lambda x: x.split('-')[0])
+        df_commande['affaire_ind'] = df_commande.affaire_id.apply(lambda x: x.split('-')[1])
+
+        df_commande = df_commande[['affaire_num', 'affaire_ind', 'montant_ttc']]\
+            .groupby(['affaire_num', 'affaire_ind'])\
             .sum()\
             .rename(columns={'montant_ttc': 'montant_commande'})\
             .reset_index()
-        df = df.merge(df_commande, on='affaire_id', how='left')
+
+        df = df.merge(df_commande, on=['affaire_num', 'affaire_ind'], how='left')
         df = df.fillna({'montant_commande': 0.0})
 
         # Join heures information
         df_heure = Heure.load_db()
-        df_heure = df_heure[['affaire_id', 'nb_heure_be', 'nb_heure_ch']]\
-            .groupby(['affaire_id'])\
+        df_heure['affaire_num'] = df_heure.affaire_id.apply(lambda x: x.split('-')[0])
+        df_heure['affaire_ind'] = df_heure.affaire_id.apply(lambda x: x.split('-')[1])
+
+        df_heure = df_heure[['affaire_num', 'affaire_ind', 'nb_heure_be', 'nb_heure_ch']]\
+            .groupby(['affaire_num', 'affaire_ind'])\
             .sum()\
             .rename(columns={'nb_heure_be': 'nb_heure_be_provided', 'nb_heure_ch': 'nb_heure_ch_provided'})\
             .reset_index()
 
-        df = df.merge(df_heure, on='affaire_id', how='left')
+        df = df.merge(df_heure, on=['affaire_num', 'affaire_ind'], how='left')
         df = df.fillna({'nb_heure_be_provided': 0.0, 'nb_heure_ch_provided': 0.0})
 
         return df

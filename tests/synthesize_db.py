@@ -24,7 +24,7 @@ class Synthesizer():
         self.n_contact_client = 10
         self.n_contact_fournisseur = 15
         self.n_chantier = 5
-        self.l_affaires = range(4)
+        self.l_affaires = ['AF18{0:0=4d}-001'.format(i) for i in range(4)]
         self.d_month = {1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}',
                         7: 'Juillet {}', 8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}',
                         12: 'Decembre {}'}
@@ -195,7 +195,7 @@ class Synthesizer():
 
         d_contact_client = {
             i: {
-                'contact_id': i,
+                'contact_id': 'CT{0:0=4d}'.format(i),
                 'type': 'client',
                 'raison_social': 'client {}'.format(i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
@@ -212,7 +212,7 @@ class Synthesizer():
 
         d_contact_fournisseur = {
             i + self.n_contact_client: {
-                'contact_id': i + self.n_contact_client,
+                'contact_id': 'CT{0:0=4d}'.format(i + self.n_contact_client),
                 'type': 'fournisseur',
                 'raison_social': 'fournisseur {}'.format(i % self.n_fournisseur),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
@@ -238,10 +238,10 @@ class Synthesizer():
 
         d_chantier = {
             i: {
-                'chantier_id': i,
+                'chantier_id': 'CH{0:0=4d}'.format(i),
                 'rs_client': 'client {}'.format(i),
                 'nom': 'Chantier client {}'.format(i),
-                'contact_id': 0,
+                'contact_id': 'CT{0:0=4d}'.format(0),
                 'adresse': self.adresse(),
                 'responsable': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)]),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
@@ -262,10 +262,10 @@ class Synthesizer():
         np.random.seed(1234)
         # Attached to affaire devis
         d_devis = {
-            i: {'devis_id': int(i),
+            i: {'devis_id': 'DV{0:0=4d}'.format(int(i)),
                 'rs_client': 'client {}'.format(i),
-                'contact_id': i,
-                'chantier_id': i,
+                'contact_id': 'CT{0:0=4d}'.format(i),
+                'chantier_id': 'CH{0:0=4d}'.format(i),
                 'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
                 'heure_be': np.random.randint(30, 100),
                 'heure_ch': np.random.randint(100, 1000),
@@ -294,11 +294,11 @@ class Synthesizer():
             return d_devis
 
         # Add un attached devis
-        d_= {len(self.l_affaires): {
-            'devis_id': len(self.l_affaires),
+        d_ = {len(self.l_affaires): {
+            'devis_id': 'DV{0:0=4d}'.format(int(len(self.l_affaires))),
             'rs_client': 'client {}'.format(len(self.l_affaires)),
-            'contact_id': len(self.l_affaires),
-            'chantier_id': len(self.l_affaires),
+            'contact_id': 'CT{0:0=4d}'.format(len(self.l_affaires)),
+            'chantier_id': 'CH{0:0=4d}'.format(len(self.l_affaires)),
             'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
             'heure_be': np.random.randint(30, 100),
             'heure_ch': np.random.randint(100, 1000),
@@ -331,10 +331,10 @@ class Synthesizer():
         np.random.seed(1234)
 
         d_commande = {
-            i: {'commande_id': i,
+            i: {'commande_id': 'CM{0:0=4d}'.format(i),
                 'affaire_id': affaire,
                 'rs_fournisseur': np.random.choice(['fournisseur {}'.format(j) for j in range(self.n_fournisseur)]),
-                'chantier_id': np.random.randint(0, self.n_chantier),
+                'chantier_id': 'CH{0:0=4d}'.format(np.random.randint(0, self.n_chantier)),
                 'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
                 'montant_ht': self.float(float(np.random.randint(1000, 20000))),
                 'taux_tva': 0.196,
@@ -342,7 +342,7 @@ class Synthesizer():
                 'montant_tva': 0.,
                 'nb_article': np.random.randint(1, 10),
                 'l_article': '',
-                'is_mandated': 'yes',
+                'is_visa': 'yes',
                 'is_payed': 'yes',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
@@ -406,21 +406,20 @@ class Synthesizer():
 
         d_devis, d_facture = self.Build_devis_table(return_dict_affaire=True), {}
 
+        # Add facture
         for k in range(3):
 
             d_ = {
                 i + (k * len(d_devis)): {
-                    'facture_id': i + (k * len(d_devis)),
+                    'Type': 'facture',
+                    'facture_id': 'FC{0:0=4d}'.format(i + (k * len(d_devis))),
                     'affaire_id': self.l_affaires[i],
                     'rs_client': d['rs_client'],
                     'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
                     'objet': 'facture num {}'.format(k),
                     'montant_ht': self.float(d['price'] / 3),
-                    'taux_tva': 0.196,
-                    'montant_ttc': 0.,
-                    'montant_tva': 0.,
-                    'delai_paiement': 3,
-                    'is_mandated': 'yes',
+                    'situation': i,
+                    'is_visa': 'yes' if k < 2 else np.random.choice(['yes', 'no']),
                     'is_payed': 'yes' if k < 2 else 'no',
                     'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                     'maj_date': str(pd.Timestamp.now())
@@ -429,11 +428,24 @@ class Synthesizer():
 
             d_facture.update(d_)
 
-        for k in d_facture.keys():
-            d_facture[k]['montant_tva'] = d_facture[k]['montant_ht'] * d_facture[k]['taux_tva']
-            d_facture[k]['montant_tva'] = self.float(d_facture[k]['montant_tva'])
-            d_facture[k]['montant_ttc'] = d_facture[k]['montant_ht'] + d_facture[k]['montant_tva']
-            d_facture[k]['montant_ttc'] = self.float(d_facture[k]['montant_ttc'])
+        # Add avoir
+        d_ = {
+            max(d_facture.keys()) + 1: {
+                'Type': 'avoir',
+                'facture_id': 'AV{0:0=4d}'.format(1),
+                'affaire_id': self.l_affaires[0],
+                'rs_client': d_devis.values()[0]['rs_client'],
+                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
+                'objet': 'avoir situation 0',
+                'montant_ht': self.float(d_devis.values()[0]['price'] / 3),
+                'situation': 0,
+                'is_visa': np.random.choice(['yes', 'no']),
+                'is_payed': 'yes',
+                'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
+                'maj_date': str(pd.Timestamp.now())
+            }
+        }
+        d_facture.update(d_)
 
         df_facture = pd.DataFrame.from_dict(
             {k: v for k, v in d_facture.items()}, orient='index'
@@ -445,11 +457,12 @@ class Synthesizer():
         self.save_database(df_facture, 'facture.csv')
 
     def Build_affaire_table(self):
-
         d_affaire = {i: {
-                'affaire_id': affaire,
-                'devis_id': i,
+                'affaire_num': affaire.split('-')[0],
+                'affaire_ind': affaire.split('-')[1],
+                'devis_id': 'DV{0:0=4d}'.format(i),
                 'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
+                'fae': 0.0,
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             } for i, affaire in enumerate(self.l_affaires)}
@@ -502,6 +515,7 @@ class Service:
         else:
             return self.service[n][0]
 
+
 class Name:
     name = ('name_{}_surname_{}', 'name_{} surname_{}')
 
@@ -513,3 +527,19 @@ class Name:
             return self.name[1].format(l, l)
         else:
             return self.name[0].format(l, l)
+
+
+if __name__ == '__main__':
+    synt = Synthesizer()
+    synt.Build_employe_table()
+    synt.Build_client_table()
+    synt.Build_fournisseur_table()
+    synt.Build_base_prix_table()
+    synt.Build_contact_table()
+    synt.Build_chantier_table()
+    synt.Build_devis_table()
+    synt.Build_commande_table()
+    synt.Build_heure_table()
+    synt.Build_facture_table()
+    synt.Build_affaire_table()
+
