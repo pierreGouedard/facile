@@ -8,3 +8,4 @@ facile_test_path = os.path.join(facile_data_path, 'TEST')
 deform_template_path = os.path.join(facile_home, 'facileapp/static/deform/templates/')
 table_template_path = os.path.join(facile_home, 'facileapp/static/table/templates')
 facile_business_closing_date = '{}-06-01'
+facile_driver_file_tmpdir = '/tmp'

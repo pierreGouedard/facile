@@ -11,14 +11,16 @@ class Form(object):
     mapping_name = {'__formid__': None, '_charset_': None}
     css_static = '<link rel="stylesheet" type="text/css" href="%s"></link>'
     js_static = '<script type="text/javascript" src="%s"></script>'
+    script = '<script type="text/javascript">{}</script>'
     href = "{{url_for('static', filename='deform/%s')}}"
 
-    def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',)):
+    def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',), use_ajax=False):
         self.request = request
         self.search_path = search_path
         self.schema = schema
         self.appstruct = appstruct
         self.buttons = buttons
+        self.use_ajax = use_ajax
 
     def validate_(self, pstruct):
         return pstruct
@@ -35,14 +37,14 @@ class Form(object):
 
         return pstruct
 
-    def process_form(self, force_get=False, validate=True, d_format=None, **kw):
+    def process_form(self, force_get=False, validate=True, d_format=None, script=None, **kw):
         success, form_data = False, None
 
         # Change default renderer path
         deform.form.Form.set_zpt_renderer(self.search_path)
 
         # Create form
-        form = deform.form.Form(self.schema, buttons=self.buttons, use_ajax=True)
+        form = deform.form.Form(self.schema, buttons=self.buttons, use_ajax=self.use_ajax)
 
         # condition of metho
         if self.request.method == 'POST' and not force_get:
@@ -82,6 +84,9 @@ class Form(object):
         d_reqts = form.get_widget_resources()
         l_js_links = [self.js_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['js']]
         l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
+
+        if script is not None:
+            l_js_links += [self.script.format(script)]
 
         # values passed to template for rendering
         d_web = {

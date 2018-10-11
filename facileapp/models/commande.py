@@ -209,7 +209,7 @@ class Commande(BaseModel):
         table_man = TableLoader(Commande.l_index, Commande.l_fields())
 
         # App 2 table of command waiting for mandat
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_mandated == 'no'])
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_visa == 'no'])
 
         d_control_data['tablenomandat'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
@@ -218,10 +218,10 @@ class Commande(BaseModel):
             'rank': 1
                 }
         # App 3 table of command waiting for payment
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_mandated == 'yes') & (df.is_payed == 'no')])
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_visa == 'yes') & (df.is_payed == 'no')])
 
         d_control_data['tablenopayement'] = {
-            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'mandat'},
+            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'visa'},
             'rows': [('title', [{'content': 'title', 'value': 'Commandes a payer', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 2

@@ -142,7 +142,7 @@ class DateFields(object):
         self.title = title
         self.name = name
         self.type = str
-
+        self.missing = missing
         self.desc = desc
 
         self.table_reduce, self.rank, = table_reduce, rank
@@ -160,11 +160,11 @@ class DateFields(object):
 
         return DateFields(self.title, self.name, self.round,
                           widget=DateInputWidget(**{'key': '{}-date'.format(self.name)}), mapinit={'date': None},
-                          processing_form=lambda x: pd.Timestamp(x['date']), desc=self.desc)
+                          processing_form=lambda x: pd.Timestamp(x['date']), desc=self.desc, missing=self.missing)
 
     def hidden_mode(self):
         return DateFields(self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
-                          processing_form=lambda x: pd.Timestamp(x))
+                          processing_form=lambda x: pd.Timestamp(x), missing=self.missing)
 
 
 class DateTimeFields(object):

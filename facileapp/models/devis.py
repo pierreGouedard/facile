@@ -21,7 +21,7 @@ class Devis(BaseModel):
     path = os.path.join(settings.facile_project_path, 'devis.csv')
 
     l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
-                             rank=0)]
+                            rank=0)]
     l_documents = [('devis', 'Devis')]
     l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -170,7 +170,7 @@ class Devis(BaseModel):
         form_man = FormLoader(Devis.l_index, l_fields)
 
         if step % Devis.nb_step_form == 0:
-            index_node = IntegerFields(title='Numero de devis', name='index', missing=-1,
+            index_node = StringFields(title='Numero de devis', name='index', missing=-1,
                                        l_choices=zip(Devis.get_devis(), Devis.get_devis()),
                                        desc="En cas de modification choisir un numero de devis",)
             form_man.load_init_form(Devis.action_field, index_node)

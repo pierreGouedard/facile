@@ -185,15 +185,15 @@ class Facture(BaseModel):
         # date_pas = dates.get_bound_from_business_year(business_year - 1)
 
         # App 1 repartition bill waiting for mandat, waiting for payment, payed for current business year
-        df_statue = df[['is_mandated', 'is_payed', 'montant_ttc']].groupby(['is_mandated', 'is_payed'])\
+        df_statue = df[['is_visa', 'is_payed', 'montant_ht']].groupby(['is_visa', 'is_payed'])\
             .sum()\
             .reset_index()
-        df_statue['name'] = df_statue[['is_mandated', 'is_payed']].apply(lambda row: name_from_row(row), axis=1)
-        df_statue = df_statue[['name', 'montant_ttc']].rename(columns={'montant_ttc': 'value'})
+        df_statue['name'] = df_statue[['is_visa', 'is_payed']].apply(lambda row: name_from_row(row), axis=1)
+        df_statue = df_statue[['name', 'montant_ht']].rename(columns={'montant_ht': 'value'})
 
         d_control_data['repstatue'] = {
             'plot': {'k': 'pie', 'd': df_statue, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': 'Repartition des facture', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': 'Repartition des factures', 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
                 }
@@ -202,19 +202,19 @@ class Facture(BaseModel):
         table_man = TableLoader(Facture.l_index, Facture.l_fields())
 
         # App 2 table of bill waiting for mandat
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_mandated == 'no'])
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_visa == 'no'])
 
         d_control_data['tablenomandat'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
-            'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de mandat', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de visa', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 1
                 }
         # App 3 table of bill waiting for payment
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_mandated == 'yes') & (df.is_payed == 'no')])
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_visa == 'yes') & (df.is_payed == 'no')])
 
         d_control_data['tablenopayement'] = {
-            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'mandat'},
+            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'visa'},
             'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de paiement', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 2
@@ -234,10 +234,10 @@ class Facture(BaseModel):
 
 
 def name_from_row(row):
-    if row['is_mandated'] == 'yes' and row['is_payed'] == 'no':
+    if row['is_visa'] == 'yes' and row['is_payed'] == 'no':
         return 'Mandate'
 
-    elif row['is_mandated'] == 'yes' and row['is_payed'] == 'yes':
+    elif row['is_visa'] == 'yes' and row['is_payed'] == 'yes':
         return 'Encaisse'
 
     else:

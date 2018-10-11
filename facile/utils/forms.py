@@ -12,7 +12,8 @@ from facileapp.models.heure import Heure
 from facile.forms import mutlistep, document
 
 
-def build_form(table_key, request, deform_template_path, step=0, force_get=True, data=None, validate=True):
+def build_form(table_key, request, deform_template_path, step=0, force_get=True, data=None, validate=True,
+               script=None):
 
     if 'index' in request.form.keys():
         index = request.form['index']
@@ -67,12 +68,26 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
         raise ValueError('key not understood {}'.format(table_key))
 
     web, data = mutlistep.MultipleStepForm(request, deform_template_path, step, nb_step_form, **d_form_data)\
-        .process_form(force_get=force_get, validate=validate, d_format=d_form_data['formatting'])
+        .process_form(force_get=force_get, validate=validate, d_format=d_form_data['formatting'], script=script)
 
     return web, data
 
 
 def process_form(table_key, d_data, action):
+
+    # Code to download document at the completion of some form (Devis, Affaire, ...)
+    data = ('"{}"'.format(table_key), '"{}"'.format(d_data['index']),
+            '"{}: {} a bien ete saisie"'.format(table_key, d_data['index']))
+
+    script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
+             '.done(function (response, status, request) { alert(%s);});' % data
+
+    if table_key in ['affaire', 'devis', 'employe']:
+        script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
+                 '.done(function (response, status, request) { alert(%s);' \
+                 'var url = response["url"].concat(response["data"]);' \
+                 'window.location = url;' \
+                 '$.ajax({method: "POST", url: "/clean_tmp_dir"});});' % data
 
     if table_key == 'employe':
         l_index, l_fields = Employe.l_index, Employe.l_fields()
@@ -128,6 +143,8 @@ def process_form(table_key, d_data, action):
             else:
                 generic_process_form(l_index, l_fields, Heure, 'Modifier', d_data_)
 
+    return script
+
 
 def generic_process_form(l_index, l_fields, model, action, d_data=None):
     if 'Ajouter' in action:
@@ -160,11 +177,16 @@ def get_args_forms(d_data):
 
 def get_title_from_step(step, data):
     action = data['action']
-    if 'Ajouter' in action:
-        title = action if step % int(data['nb_step']) > 0 else 'Choisissez une action'
+
+    if step % int(data['nb_step']) == 0:
+        title = 'Choisissez une action'
+
     else:
-        title = '{}: {}'.format(action, data.get('index', '')) if step % int(data['nb_step']) > 0 \
-            else 'Choisissez une action'
+        if 'Ajouter' in action:
+            title = action
+
+        else:
+            title = '{}: {}'.format(action, data.get('index', ''))
 
     return title
 

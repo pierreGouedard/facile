@@ -1,7 +1,7 @@
 # Global import
 from facileapp import app
 from flask import render_template
-from flask import Markup, session, redirect, url_for, request
+from flask import Markup, session, redirect, url_for, request, send_file, jsonify
 from jinja2 import Template
 
 # Local import
@@ -10,8 +10,8 @@ from facile.utils.forms import build_form, process_form, get_args_forms, get_tit
 from facile.utils.tables import build_table
 from facile.utils.controls import build_controls
 from facile.layout import boostrap
-from settings import deform_template_path
-
+from settings import deform_template_path, facile_driver_file_tmpdir
+from facile.utils.drivers.comon import FileDriver
 
 @app.route('/')
 def home():
@@ -85,7 +85,7 @@ def form():
         web, data = build_form(request.args['table'], request, deform_template_path, step=int(request.form['step']),
                                force_get=False, validate='Retour' not in request.form.keys(),
                                data={k: request.form.get(k, '') for k in ['step', 'action']})
-
+        script = None
         if data['success']:
 
             # Get args that enable to know which form to display
@@ -95,13 +95,15 @@ def form():
             # Create template
             custom_template = Template(render_template('form.html', form=Markup(boostrap.get_form_layout(title))))
 
-            # Process form if final step of action
+            # Process form if final step of action and layout option page
             if step > 0 and step % int(request.form['nb_step']) == 0 and 'Suivant' in request.form.keys():
-                process_form(request.args['table'], data['form_data'], action)
+                script = process_form(request.args['table'], data['form_data'], action)
+                step, data['form_data'] = 0, 0
 
             # Generate new form
             web, data = build_form(request.args['table'], request, deform_template_path, step=step, force_get=True,
-                                   data=data['form_data'])
+                                   data=data['form_data'], script=script)
+
         else:
             step = request.form['step']
             d_data = {k: request.form.get(k, '') for k in ['action', 'nb_step', 'index']}
@@ -153,8 +155,17 @@ def export():
             html = render_template("export.html", **{'export': export})
     else:
         # return xlsx of the table
-        import IPython
-        IPython.embed()
+        # return pdf of the selected document
+        from facileapp.models.affaire import Affaire
+
+        driver = FileDriver('tmp_test', '')
+
+        df = Affaire.load_db()
+        tmpdir = driver.TempDir(create=True)
+
+        df.to_csv(driver.join(tmpdir.path, 'test.csv'))
+
+        return send_file(driver.join(tmpdir.path, 'test.csv'))
 
     return html
 
@@ -188,32 +199,64 @@ def document():
             html = render_template("document.html", **{'document': document})
     else:
         # return pdf of the selected document
-        import IPython
-        IPython.embed()
+        from facileapp.models.affaire import Affaire
+        driver = FileDriver('tmp_test', '')
+
+        df = Affaire.load_db()
+        tmpdir = driver.TempDir(create=True)
+
+        df.to_csv(driver.join(tmpdir.path, 'test.csv'))
+
+        return send_file(driver.join(tmpdir.path, 'test.csv'))
 
     return html
 
 
-@app.route('/controls', methods=['GET', 'POST'])
+@app.route('/controls', methods=['GET'])
 def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))
 
-    if request.method == 'GET':
-        if request.args:
+    if request.args:
 
-            # render controls
-            html = build_controls(table_key=request.args['table'])
+        # render controls
+        html = build_controls(table_key=request.args['table'])
 
-        else:
-            control = Markup('<div class="jumbotron">'
-                             '<h1>Page des controles</h1>'
-                              '<p class="lead"> Choisissez un onglet pour visualiser un control</p></div>')
-            html = render_template("control.html", **{'control': control})
     else:
-        # do smth
-        import IPython
-        IPython.embed()
+        control = Markup('<div class="jumbotron">'
+                         '<h1>Page des controles</h1>'
+                         '<p class="lead"> Choisissez un onglet pour visualiser un control</p></div>')
+        html = render_template("control.html", **{'control': control})
 
     return html
 
+
+@app.route('/url_download_form', methods=['POST'])
+def url_download_form():
+    return jsonify({'url': '/send_file_form', 'data': '?' + '&'.join(['='.join(t) for t in request.form.items()])})
+
+
+@app.route('/send_file_form', methods=['GET'])
+def send_file_form():
+    # return pdf of the selected document
+    from facileapp.models.affaire import Affaire
+    driver = FileDriver('tmp_test', '')
+
+    df = Affaire.load_db()
+    tmpdir = driver.TempDir(create=True)
+
+    df.to_csv(driver.join(tmpdir.path, 'test.csv'))
+
+    return send_file(driver.join(tmpdir.path, 'test.csv'), as_attachment=True)
+
+
+@app.route('/clean_tmp_dir', methods=['POST'])
+def clean_tmp_dir():
+    driver = FileDriver('tmp_test', '')
+    for f in driver.listdir(facile_driver_file_tmpdir):
+        try:
+            driver.remove(driver.join(facile_driver_file_tmpdir, f), recursive=True)
+        except OSError:
+            continue
+
+    return jsonify({'success': True})
