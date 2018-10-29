@@ -1,11 +1,11 @@
 # Global imports
 import os
 import pandas as pd
-from deform.widget import MoneyInputWidget, HiddenWidget, TextInputWidget
+from deform.widget import HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields
+from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -39,12 +39,12 @@ class Devis(BaseModel):
                               table_reduce=True, rank=2),
                  IntegerFields(title="Nombre d'heure BE", name='heure_be', l_choices=zip(range(9000), range(9000))),
                  IntegerFields(title="Nombre d'heure Ch", name='heure_ch', l_choices=zip(range(1000), range(1000))),
-                 FloatFields(title='Montant achat', name='montant_achat'),
+                 MoneyFields(title='Montant achat', name='montant_achat'),
                  FloatFields(title='Coefficient achat', name='coef_achat'),
                  DateFields(title='Date de debut', name='date_start'),
                  DateFields(title='Date de fin', name='date_end'),
                  StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-                 FloatFields(title='Prix', name='price', round=2,
+                 MoneyFields(title='Prix', name='price', round=2,
                              table_reduce=True, rank=3)]
         else:
             l_fields = \
@@ -54,12 +54,12 @@ class Devis(BaseModel):
                  StringFields(title='Responsable', name='responsable', table_reduce=True, rank=2),
                  IntegerFields(title="Nombre d'heure BE", name='heure_be'),
                  IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
-                 FloatFields(title='Montant achat', name='montant_achat'),
+                 MoneyFields(title='Montant achat', name='montant_achat'),
                  FloatFields(title='Coefficient achat', name='coef_achat'),
                  DateFields(title='Date de debut', name='date_start'),
                  DateFields(title='Date de fin', name='date_end'),
                  StringFields(title='Base de prix', name='base_prix'),
-                 FloatFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
+                 MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
 
         return l_fields
 

@@ -5,18 +5,53 @@
 {% block body %}
 
 <div id="formnav" class="sidenav">
-  <a href="/exports?table=employe">Employés</a>
-  <a href="/exports?table=client">Clients</a>
-  <a href="/exports?table=fournisseur">Fournisseur</a>
-  <a href="/exports?table=contact">Contact</a>
-  <a href="/exports?table=chantier">Chantier</a>
-  <a href="/exports?table=base_prix">Base de prix</a>
-  <a href="/exports?table=devis">Devis</a>
-  <a href="/exports?table=affaire">Affaires</a>
-  <a href="/exports?table=heure">Heures</a>
-  <a href="/exports?table=commande">Commande</a>
-  <a href="/exports?table=facture">Facture</a>
+  <button class="dropdown-btn">Administration
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/exports?table=employe">Employés</a>
+         <a href="/exports?table=fournisseur">Fournisseur</a>
+         <a href="/exports?table=contact">Contact</a>
+         <a href="/exports?table=base_prix">Base de prix</a>
+  </div>
+
+  <button class="dropdown-btn">Commercial
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/exports?table=client">Client</a>
+         <a href="/exports?table=chantier">Chantier</a>
+  </div>
+
+  <button class="dropdown-btn">Affaire
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+      <a href="/exports?table=devis">Devis</a>
+      <a href="/exports?table=affaire">Affaires</a>
+      <a href="/exports?table=heure">Heures</a>
+      <a href="/exports?table=commande">Commande</a>
+      <a href="/exports?table=facture">Facture</a>
+  </div>
 </div>
+<script>
+  /* Loop through all dropdown buttons to toggle between hiding and showing its dropdown content - This allows the user to have multiple dropdowns without any conflict */
+  var dropdown = document.getElementsByClassName("dropdown-btn");
+  var i;
+
+  for (i = 0; i < dropdown.length; i++) {
+    dropdown[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      var dropdownContent = this.nextElementSibling;
+      if (dropdownContent.style.display === "block") {
+        dropdownContent.style.display = "none";
+      } else {
+        dropdownContent.style.display = "block";
+      }
+    });
+  }
+</script>
+
 
 <div class="jumbotron">
 {{ export }}

@@ -5,18 +5,52 @@
 {% block body %}
 
 <div id="formnav" class="sidenav">
-  <a href="/forms?table=employe">Employés</a>
-  <a href="/forms?table=client">Clients</a>
-  <a href="/forms?table=fournisseur">Fournisseur</a>
-  <a href="/forms?table=contact">Contact</a>
-  <a href="/forms?table=chantier">Chantier</a>
-  <a href="/forms?table=base_prix">Base de prix</a>
-  <a href="/forms?table=devis">Devis</a>
-  <a href="/forms?table=affaire">Affaires</a>
-  <a href="/forms?table=heure">Heures</a>
-  <a href="/forms?table=commande">Commande</a>
-  <a href="/forms?table=facture">Facture</a>
+  <button class="dropdown-btn">Administration
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/forms?table=employe">Employés</a>
+         <a href="/forms?table=fournisseur">Fournisseur</a>
+         <a href="/forms?table=contact">Contact</a>
+         <a href="/forms?table=base_prix">Base de prix</a>
+  </div>
+
+  <button class="dropdown-btn">Commercial
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/forms?table=client">Client</a>
+         <a href="/forms?table=chantier">Chantier</a>
+  </div>
+
+  <button class="dropdown-btn">Affaire
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+      <a href="/forms?table=devis">Devis</a>
+      <a href="/forms?table=affaire">Affaires</a>
+      <a href="/forms?table=heure">Heures</a>
+      <a href="/forms?table=commande">Commande</a>
+      <a href="/forms?table=facture">Facture</a>
+  </div>
 </div>
+<script>
+  /* Loop through all dropdown buttons to toggle between hiding and showing its dropdown content - This allows the user to have multiple dropdowns without any conflict */
+  var dropdown = document.getElementsByClassName("dropdown-btn");
+  var i;
+
+  for (i = 0; i < dropdown.length; i++) {
+    dropdown[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      var dropdownContent = this.nextElementSibling;
+      if (dropdownContent.style.display === "block") {
+        dropdownContent.style.display = "none";
+      } else {
+        dropdownContent.style.display = "block";
+      }
+    });
+  }
+</script>
 
 <div class="jumbotron">
 {{ form }}

@@ -106,6 +106,8 @@ class FeuilleTravaux(BaseView):
     def control_loading():
         d_control_data = {}
         df = FeuilleTravaux.load_view()
+        df['affaire_id'] = df[['affaire_num', 'affaire_ind']]\
+            .apply(lambda r: '{} - {}'.join([r['affaire_num'], r['affaire_ind']]), axis=1)
 
         d_name = {True: 'Cloture', False: 'En cours'}
         df_state = df[['affaire_id', 'montant_encaisse', 'montant_facture']]

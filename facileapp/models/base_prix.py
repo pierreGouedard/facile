@@ -4,7 +4,7 @@ import pandas as pd
 
 # Local import
 import settings
-from facile.core.fields import StringFields, FloatFields
+from facile.core.fields import StringFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.base_model import BaseModel
 from facile.core.table_loader import TableLoader
@@ -21,8 +21,8 @@ class Base_prix(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [FloatFields(title='Prix heure BE', name='prix_heure_be', table_reduce=True, rank=1),
-             FloatFields(title='Prix heure Ch', name='prix_heure_ch', table_reduce=True, rank=2)]
+            [MoneyFields(title='Prix heure BE', name='prix_heure_be', table_reduce=True, rank=1),
+             MoneyFields(title='Prix heure Ch', name='prix_heure_ch', table_reduce=True, rank=2)]
 
         return l_fields
 

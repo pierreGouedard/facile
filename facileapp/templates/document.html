@@ -5,14 +5,50 @@
 {% block body %}
 
 <div id="formnav" class="sidenav">
-  <a href="/documents?table=employe">Employés</a>
-  <a href="/documents?table=client">Clients</a>
-  <a href="/documents?table=fournisseur">Fournisseur</a>
-  <a href="/documents?table=devis">Devis</a>
-  <a href="/documents?table=affaire">Affaires</a>
-  <a href="/documents?table=commande">Commande</a>
-  <a href="/documents?table=facture">Facture</a>
+  <button class="dropdown-btn">Administration
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/documents?table=employe">Employés</a>
+         <a href="/documents?table=fournisseur">Fournisseur</a>
+  </div>
+
+  <button class="dropdown-btn">Commercial
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+         <a href="/documents?table=client">Client</a>
+  </div>
+
+  <button class="dropdown-btn">Affaire
+    <i class="fa fa-caret-down"></i>
+  </button>
+  <div class="dropdown-container">
+      <a href="/documents?table=devis">Devis</a>
+      <a href="/documents?table=affaire">Affaires</a>
+      <a href="/documents?table=commande">Commande</a>
+      <a href="/documents?table=facture">Facture</a>
+  </div>
 </div>
+<script>
+  /* Loop through all dropdown buttons to toggle between hiding and showing its dropdown content - This allows the user to have multiple dropdowns without any conflict */
+  var dropdown = document.getElementsByClassName("dropdown-btn");
+  var i;
+
+  for (i = 0; i < dropdown.length; i++) {
+    dropdown[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      var dropdownContent = this.nextElementSibling;
+      if (dropdownContent.style.display === "block") {
+        dropdownContent.style.display = "none";
+      } else {
+        dropdownContent.style.display = "block";
+      }
+    });
+  }
+</script>
+
+
 
 <div class="jumbotron">
 {{ document }}

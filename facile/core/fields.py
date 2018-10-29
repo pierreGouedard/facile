@@ -120,10 +120,10 @@ class MoneyFields(object):
             if l_choices:
                 self.widget = Select2Widget(values=l_choices, multiple=multiple)
             else:
-                self.widget = MoneyInputWidget()
+                self.widget = MoneyInputWidget(options={'allowZero': True})
 
         self.mapinit = None
-        self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
+        self.processing_form = {'form': lambda x: float(x.replace(',', '')) if x else missing, 'db': lambda x: float(x)}
         self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
 
         self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc, missing=missing)

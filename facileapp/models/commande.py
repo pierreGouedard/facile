@@ -5,7 +5,7 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields
+from facile.core.fields import StringFields, IntegerFields, FloatFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -35,10 +35,10 @@ class Commande(BaseModel):
                               table_reduce=True, rank=2),
                  StringFields(title='Chantier', name='chantier_id', l_choices=Commande.list('chantier')),
                  StringFields(title='Responsable reception', name='responsable', l_choices=Commande.list('employe')),
-                 FloatFields(title='Montant Commande HT', name='montant_ht'),
+                 MoneyFields(title='Montant Commande HT', name='montant_ht'),
                  FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
-                 FloatFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-                 FloatFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
+                 MoneyFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
+                 MoneyFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
                  IntegerFields(title="Nombre d'article", name='nb_article', l_choices=zip(range(100), range(100)),
                                table_reduce=True, rank=4),
                  StringFields(title="Liste des articles", name='l_article'),
@@ -52,10 +52,10 @@ class Commande(BaseModel):
                  StringFields(title='Fournisseur', name='rs_fournisseur', table_reduce=True, rank=2),
                  StringFields(title='Chantier', name='chantier_id'),
                  StringFields(title='Responsable reception', name='responsable'),
-                 FloatFields(title='Montant Commande HT', name='montant_ht'),
+                 MoneyFields(title='Montant Commande HT', name='montant_ht'),
                  FloatFields(title='Taux TVA', name='taux_tva'),
-                 FloatFields(title='Montant TVA', name='montant_tva'),
-                 FloatFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
+                 MoneyFields(title='Montant TVA', name='montant_tva'),
+                 MoneyFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
                  IntegerFields(title="Nombre d'article", name='nb_article', table_reduce=True, rank=4),
                  StringFields(title="Liste des articles", name='l_article'),
                  StringFields(title='Visa', name='is_visa'),

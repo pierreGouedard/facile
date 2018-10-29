@@ -5,7 +5,7 @@ from deform.widget import HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields
+from facile.core.fields import StringFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -34,15 +34,15 @@ class Affaire(BaseModel):
             l_fields = \
                 [StringFields(title="Numero de devis", name='devis_id', l_choices=Affaire.list('devis'), table_reduce=True,
                                rank=2),
-                StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'),
+                 StringFields(title='Responsable', name='responsable', l_choices=Affaire.list('responsable'),
                              table_reduce=True, rank=3),
-                FloatFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
+                 MoneyFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
 
         else:
             l_fields = \
                 [StringFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=2),
                  StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
-                 FloatFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
+                 MoneyFields(title='FAE', name='fae', table_reduce=True, rank=4, missing=0.0)]
 
         return l_fields
 

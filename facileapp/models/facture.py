@@ -5,7 +5,7 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields
+from facile.core.fields import StringFields, IntegerFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -37,7 +37,7 @@ class Facture(BaseModel):
                  StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
                               table_reduce=True, rank=3),
                  StringFields(title='Objet', name='objet'),
-                 FloatFields(title='Montant facture HT', name='montant_ht'),
+                 MoneyFields(title='Montant facture HT', name='montant_ht'),
                  IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation')),
                  StringFields(title='Visa', name='is_visa',
                               widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_visa'})),
@@ -49,7 +49,7 @@ class Facture(BaseModel):
                  StringFields(title='Client', name='rs_client', table_reduce=True, rank=2),
                  StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
                  StringFields(title='Objet', name='objet'),
-                 FloatFields(title='Montant facture HT', name='montant_ht'),
+                 MoneyFields(title='Montant facture HT', name='montant_ht'),
                  IntegerFields(title='Numero de situation', name='situation'),
                  StringFields(title='Visa', name='is_visa'),
                  StringFields(title='Encaissement', name='is_payed')]
