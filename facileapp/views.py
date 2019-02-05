@@ -63,8 +63,9 @@ def form():
     if request.method == 'GET':
         if request.args:
             # Get template
-            custom_template = Template(render_template('form.html',
-                                                       form=Markup(boostrap.get_form_layout('Choisissez une action'))))
+            custom_template = Template(
+                render_template('form.html', form=Markup(boostrap.get_form_layout('Choisissez une action')))
+            )
 
             # Get form
             web, data = build_form(request.args['table'], request, deform_template_path)
@@ -78,28 +79,28 @@ def form():
 
         else:
             form = Markup('<h1>Page des Formulaires</h1>'
-                          '<p class="lead"> Choisissez un onglet et ajoutez, modifiez '
+                          '<p class="lead"> Choisissez un onglet puis ajoutez, modifiez '
                           "ou suprimez un element d'une table</p>")
             html = render_template("form.html", **{'form': form})
     else:
         # Get data from form
         web, data = build_form(request.args['table'], request, deform_template_path, step=int(request.form['step']),
                                force_get=False, validate='Retour' not in request.form.keys(),
-                               data={k: request.form.get(k, '') for k in ['step', 'action']})
+                               data={k: request.form.get(k, '') for k in ['step', 'action', 'index']})
+
         script = None
         if data['success']:
 
             # Get args that enable to know which form to display
             step, action, title = get_args_forms(data['form_data'])
             data['form_data'].update({'step': step})
-
             # Create template
             custom_template = Template(render_template('form.html', form=Markup(boostrap.get_form_layout(title))))
 
             # Process form if final step of action and layout option page
             if step > 0 and step % int(request.form['nb_step']) == 0 and 'Suivant' in request.form.keys():
                 script = process_form(request.args['table'], data['form_data'], action)
-                step, data['form_data'] = 0, 0
+                step, data['form_data'] = 0, {}
 
             # Generate new form
             web, data = build_form(request.args['table'], request, deform_template_path, step=step, force_get=True,

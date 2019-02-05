@@ -17,14 +17,17 @@ class Synthesizer():
         self.path = os.path.join(facile_test_path)
 
         self.n_client = 5
-        self.n_fournisseur = 5
+        self.n_fournisseur = 4
         self.n_ouvrier = 7
-        self.n_chargedaff = 3
+        self.n_charge = 3
         self.n_admin = 2
-        self.n_contact_client = 10
-        self.n_contact_fournisseur = 15
+        self.n_contact_client_chantier = 5
+        self.n_contact_client_commandes = 5
+        self.n_contact_client_admin = 5
+
+        self.n_contact_fournisseur = 4
         self.n_chantier = 5
-        self.l_affaires = ['AF18{0:0=4d}-001'.format(i) for i in range(4)]
+        self.l_affaires = ['AF19{0:0=4d}-001'.format(i) for i in range(4)]
         self.d_month = {1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}',
                         7: 'Juillet {}', 8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}',
                         12: 'Decembre {}'}
@@ -41,8 +44,9 @@ class Synthesizer():
         self.ville = Ville()
         self.tel = Tel()
         self.service = Service()
+        self.d_contacts = {}
 
-    def save_database(self, df,name, ):
+    def save_database(self, df, name):
         df.to_csv(os.path.join(self.path, name), index=None)
 
     def Build_employe_table(self):
@@ -54,14 +58,14 @@ class Synthesizer():
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': ''.join([random.choice(string.ascii_letters) for _ in range(10)]),
-                'emploie': np.random.choice(['CDD', 'CDI', 'interim']),
+                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'categorie': 'chantier',
+                'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),
                 'adresse': self.adresse(),
-                'ville': self.ville(**{'seed': i, 'key':'name'}),
+                'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'CP'}),
                 'num_tel': self.tel(),
                 'mail': 'ouvrier.num_{}@casoe.com'.format(i),
-                'num_entre': str(np.random.randint(100, 999)),
-                'qualification': np.random.choice(["electricien", "macon", "peinture"]),
                 'date_start': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))).date()),
                 'date_end': '',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
@@ -69,41 +73,40 @@ class Synthesizer():
             }
             for i in range(self.n_ouvrier)}
 
-        d_chargedaff = {
+        d_charge = {
             i + self.n_ouvrier: {
                 'prenom': 'chargedaff',
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': '',
-                'emploie': 'CDI',
+                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'categorie': np.random.choice(['charge affaire', 'charge etude']),
+                'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'CP'}),
                 'num_tel': self.tel(),
                 'mail': 'chargedaff.num_{}@casoe.com'.format(i),
-                'num_entre': str(np.random.randint(100, 999)),
-                'qualification': "charge affaire",
                 'date_start': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))).date()),
                 'date_end': '',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
                 'maj_date': str(pd.Timestamp.now())
             }
-            for i in range(self.n_chargedaff)}
+            for i in range(self.n_charge)}
 
         d_admin = {
-            i + self.n_ouvrier + self.n_chargedaff: {
+            i + self.n_ouvrier + self.n_charge: {
                 'prenom': 'admin',
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': '',
-                'emploie': 'CDI',
-                'adresse': self.adresse(),
+                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'categorie': 'administration',
+                'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),                'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'CP'}),
                 'num_tel': self.tel(),
                 'mail': 'admin.num_{}@casoe.com'.format(i),
-                'num_entre': str(np.random.randint(100, 999)),
-                'qualification': "administration",
                 'date_start': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))).date()),
                 'date_end': '',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
@@ -113,7 +116,7 @@ class Synthesizer():
             for i in range(self.n_admin)}
 
         df_employe = pd.DataFrame.from_dict(
-            {k: v for k, v in d_ouvrier.items() + d_chargedaff.items() + d_admin.items()}, orient='index'
+            {k: v for k, v in d_ouvrier.items() + d_charge.items() + d_admin.items()}, orient='index'
         ).reset_index(drop=True)
 
         self.save_database(df_employe, 'employe.csv')
@@ -124,7 +127,6 @@ class Synthesizer():
         d_client = {
             i: {
                 'raison_social': 'client {}'.format(i),
-                'contact': self.service(**{'seed': i, 'key': 'name'}),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
@@ -147,7 +149,6 @@ class Synthesizer():
         d_fournisseur = {
             i: {
                 'raison_social': 'fournisseur {}'.format(i),
-                'contact': self.service(**{'seed': i, 'key': 'name'}),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
@@ -164,42 +165,16 @@ class Synthesizer():
 
         self.save_database(df_fournisseur, 'fournisseur.csv')
 
-    def Build_base_prix_table(self, return_df=False):
-        np.random.seed(1234)
-
-        l_dates = pd.DatetimeIndex(start=pd.Timestamp.now().date() - pd.Timedelta(days=9000),
-                                   end=pd.Timestamp.now().date() + pd.Timedelta(days=9000),
-                                   freq='M')
-        l_names = [self.d_month[t.month].format(t.year) for t in l_dates]
-
-        d_base_prix = {
-            i: {
-                'nom': n,
-                'prix_heure_be': float(np.random.randint(2000, 4000)) / 100,
-                'prix_heure_ch': float(np.random.randint(500, 2000)) / 100,
-                'creation_date': str(pd.Timestamp.now()),
-                'maj_date': str(pd.Timestamp.now())
-            }
-            for i, n in enumerate(l_names)}
-
-        df_base_prix = pd.DataFrame.from_dict(
-            {k: v for k, v in d_base_prix.items()}, orient='index'
-        ).reset_index(drop=True)
-
-        if return_df:
-            return df_base_prix
-        self.save_database(df_base_prix, 'base_prix.csv')
-
     def Build_contact_table(self):
         np.random.seed(1234)
-
-        d_contact_client = {
-            i: {
-                'contact_id': 'CT{0:0=4d}'.format(i),
-                'type': 'client',
+        n = 0
+        d_contact_client_chantier = {
+            i + n: {
+                'contact_id': 'CT{0:0=4d}'.format(i + n),
+                'type': 'client_chantier',
                 'raison_social': 'client {}'.format(i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
-                'desc': 'description of client contact {}'.format(i),
+                'desc': 'Operationel sur chantier - client {}'.format(i),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
@@ -208,11 +183,51 @@ class Synthesizer():
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
                 'maj_date': str(pd.Timestamp.now())
             }
-            for i in range(self.n_contact_client)}
+            for i in range(self.n_contact_client_chantier)}
+        n += self.n_contact_client_chantier
+        self.d_contacts.update({'chantier': [v['contact_id'] for v in d_contact_client_chantier.values()]})
+
+        d_contact_client_commande = {
+            i + n: {
+                'contact_id': 'CT{0:0=4d}'.format(i + n),
+                'type': 'client_commande',
+                'raison_social': 'client {}'.format(i % self.n_client),
+                'contact': self.name(**{'seed': i, 'key': 'name'}),
+                'desc': 'Operationel pour commande - client {}'.format(i),
+                'adresse': self.adresse(),
+                'ville': self.ville(**{'seed': i, 'key': 'name'}),
+                'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
+                'num_tel': self.tel(),
+                'mail': '{}@client_{}.com'.format(self.name(**{'seed': i, 'key': 'short'}), i),
+                'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
+                'maj_date': str(pd.Timestamp.now())
+            }
+            for i in range(self.n_contact_client_commandes)}
+        n += self.n_contact_client_commandes
+        self.d_contacts.update({'commande': [v['contact_id'] for v in d_contact_client_commande.values()]})
+
+        d_contact_client_admin = {
+            i + n: {
+                'contact_id': 'CT{0:0=4d}'.format(i + n),
+                'type': 'client_administration',
+                'raison_social': 'client {}'.format(i % self.n_client),
+                'contact': self.name(**{'seed': i, 'key': 'name'}),
+                'desc': 'Operationel pour administration - client {}'.format(i),
+                'adresse': self.adresse(),
+                'ville': self.ville(**{'seed': i, 'key': 'name'}),
+                'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
+                'num_tel': self.tel(),
+                'mail': '{}@client_{}.com'.format(self.name(**{'seed': i, 'key': 'short'}), i),
+                'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
+                'maj_date': str(pd.Timestamp.now())
+            }
+            for i in range(self.n_contact_client_admin)}
+        n += self.n_contact_client_admin
+        self.d_contacts.update({'admin': [v['contact_id'] for v in d_contact_client_admin.values()]})
 
         d_contact_fournisseur = {
-            i + self.n_contact_client: {
-                'contact_id': 'CT{0:0=4d}'.format(i + self.n_contact_client),
+            i + n: {
+                'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'fournisseur',
                 'raison_social': 'fournisseur {}'.format(i % self.n_fournisseur),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
@@ -226,9 +241,11 @@ class Synthesizer():
                 'maj_date': str(pd.Timestamp.now())
             }
             for i in range(self.n_contact_fournisseur)}
+        self.d_contacts.update({'fournisseur': [v['contact_id'] for v in d_contact_fournisseur.values()]})
 
         df_contact = pd.DataFrame.from_dict(
-            {k: v for k, v in d_contact_client.items() + d_contact_fournisseur.items()}, orient='index'
+            {k: v for k, v in d_contact_client_chantier.items() + d_contact_client_commande.items() +
+             d_contact_client_admin.items() + d_contact_fournisseur.items()}, orient='index'
         ).reset_index(drop=True)
 
         self.save_database(df_contact, 'contact.csv')
@@ -239,14 +256,11 @@ class Synthesizer():
         d_chantier = {
             i: {
                 'chantier_id': 'CH{0:0=4d}'.format(i),
-                'rs_client': 'client {}'.format(i),
+                'raison_social': 'client {}'.format(i),
                 'nom': 'Chantier client {}'.format(i),
-                'contact_id': 'CT{0:0=4d}'.format(0),
                 'adresse': self.adresse(),
-                'responsable': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)]),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
-                'is_active': 'yes',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 900))),
                 'maj_date': str(pd.Timestamp.now())
             }
@@ -264,11 +278,13 @@ class Synthesizer():
         d_devis = {
             i: {'devis_id': 'DV{0:0=4d}'.format(int(i)),
                 'rs_client': 'client {}'.format(i),
-                'contact_id': 'CT{0:0=4d}'.format(i),
-                'chantier_id': 'CH{0:0=4d}'.format(i),
-                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
-                'heure_be': np.random.randint(30, 100),
-                'heure_ch': np.random.randint(100, 1000),
+                'contact_id': np.random.choice([id_ for id_ in self.d_contacts.get('commande', ['unknown'])]),
+                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+                'object': 'Objet du devis correspond a un texte arbitraire',
+                'heure_prod': np.random.randint(100, 1000),
+                'heure_autre': np.random.randint(100, 1000),
+                'prix_heure_prod': float(np.random.randint(40, 100)),
+                'prix_heure_autre': float(np.random.randint(60, 150)),
                 'montant_achat': self.float(np.random.randint(10000, 100000)),
                 'coef_achat': self.float(1.5 + np.random.randn()),
                 'date_start': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(100, 200))).date()),
@@ -281,13 +297,10 @@ class Synthesizer():
             for i, _ in enumerate(self.l_affaires)}
 
         # Load base prix and compute the price of the devis
-        df = self.Build_base_prix_table(return_df=True)
         for k in d_devis.keys():
-            df_sub = df.loc[df.nom == d_devis[k]['base_prix']].reset_index(drop=True)
-
             d_devis[k]['price'] += d_devis[k]['montant_achat'] * d_devis[k]['coef_achat']
-            d_devis[k]['price'] += d_devis[k]['heure_be'] * df_sub.loc[0, 'prix_heure_be']
-            d_devis[k]['price'] += d_devis[k]['heure_ch'] * df_sub.loc[0, 'prix_heure_ch']
+            d_devis[k]['price'] += d_devis[k]['heure_prod'] * d_devis[k]['prix_heure_prod']
+            d_devis[k]['price'] += d_devis[k]['heure_autre'] * d_devis[k]['prix_heure_autre']
             d_devis[k]['price'] = self.float(d_devis[k]['price'])
 
         if return_dict_affaire:
@@ -297,11 +310,12 @@ class Synthesizer():
         d_ = {len(self.l_affaires): {
             'devis_id': 'DV{0:0=4d}'.format(int(len(self.l_affaires))),
             'rs_client': 'client {}'.format(len(self.l_affaires)),
-            'contact_id': 'CT{0:0=4d}'.format(len(self.l_affaires)),
-            'chantier_id': 'CH{0:0=4d}'.format(len(self.l_affaires)),
-            'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
-            'heure_be': np.random.randint(30, 100),
-            'heure_ch': np.random.randint(100, 1000),
+            'contact_id': np.random.choice([id_ for id_ in self.d_contacts.get('commande', ['unknown'])]),
+            'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+            'heure_prod': np.random.randint(100, 1000),
+            'heure_autre': np.random.randint(100, 1000),
+            'prix_heure_prod': float(np.random.randint(40, 100)),
+            'prix_heure_autre': float(np.random.randint(60, 150)),
             'montant_achat': self.float(np.random.randint(10000, 100000)),
             'coef_achat': self.float(1.5 + np.random.randn()),
             'date_start': str((pd.Timestamp.now() + pd.Timedelta(days=np.random.randint(20, 30))).date()),
@@ -313,10 +327,9 @@ class Synthesizer():
         }}
 
         for k in d_.keys():
-            df_sub = df.loc[df.nom == d_[k]['base_prix']].reset_index(drop=True)
             d_[k]['price'] += d_[k]['montant_achat'] * d_[k]['coef_achat']
-            d_[k]['price'] += d_[k]['heure_be'] * df_sub.loc[0, 'prix_heure_be']
-            d_[k]['price'] += d_[k]['heure_ch'] * df_sub.loc[0, 'prix_heure_ch']
+            d_[k]['price'] += d_[k]['heure_prod'] * d_[k]['prix_heure_prod']
+            d_[k]['price'] += d_[k]['heure_autre'] * d_[k]['prix_heure_autre']
             d_[k]['price'] = self.float(d_[k]['price'])
 
         d_devis.update(d_)
@@ -333,17 +346,12 @@ class Synthesizer():
         d_commande = {
             i: {'commande_id': 'CM{0:0=4d}'.format(i),
                 'affaire_id': affaire,
-                'rs_fournisseur': np.random.choice(['fournisseur {}'.format(j) for j in range(self.n_fournisseur)]),
-                'chantier_id': 'CH{0:0=4d}'.format(np.random.randint(0, self.n_chantier)),
-                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
+                'raison_social': np.random.choice(['fournisseur {}'.format(j) for j in range(self.n_fournisseur)]),
                 'montant_ht': self.float(float(np.random.randint(1000, 20000))),
                 'taux_tva': 0.196,
                 'montant_ttc': 0.,
                 'montant_tva': 0.,
-                'nb_article': np.random.randint(1, 10),
                 'l_article': '',
-                'is_visa': 'yes',
-                'is_payed': 'yes',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             }
@@ -371,9 +379,9 @@ class Synthesizer():
             i: {'heure_id': i,
                 'affaire_id': affaire,
                 'semaine': np.random.choice(self.l_semaine),
-                'employe': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)]),
-                'nb_heure_be': 0.,
-                'nb_heure_ch': np.random.randint(20, 35),
+                'name': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)] + ['interimaire']),
+                'heure_autre': 0.,
+                'heure_prod': np.random.randint(20, 35),
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
                 }
@@ -384,9 +392,9 @@ class Synthesizer():
                 'heure_id': len(d_heure_ouvrier) + i,
                 'affaire_id': affaire,
                 'semaine': np.random.choice(self.l_semaine),
-                'employe': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
-                'nb_heure_be': np.random.randint(20, 35),
-                'nb_heure_ch': 0.,
+                'employe': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+                'heure_autre': np.random.randint(20, 35),
+                'heure_prod': 0.,
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
                 }
@@ -411,16 +419,14 @@ class Synthesizer():
 
             d_ = {
                 i + (k * len(d_devis)): {
-                    'Type': 'facture',
+                    'type': 'facture',
                     'facture_id': 'FC{0:0=4d}'.format(i + (k * len(d_devis))),
                     'affaire_id': self.l_affaires[i],
-                    'rs_client': d['rs_client'],
-                    'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
                     'objet': 'facture num {}'.format(k),
                     'montant_ht': self.float(d['price'] / 3),
                     'situation': i,
-                    'is_visa': 'yes' if k < 2 else np.random.choice(['yes', 'no']),
-                    'is_payed': 'yes' if k < 2 else 'no',
+                    'date_visa': 'yes' if k < 2 else np.random.choice(['yes', 'no']),
+                    'date_payed': 'yes' if k < 2 else 'no',
                     'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                     'maj_date': str(pd.Timestamp.now())
                     }
@@ -431,16 +437,14 @@ class Synthesizer():
         # Add avoir
         d_ = {
             max(d_facture.keys()) + 1: {
-                'Type': 'avoir',
+                'type': 'avoir',
                 'facture_id': 'AV{0:0=4d}'.format(1),
                 'affaire_id': self.l_affaires[0],
-                'rs_client': d_devis.values()[0]['rs_client'],
-                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
                 'objet': 'avoir situation 0',
                 'montant_ht': self.float(d_devis.values()[0]['price'] / 3),
                 'situation': 0,
-                'is_visa': np.random.choice(['yes', 'no']),
-                'is_payed': 'yes',
+                'date_visa': np.random.choice(['yes', 'no']),
+                'date_payed': 'yes',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             }
@@ -461,7 +465,11 @@ class Synthesizer():
                 'affaire_num': affaire.split('-')[0],
                 'affaire_ind': affaire.split('-')[1],
                 'devis_id': 'DV{0:0=4d}'.format(i),
-                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_chargedaff)]),
+                'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+                'chantier_id': 'CH{0:0=4d}'.format(i),
+                'contact_chantier_client': self.d_contacts['chantier'][i],
+                'contact_facturation_client': self.d_contacts['admin'][i],
+                'contact_chantier_interne': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)]),
                 'fae': 0.0,
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
@@ -534,7 +542,6 @@ if __name__ == '__main__':
     synt.Build_employe_table()
     synt.Build_client_table()
     synt.Build_fournisseur_table()
-    synt.Build_base_prix_table()
     synt.Build_contact_table()
     synt.Build_chantier_table()
     synt.Build_devis_table()

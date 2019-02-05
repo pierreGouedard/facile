@@ -5,7 +5,7 @@ from deform.widget import RadioChoiceWidget, HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, MoneyFields
+from facile.core.fields import StringFields, IntegerFields, MoneyFields, DateFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -30,46 +30,32 @@ class Facture(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
-                               table_reduce=True, rank=1),
+                              table_reduce=True, rank=1),
                  StringFields(title='Type', name='type', l_choices=Facture.list('type'), table_reduce=True),
-                 StringFields(title='Client', name='rs_client', l_choices=Facture.list('client'), table_reduce=True,
-                              rank=2),
-                 StringFields(title='Responsable', name='responsable', l_choices=Facture.list('responsable'),
-                              table_reduce=True, rank=3),
                  StringFields(title='Objet', name='objet'),
                  MoneyFields(title='Montant facture HT', name='montant_ht'),
                  IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation')),
-                 StringFields(title='Visa', name='is_visa',
-                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_visa'})),
-                 StringFields(title='Encaissement', name='is_payed',
-                              widget=RadioChoiceWidget(values=Facture.list('statue'), **{'key': 'is_payed'}))]
+                 DateFields(title='Visa', name='date_visa'),
+                 DateFields(title='Encaissement', name='date_payed')
+                 ]
         else:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
-                 StringFields(title='Client', name='rs_client', table_reduce=True, rank=2),
-                 StringFields(title='Responsable', name='responsable', table_reduce=True, rank=3),
+                 StringFields(title='Type', name='type', table_reduce=True),
                  StringFields(title='Objet', name='objet'),
                  MoneyFields(title='Montant facture HT', name='montant_ht'),
                  IntegerFields(title='Numero de situation', name='situation'),
-                 StringFields(title='Visa', name='is_visa'),
-                 StringFields(title='Encaissement', name='is_payed')]
+                 DateFields(title='Visa', name='date_visa'),
+                 DateFields(title='Encaissement', name='date_payed')]
 
         return l_fields
 
     @staticmethod
     def list(kw):
-
-        if kw == 'client':
-            return zip(Client.get_clients(), Client.get_clients())
-        elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
-                       Employe.get_employes(**{'qualification': 'charge affaire'}))
-        elif kw == 'affaire':
+        if kw == 'affaire':
             return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
-        elif kw == 'statue':
-            return [('oui', 'Oui'), ('non', 'Non')]
         elif kw == 'situation':
-            return [(i, 'Situation numero {}'.format(i)) for i in range(6)]
+            return [(i, 'Situation numero {}'.format(i)) for i in range(12)]
         elif kw == 'type':
             return [('facture', 'Facture'), ('avoir', 'Avoir')]
         else:
@@ -103,7 +89,7 @@ class Facture(BaseModel):
         # Save current facture id
         facture_id_ = self.facture_id
 
-        if self.facture_id == -1 or self.facture_id is None:
+        if self.facture_id == '' or self.facture_id is None:
             df = df.loc[df.type == self.type]
 
             if self.type == 'facture':
@@ -122,6 +108,8 @@ class Facture(BaseModel):
             self.facture_id = facture_id_
             raise ValueError(e.message)
 
+        return self
+
     @staticmethod
     def form_loading(step, index=None, data=None):
 
@@ -133,9 +121,11 @@ class Facture(BaseModel):
         form_man = FormLoader(Facture.l_index, Facture.l_fields(widget=True))
 
         if step % Facture.nb_step_form == 0:
-            index_node = IntegerFields(title='Numero de facture', name='index', missing=-1,
-                                       l_choices=zip(Facture.get_facture(), Facture.get_facture()),
-                                       desc="En cas de modification choisir un numero de facture",)
+            index_node = StringFields(
+                title='Numero de facture', name='index', missing=-1,
+                l_choices=zip(Facture.get_facture(), Facture.get_facture()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un numero de facture"
+            )
             form_man.load_init_form(Facture.action_field, index_node)
 
         else:
@@ -145,6 +135,7 @@ class Facture(BaseModel):
 
             form_man.load(step % Facture.nb_step_form, data_db=data_db, data_form=data)
 
+        print form_man.d_form_data
         return form_man.d_form_data
 
     @staticmethod

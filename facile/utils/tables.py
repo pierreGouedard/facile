@@ -3,7 +3,6 @@
 # Local import
 from facile.tables import html_table
 from facileapp.models.affaire import Affaire
-from facileapp.models.base_prix import Base_prix
 from facileapp.models.chantier import Chantier
 from facileapp.models.client import Client
 from facileapp.models.commande import Commande
@@ -32,9 +31,6 @@ def build_table(table_key, reduced=True, load_jQuery=False, head_class="table-ac
 
     elif table_key == 'chantier':
         df_table, d_footer, kwargs = Chantier.table_loading(reduced=reduced)
-
-    elif table_key == 'base_prix':
-        df_table, d_footer, kwargs = Base_prix.table_loading(reduced=reduced)
 
     elif table_key == 'affaire':
         if reduced:

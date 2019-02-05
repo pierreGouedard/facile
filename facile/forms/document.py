@@ -1,5 +1,4 @@
 # Global importsA
-import deform
 import colander
 from translationstring import TranslationStringFactory
 import pytz

@@ -26,28 +26,35 @@ class Employe(BaseModel):
         l_fields = \
             [StringFields(title='N securite social', name='securite_social'),
              StringFields(title='Carte de sejour', name='carte_sejoure'),
-             StringFields(title='Emploi', name='emploie', table_reduce=True, rank=2),
+             StringFields(title='Emploie', name='emploie', table_reduce=True, rank=2),
+             StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3),
+             StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4),
              StringFields(title='Adresse', name='adresse'),
              StringFields(title='Ville', name='ville'),
              StringFields(title='Code postal', name='code_postal'),
              StringFields(title='tel', name='num_tel'),
              StringFields(title='E-mail', name='mail'),
-             StringFields(title="Numero d'entre", name='num_entre'),
-             StringFields(title='Qualification', name='qualification'),
-             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=3),
-             DateFields(title='date de sortie', name='date_end', table_reduce=True, rank=4, missing='1970-01-01'),
+             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=5),
+             DateFields(title='date de sortie', name='date_end', missing='1970-01-01'),
              ]
         if widget:
-            l_fields[2] = StringFields(title='Emploi', name='emploie', l_choices=Employe.list('emploi'),
-                                       table_reduce=True, rank=2)
+            l_fields[3] = StringFields(
+                title='Categorie', name='categorie', l_choices=Employe.list('categorie'), table_reduce=True, rank=3
+            )
+            l_fields[4] = StringFields(
+                title='Type de contrat', name='type_contrat', l_choices=Employe.list('type_contrat'), table_reduce=True,
+                rank=4
+            )
 
         return l_fields
 
     @staticmethod
     def list(kw):
-        if kw == 'emploi':
-            return [('administration', 'administration'), ('charge affaire', 'charge affaire'),
-                    ('charge etude', 'charge etude')]
+        if kw == 'categorie':
+            return [('administration', 'Administration'), ('charge affaire', "Charge d'affaire"),
+                    ('charge etude', "Charge d'etude"), ('chantier', 'Personel chantier')]
+        elif kw == 'type_contrat':
+            return [('cdi', 'CDI'), ('cdd', "CDD"), ('stagiaire', 'Stagiaire')]
         else:
             return []
 
@@ -74,6 +81,9 @@ class Employe(BaseModel):
     def get_employes(path=None, sep=' ', **kwargs):
         df = Employe.load_db(path)
 
+        if df.empty:
+            return []
+
         for k, v in kwargs.items():
             df = df.loc[df[k] == v]
 
@@ -93,9 +103,11 @@ class Employe(BaseModel):
         form_man = FormLoader(Employe.l_index, Employe.l_fields(widget=True))
 
         if step % Employe.nb_step_form == 0:
-            index_node = StringFields(title='Nom complet', name='index', missing=unicode(''),
-                                      l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()),
-                                      desc="En cas de modification choisir un employe")
+            index_node = StringFields(
+                title='Nom complet', name='index', missing=unicode(''),
+                l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un employe"
+            )
             form_man.load_init_form(Employe.action_field, index_node)
 
         else:

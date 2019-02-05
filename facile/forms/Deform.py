@@ -62,7 +62,7 @@ class Form(object):
                 # Deffered read only input
                 pstruct = self.deffered_missing_(pstruct)
 
-                # Forrmat entry of spots
+                # Format entry of spots
                 if d_format:
                     for k, f in d_format.items():
                         if k in pstruct:

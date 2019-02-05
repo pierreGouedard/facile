@@ -40,9 +40,8 @@ class FormLoader(object):
             l_index = [f.hidden_mode() for f in l_index]
 
             if self.use_subindex:
-                l_fields = map(lambda (i, x): x if not i in self.l_subindex else f.hidden_mode(), l_fields)
+                l_fields = [f if not i in self.l_subindex else f.hidden_mode() for i, f in enumerate(l_fields)]
 
-            self.d_form_data['mapping'] += [('Ajouter', None)]
             for f in l_index + l_fields:
                 if f.name in data_db:
                     data_db[f.name] = f.processing_form['db'](data_db[f.name])

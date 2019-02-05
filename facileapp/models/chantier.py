@@ -27,28 +27,20 @@ class Chantier(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Raison social du client', name='rs_client', l_choices=Chantier.list('client'),
+                [StringFields(title='Raison social du client', name='raison_social', l_choices=Chantier.list('client'),
                               table_reduce=True, rank=1),
-                 StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
-                 StringFields(title='Contact exterieur', name='contact_id', l_choices=Chantier.list('contact')),
-                 StringFields(title='Responsable du chantier', name='responsable', l_choices=Chantier.list('responsable'),
-                              table_reduce=True, rank=0),
+                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
                  StringFields(title='Code postal', name='code_postal'),
-                 StringFields(title='Le chantier est actif', name='is_active',
-                              widget=RadioChoiceWidget(values=Chantier.list('is_active'), **{'key': 'is_active'}))
                  ]
         else:
             l_fields = \
-                [StringFields(title='Raison social du client', name='rs_client', table_reduce=True, rank=1),
-                 StringFields(title='Nom du chantier', name='nom', table_reduce=True, rank=2),
-                 StringFields(title='Contact exterieur', name='contact_id'),
-                 StringFields(title='Responsable du chantier', name='responsable', table_reduce=True, rank=0),
+                [StringFields(title='Raison social du client', name='raison_social', table_reduce=True, rank=1),
+                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
                  StringFields(title='Code postal', name='code_postal'),
-                 StringFields(title='Le chantier est actif', name='is_active')
                  ]
 
         return l_fields
@@ -57,15 +49,6 @@ class Chantier(BaseModel):
     def list(kw):
         if kw == 'client':
             return zip(Client.load_db()['raison_social'].unique(), Client.load_db()['raison_social'].unique())
-
-        elif kw == 'contact':
-            return Contact.get_contact('client', return_id=True)
-
-        elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
-                       Employe.get_employes(**{'qualification': 'charge affaire'}))
-        elif kw == 'is_active':
-            return [('oui', 'Oui'), ('non', 'Non')]
 
         else:
             return []
@@ -95,15 +78,27 @@ class Chantier(BaseModel):
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
     @staticmethod
-    def get_chantier(path=None, return_id=False):
+    def get_chantier(path=None, return_id=False, **kwargs):
+
+        # Load chantier database and apply filter if any in kwargs
+        df = Chantier.load_db(path)
+
+        if df.empty:
+            return []
+
+        if len(set(kwargs.keys()).intersection(df.columns)) > 0:
+            df = df.loc[
+                df[[c for c in df.columns if c in kwargs.keys()]]
+                .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
+            ]
 
         if return_id:
-            l_chantier = Chantier.load_db(path).loc[:, ['rs_client', 'nom']] \
+            l_chantier = df.loc[:, ['raison_social', 'nom']] \
                 .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
                 .to_dict().items()
 
         else:
-            l_chantier = Chantier.load_db(path).loc[:, ['rs_client', 'nom']]\
+            l_chantier = df.loc[:, ['raison_social', 'nom']]\
                 .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
                 .unique()
 
@@ -116,7 +111,7 @@ class Chantier(BaseModel):
         # Save current contact id
         chantier_id_ = self.chantier_id
 
-        if self.chantier_id == -1 or self.chantier_id is None:
+        if self.chantier_id is None or self.chantier_id == '':
             self.chantier_id = 'CH{0:0=4d}'.format(df.chantier_id.apply(lambda x: int(x.replace('CH', ''))).max() + 1)
 
         # Try to add and reset conatct id if failed
@@ -125,6 +120,8 @@ class Chantier(BaseModel):
         except ValueError, e:
             self.chantier_id = chantier_id_
             raise ValueError(e.message)
+
+        return self
 
     @staticmethod
     def form_loading(step, index=None, data=None):
@@ -139,9 +136,11 @@ class Chantier(BaseModel):
                               use_subindex=True)
 
         if step % Chantier.nb_step_form == 0:
-            index_node = StringFields(title='Nom du chantier', name='index', missing=unicode(''),
-                                      l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()),
-                                      desc="En cas de modification choisir un chantier")
+            index_node = StringFields(
+                title='Nom du chantier', name='index', missing=unicode(''),
+                l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un chantier"
+            )
             form_man.load_init_form(Chantier.action_field, index_node)
 
         else:

@@ -35,19 +35,19 @@ class Heure(BaseModel):
                               rank=1),
                  StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
                               table_reduce=True,  rank=2),
-                 StringFields(title="Nom de l'employe", name='employe', l_choices=Heure.list('employe'), table_reduce=True,
-                              rank=3),
-                 IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', l_choices=zip(range(100), range(100)),
+                 StringFields(title="Designation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
+                              rank=3, desc="Choisir 'Interimaires' pour ajouter le cumul des heures des interimaires"),
+                 IntegerFields(title="Cumul heure prod", name='heure_prod', l_choices=Heure.list('heures'),
                                missing=0, table_reduce=True, rank=4),
-                 IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', l_choices=zip(range(100), range(100)),
+                 IntegerFields(title="Cumul heure autre", name='heure_autre', l_choices=Heure.list('heures'),
                                missing=0, table_reduce=True, rank=5)]
         else:
             l_fields = \
                 [StringFields(title="Semaine", name='semaine', table_reduce=True, rank=1),
                  StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True,  rank=2),
-                 StringFields(title="Nom de l'employe", name='employe', table_reduce=True, rank=3),
-                 IntegerFields(title="Nombre d'heure BE", name='nb_heure_be', missing=0, table_reduce=True, rank=4),
-                 IntegerFields(title="Nombre d'heure CH", name='nb_heure_ch', missing=0, table_reduce=True, rank=5)]
+                 StringFields(title="designation", name='name', table_reduce=True, rank=3),
+                 IntegerFields(title="Cumul heure prod", name='heure_prod', missing=0, table_reduce=True, rank=4),
+                 IntegerFields(title="Cumul heure autre", name='heure_autre', missing=0, table_reduce=True, rank=5)]
 
         return l_fields
 
@@ -60,15 +60,17 @@ class Heure(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'employe':
-            return zip(Employe.get_employes(), Employe.get_employes())
+            return zip(Employe.get_employes(), Employe.get_employes()) + [('interim', 'Interimaires')]
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
         elif kw == 'week':
             current_monday = dates.get_current_start_date()
-            l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=70),
-                                       end=current_monday + pd.Timedelta(days=70),
+            l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=30),
+                                       end=current_monday + pd.Timedelta(days=6),
                                        freq='w')
             return [str((t + pd.Timedelta(days=1)).date()) for t in l_dates]
+        elif kw == 'heures':
+            return zip(range(1000), range(1000))
         else:
             return []
 
@@ -123,6 +125,8 @@ class Heure(BaseModel):
             self.heure_id = heure_id_
             raise ValueError(e.message)
 
+        return self
+
     def alter(self):
         super(Heure, self).alter()
 
@@ -136,8 +140,9 @@ class Heure(BaseModel):
         form_man = FormLoader([], [Heure.sequence_field()], use_groupindex=True)
 
         if step % Heure.nb_step_form == 0:
-            index_node = StringFields(title='Semaine', name='index', missing=-1,
-                                      l_choices=zip(Heure.list('week'), Heure.list('week')))
+            index_node = StringFields(
+                title='Semaine', name='index', missing=-1, l_choices=zip(Heure.list('week'), Heure.list('week'))
+            )
             form_man.load_init_form(Heure.action_field, index_node)
 
         else:

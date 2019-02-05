@@ -18,7 +18,7 @@ class Contact(BaseModel):
     path = os.path.join(settings.facile_project_path, 'contact.csv')
     l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                             rank=0)]
-    l_subindex = [0, 1, 2]
+    l_subindex = [1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -28,10 +28,10 @@ class Contact(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
-                              rank=1),
-                 StringFields(title='Raison social du client', name='raison_social',
+                              rank=1, multiple=True),
+                 StringFields(title='Raison social', name='raison_social',
                               l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
-                 StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
+                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
@@ -40,9 +40,9 @@ class Contact(BaseModel):
                  StringFields(title='E-mail', name='mail')]
         else:
             l_fields = \
-                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1),
-                 StringFields(title='Raison social du client', name='raison_social', table_reduce=True, rank=2),
-                 StringFields(title='Nom complet du contact', name='contact', table_reduce=True, rank=3),
+                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1, multiple=True),
+                 StringFields(title='Raison social', name='raison_social', table_reduce=True, rank=2),
+                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
@@ -61,7 +61,10 @@ class Contact(BaseModel):
             return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
 
         elif kw == 'type':
-            return [('client', 'client'), ('fournisseur', 'fournisseur')]
+            return [('client_chantier', 'Contact chantier client'),
+                    ('client_administration', 'Contact administratif client'),
+                    ('client_commande', 'Contact commande client'),
+                    ('fournisseur', 'fournisseur')]
 
         else:
             return []
@@ -91,30 +94,29 @@ class Contact(BaseModel):
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
     @staticmethod
-    def get_contact(type_='all', path=None, return_id=False):
+    def get_contact(type_='all', path=None, return_id=False, **kwargs):
+
+        # Load contact database and apply filter if any in kwargs and load different type of contact
         df = Contact.load_db(path)
 
-        if type_ == 'client':
-            d_contacts = df.loc[df.type == 'client'].loc[:, ['raison_social', 'contact']]\
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
-                .to_dict()
+        if len(set(kwargs.keys()).intersection(df.columns)) > 0:
+            df = df.loc[
+                df[[c for c in df.columns if c in kwargs.keys()]]
+                .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
+            ]
 
-        elif type_ == 'fournisseur':
-            d_contacts = df.loc[df.type == 'fournisseur'].loc[:, ['raison_social', 'contact']] \
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
-                .to_dict()
+        if df.empty:
+            return []
 
-        else:
-            d_contacts_f = df.loc[df.type == 'fournisseur'].loc[:, ['raison_social', 'contact']] \
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
-                .to_dict()
+        if type_ != 'all':
+            df = df.loc[df.type.apply(lambda x: type_ in x)]
 
-            d_contacts_c = df.loc[df.type == 'client'].loc[:, ['raison_social', 'contact']] \
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
-                .to_dict()
+        if df.empty:
+            return []
 
-            d_contacts = {k: 'client - {}'.format(v) for k, v in d_contacts_c.items()}
-            d_contacts.update({k: 'fournisseur - {}'.format(v) for k, v in d_contacts_f.items()})
+        d_contacts = df.loc[:, ['raison_social', 'contact']]\
+            .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
+            .to_dict()
 
         if return_id:
             l_contacts = d_contacts.items()
@@ -129,7 +131,7 @@ class Contact(BaseModel):
         # Save current contact id
         contact_id_ = self.contact_id
 
-        if self.contact_id == -1 or self.contact_id is None:
+        if self.contact_id == '' or self.contact_id is None:
             self.contact_id = 'CT{0:0=4d}'.format(df.contact_id.apply(lambda x: int(x.replace('CT', ''))).max() + 1)
 
         # Try to add and reset contact id if failed
@@ -139,6 +141,8 @@ class Contact(BaseModel):
         except ValueError, e:
             self.contact_id = contact_id_
             raise ValueError(e.message)
+
+        return self
 
     @staticmethod
     def form_loading(step, index=None, data=None):
@@ -153,9 +157,11 @@ class Contact(BaseModel):
                               use_subindex=True)
 
         if step % Contact.nb_step_form == 0:
-            index_node = StringFields(title='Nom du contact', name='index', missing=unicode(''),
-                                      l_choices=zip(Contact.get_contact(), Contact.get_contact()),
-                                      desc="En cas de modification choisir un contact")
+            index_node = StringFields(
+                title='Nom du contact', name='index', missing=unicode(''),
+                l_choices=zip(Contact.get_contact(), Contact.get_contact()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un contact"
+            )
             form_man.load_init_form(Contact.action_field, index_node)
 
         else:

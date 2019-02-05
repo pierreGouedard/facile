@@ -45,7 +45,7 @@ class BaseModel(object):
         if not df.empty:
             return df.loc[df.index[0]]
         else:
-            raise ValueError('index: {} does not exist'.format(d_index))
+            raise IndexError('index: {} does not exist'.format(d_index))
 
     @staticmethod
     def from_subindex(d_subindex, l_index_names, df):
@@ -56,7 +56,7 @@ class BaseModel(object):
         if not df.empty:
             return {name: df.loc[df.index[0], name] for name in l_index_names}
         else:
-            raise ValueError('sub index: {} does not exist'.format(d_subindex))
+            raise IndexError('sub index: {} does not exist'.format(d_subindex))
 
     @staticmethod
     def from_groupindex(d_groupindex, l_index_names, df):
@@ -79,10 +79,10 @@ class BaseModel(object):
             df_ = df_.loc[df_[f.name] == self.__getattribute__(f.name)]
 
         if b_exists and df_.empty:
-            raise ValueError('subindex: {} does not exists'.format([f.name for f in l_fields]))
+            raise IndexError('subindex: {} does not exists'.format([f.name for f in l_fields]))
 
         elif not b_exists and not df_.empty:
-            raise ValueError('subindex: {} already exists'.format([f.name for f in l_fields]))
+            raise IndexError('subindex: {} already exists'.format([f.name for f in l_fields]))
 
     def add(self):
         # Update creation and maj timestamp
@@ -101,7 +101,7 @@ class BaseModel(object):
             self.check_subindex(df, b_exists=False)
 
         if not df_.empty:
-            raise ValueError('index: {} already exists'.format([f.name for f in self.l_index]))
+            raise IndexError('index: {} already exists'.format([f.name for f in self.l_index]))
 
         else:
             # Add record and save dataframe as csv
@@ -109,6 +109,8 @@ class BaseModel(object):
             df_ = pd.DataFrame([data], columns=[f.name for f in self.l_index + self.l_fields() + self.l_hfields])
             df = df.append(df_, ignore_index=True)
             df.reset_index(drop=True).to_csv(self.path, index=None)
+
+        return self
 
     def alter(self):
         # Update maj timestamp
@@ -127,7 +129,7 @@ class BaseModel(object):
 
         # If empty raise error
         if df_.empty:
-            raise ValueError('index: {} does not exists'.format([f.name for f in self.l_index]))
+            raise IndexError('index: {} does not exists'.format([f.name for f in self.l_index]))
 
         else:
             # Alter record and save csv
@@ -135,6 +137,8 @@ class BaseModel(object):
             for f in self.l_index + self.l_fields() + self.l_hfields:
                 df.loc[id_, f.name] = f.type(self.__getattribute__(f.name))
             df.to_csv(self.path, index=None)
+
+        return self
 
     def delete(self):
         # Load db
@@ -151,6 +155,8 @@ class BaseModel(object):
 
         # Save it
         df.reset_index(drop=True).to_csv(self.path, index=None)
+
+        return self
 
     @staticmethod
     def control_loading():

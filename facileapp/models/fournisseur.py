@@ -14,7 +14,7 @@ class Fournisseur(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'fournisseur.csv')
 
-    l_index = [StringFields(title='Raison social', name='raison_social', table_reduce=True, rank=0)]
+    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0)]
     l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
     l_documents = [('fpay', 'Lettre pour paiement'), ('fmerci', 'Lettre de remerciement')]
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -23,12 +23,11 @@ class Fournisseur(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='contact (financier)', name='contact', table_reduce=True, rank=1),
-             StringFields(title='Adresse (financier)', name='adresse'),
-             StringFields(title='Ville (financier)', name='ville'),
-             StringFields(title='Code postal (financier)', name='code_postal'),
-             StringFields(title='tel (financier)', name='num_tel', table_reduce=True, rank=2),
-             StringFields(title='E-mail (financier)', name='mail', table_reduce=True, rank=3)]
+            [StringFields(title='Adresse', name='adresse'),
+             StringFields(title='Ville', name='ville'),
+             StringFields(title='Code postal', name='code_postal'),
+             StringFields(title='tel', name='num_tel', table_reduce=True, rank=2),
+             StringFields(title='E-mail', name='mail', table_reduce=True, rank=3)]
 
         return l_fields
 
@@ -70,9 +69,10 @@ class Fournisseur(BaseModel):
         form_man = FormLoader(Fournisseur.l_index, Fournisseur.l_fields(widget=True))
 
         if step % Fournisseur.nb_step_form == 0:
-            index_node = StringFields(title='Raison social', name='index', missing=unicode(''),
-                                      l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()),
-                                      desc="En cas de modification choisir un fournisseur")
+            index_node = StringFields(
+                title='Raison social', name='index', missing=unicode(''),
+                l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un fournisseur")
             form_man.load_init_form(Fournisseur.action_field, index_node)
 
         else:

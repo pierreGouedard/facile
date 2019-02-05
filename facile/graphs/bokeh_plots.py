@@ -4,9 +4,6 @@ import itertools
 import pandas as pd
 import numpy as np
 from numpy import pi
-from bokeh.charts import Bar
-from bokeh.charts.attributes import cat, color
-from bokeh.charts.operations import blend
 
 colors = itertools.cycle(['#1144cc', '#11cc44', '#cc4411', '#11ccff', '#ff11cc', '#ffcc11', '#111111'])
 
@@ -70,18 +67,6 @@ def plot_series_and_event(df, punctual_event=None, span_event=None, title='bokeh
     return fig
 
 
-def plot_scatter(df, x, y, color=None, title='', width=500, height=300):
-    from bokeh.charts import Scatter
-
-    # Set color if necessary
-    if color is None:
-        color = "navy"
-
-    fig = Scatter(df, x=x, y=y, title=title, color=color, width=width, height=height)
-
-    return fig
-
-
 def plot_scatter_advanced(df, x, y, color=None, hover=None, title='', plot_width=600, plot_height=600, size=8,
                           l_lines=None):
 
@@ -137,27 +122,27 @@ def plot_pie(df_data, hover=False):
 
     return bokeh_plot
 
-
-def bar_plot(df_data, val_col='value'):
-    bar = Bar(df_data,
-              values=val_col,
-              label=cat(columns='label', sort=False),
-              tooltips=[(val_col, '@height')],
-              responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None, legend=None
-              )
-
-    return bar
-
-
-def stack_bar_plot(df_data, cat_cols):
-
-    bar = Bar(df_data,
-              values=blend(*cat_cols, labels_name='cat'),
-              label=cat(columns='label', sort=False),
-              stack=cat(columns='cat', sort=False),
-              color=color(columns='cat', palette=[colors.next() for _ in cat_cols], sort=False),
-              tooltips=[('cat', '@cat'), ('value', '@height')],
-              responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None
-              )
-
-    return bar
+# Deprecated , TODO: update using nokeh.plotting
+# def bar_plot(df_data, val_col='value'):
+#     bar = Bar(df_data,
+#               values=val_col,
+#               label=cat(columns='label', sort=False),
+#               tooltips=[(val_col, '@height')],
+#               responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None, legend=None
+#               )
+#
+#     return bar
+#
+#
+# def stack_bar_plot(df_data, cat_cols):
+#
+#     bar = Bar(df_data,
+#               values=blend(*cat_cols, labels_name='cat'),
+#               label=cat(columns='label', sort=False),
+#               stack=cat(columns='cat', sort=False),
+#               color=color(columns='cat', palette=[colors.next() for _ in cat_cols], sort=False),
+#               tooltips=[('cat', '@cat'), ('value', '@height')],
+#               responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None
+#               )
+#
+#     return bar

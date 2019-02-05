@@ -19,7 +19,7 @@ class DownloadForm(Form):
         class DownloadSchema(Schema):
             table = SchemaNode(
                 String(),
-                title="User name",
+                title="table",
                 widget=HiddenWidget())
 
         return DownloadSchema()

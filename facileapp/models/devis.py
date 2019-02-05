@@ -11,9 +11,7 @@ from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
-from facileapp.models.chantier import Chantier
 from facileapp.models.employe import Employe
-from facileapp.models.base_prix import Base_prix
 
 
 class Devis(BaseModel):
@@ -33,32 +31,35 @@ class Devis(BaseModel):
             l_fields = \
                 [StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True,
                               rank=1),
-                 StringFields(title='Contact', name='contact_id', l_choices=Devis.list('contact')),
-                 StringFields(title='Chantier', name='chantier_id', l_choices=Devis.list('chantier')),
-                 StringFields(title='Responsable', name='responsable', l_choices=Devis.list('responsable'),
+                 StringFields(title='Contact client', name='contact_id', l_choices=Devis.list('contact')),
+                 StringFields(title='Responsable devis', name='responsable', l_choices=Devis.list('responsable'),
                               table_reduce=True, rank=2),
-                 IntegerFields(title="Nombre d'heure BE", name='heure_be', l_choices=zip(range(9000), range(9000))),
-                 IntegerFields(title="Nombre d'heure Ch", name='heure_ch', l_choices=zip(range(1000), range(1000))),
+                 StringFields(title='Designation devis', name='object'),
+                 IntegerFields(title="Heure autre", name='heure_autre', l_choices=zip(range(9000), range(9000))),
+                 IntegerFields(title="Heure Production", name='heure_prod', l_choices=zip(range(1000), range(1000))),
+                 MoneyFields(title="Prix heure autre", name='prix_heure_autre'),
+                 MoneyFields(title="Prix heure Production", name='prix_heure_prod'),
                  MoneyFields(title='Montant achat', name='montant_achat'),
                  FloatFields(title='Coefficient achat', name='coef_achat'),
+                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
                  DateFields(title='Date de debut', name='date_start'),
                  DateFields(title='Date de fin', name='date_end'),
-                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-                 MoneyFields(title='Prix', name='price', round=2,
-                             table_reduce=True, rank=3)]
+                 MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
         else:
             l_fields = \
                 [StringFields(title='Client', name='rs_client', table_reduce=True, rank=1),
-                 StringFields(title='Contact', name='contact_id'),
-                 StringFields(title='Chantier', name='chantier_id'),
-                 StringFields(title='Responsable', name='responsable', table_reduce=True, rank=2),
-                 IntegerFields(title="Nombre d'heure BE", name='heure_be'),
-                 IntegerFields(title="Nombre d'heure Ch", name='heure_ch'),
+                 StringFields(title='Contact client', name='contact_id'),
+                 StringFields(title='Responsable devis', name='responsable', table_reduce=True, rank=2),
+                 StringFields(title='Designation devis', name='object'),
+                 IntegerFields(title="Heure autre", name='heure_autre'),
+                 IntegerFields(title="Heure Production", name='heure_prod'),
+                 MoneyFields(title="Prix heure autre", name='prix_heure_autre'),
+                 MoneyFields(title="Prix heure Production", name='prix_heure_prod'),
                  MoneyFields(title='Montant achat', name='montant_achat'),
                  FloatFields(title='Coefficient achat', name='coef_achat'),
+                 StringFields(title='Base de prix', name='base_prix'),
                  DateFields(title='Date de debut', name='date_start'),
                  DateFields(title='Date de fin', name='date_end'),
-                 StringFields(title='Base de prix', name='base_prix'),
                  MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
 
         return l_fields
@@ -66,17 +67,22 @@ class Devis(BaseModel):
     @staticmethod
     def list(kw):
 
+        d_month = {
+            1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}', 7: 'Juillet {}',
+            8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}', 12: 'Decembre {}'
+        }
+
         if kw == 'client':
             return zip(Client.get_clients(), Client.get_clients())
         elif kw == 'contact':
-            return Contact.get_contact('client', return_id=True)
-        elif kw == 'chantier':
-            return Chantier.get_chantier(return_id=True)
+            return Contact.get_contact('client_commande', return_id=True)
         elif kw == 'responsable':
-            return zip(Employe.get_employes(**{'qualification': 'charge affaire'}),
-                       Employe.get_employes(**{'qualification': 'charge affaire'}))
+            return zip(Employe.get_employes(**{'categorie': 'charge affaire'}),
+                       Employe.get_employes(**{'categorie': 'charge affaire'}))
         elif kw == 'base_prix':
-            return Base_prix.list('base')
+            d = pd.Timestamp.now().date()
+            l_dates = pd.DatetimeIndex(start=d - pd.Timedelta(days=95), end=d + pd.Timedelta(days=95), freq='M')
+            return [(d_month[t.month].format(t.year), d_month[t.month].format(t.year)) for t in l_dates]
         else:
             return []
 
@@ -108,15 +114,16 @@ class Devis(BaseModel):
         # Save current contact id
         devis_id_ = self.devis_id
 
-        if self.devis_id == -1 or self.devis_id is None:
+        if self.devis_id == '' or self.devis_id is None:
             self.devis_id = 'DV{0:0=4d}'.format(df.devis_id.apply(lambda x: int(x.replace('DV', ''))).max() + 1)
 
-        self.price = Devis.compute_price({'be': self.__getattribute__('heure_be'),
-                                          'ch': self.__getattribute__('heure_ch')},
-                                         self.__getattribute__('base_prix'), self.__getattribute__('coef_achat'),
-                                         self.__getattribute__('montant_achat'))
+        self.price = Devis.compute_price(
+            {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
+             'php': self.__getattribute__('prix_heure_prod'), 'pha':self.__getattribute__('prix_heure_autre')},
+            {'ca': self.__getattribute__('coef_achat'), 'ma': self.__getattribute__('montant_achat')}
+        )
 
-        # Try to add and reset conatct id if failed
+        # Try to add and reset contact id if failed
         try:
             super(Devis, self).add()
 
@@ -124,22 +131,20 @@ class Devis(BaseModel):
             self.devis_id = devis_id_
             raise ValueError(e.message)
 
+        return self
+
     def alter(self):
-        self.price = Devis.compute_price({'be': self.__getattribute__('heure_be'),
-                                          'ch': self.__getattribute__('heure_ch')},
-                                         self.__getattribute__('base_prix'), self.__getattribute__('coef_achat'),
-                                         self.__getattribute__('montant_achat'))
+        self.price = Devis.compute_price(
+            {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
+             'php': self.__getattribute__('prix_heure_prod'), 'pha': self.__getattribute__('prix_heure_autre')},
+            {'ca': self.__getattribute__('coef_achat'), 'ma': self.__getattribute__('montant_achat')}
+        )
         super(Devis, self).alter()
 
     @staticmethod
-    def compute_price(d_heures, base_prix, coef_achat, montant_achat):
-        # Get price from base
-        d_prices = Base_prix.get_price(base_prix)
-
+    def compute_price(d_heures, d_achats):
         # Compute price
-        price = montant_achat * coef_achat
-        price += sum([d_heures[k.split('_')[-1]] * v for k, v in d_prices.items()])
-
+        price = d_achats['ma'] * d_achats['ca'] + d_heures['hp'] * d_heures['php'] + d_heures['ha'] * d_heures['pha']
         return price
 
     @staticmethod
@@ -151,28 +156,22 @@ class Devis(BaseModel):
             d_index = None
 
         if step % Devis.nb_step_form == 2:
+            # Compute price
+            price = Devis.compute_price(
+                {'hp': int(data.get('heure_prod', 0)), 'ha': int(data.get('heure_autre', 0)),
+                 'php': float(data.get('prix_heure_prod', 0)), 'pha': float(data.get('prix_heure_autre', 0))},
+                {'ca': float(data.get('coef_achat', 1)), 'ma': float(data.get('montant_achat', 0))}
+            )
+            data.update({'price': price})
 
-            price = Devis.compute_price({'be': int(data.get('heure_be', 0)), 'ch': int(data.get('heure_ch', 0))},
-                                        data.get('base_prix', 'Janvier 2018'), float(data.get('coef_achat', 1)),
-                                        float(data.get('montant_achat', 0)))
-
-            data.update({k: v for k, v in Base_prix.get_price(data.get('base_prix', 'Janvier 2018')).items() +
-                        [('price', price)]})
-
-            l_fields = [
-                FloatFields(title="Prix heure Ch", name='prix_heure_ch', round=2),
-                FloatFields(title="Prix heure Ch", name='prix_heure_be', round=2)
-            ] + Devis.l_fields(widget=True)
-
-        else:
-            l_fields = Devis.l_fields(widget=True)
-
-        form_man = FormLoader(Devis.l_index, l_fields)
+        form_man = FormLoader(Devis.l_index, Devis.l_fields(widget=True))
 
         if step % Devis.nb_step_form == 0:
-            index_node = StringFields(title='Numero de devis', name='index', missing=-1,
-                                       l_choices=zip(Devis.get_devis(), Devis.get_devis()),
-                                       desc="En cas de modification choisir un numero de devis",)
+            index_node = StringFields(
+                title='Numero de devis', name='index', missing=-1,
+                l_choices=zip(Devis.get_devis(), Devis.get_devis()) + [('new', 'Nouveau')],
+                desc="En cas de modification choisir un numero de devis"
+            )
             form_man.load_init_form(Devis.action_field, index_node)
 
         else:
@@ -216,7 +215,7 @@ class Devis(BaseModel):
         d_control_data = {}
         df = Devis.load_db()
 
-        # App 2 amount of digned affaire by charge d'aff
+        # App 2 amount of signed affaire by charge d'aff
         df_chardaff = df[['responsable', 'price']].groupby('responsable')\
             .sum()\
             .reset_index()\

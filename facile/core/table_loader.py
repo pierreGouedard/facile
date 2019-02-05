@@ -13,8 +13,6 @@ class TableLoader(object):
         self.limit = limit
 
     def load_reduce_table(self, df):
-        # Sort database
-        df = self.sort_df(df)
 
         # Get columns to display
         l_cols = [(f.name, f.rank) for f in self.l_index + self.l_fields if f.table_reduce]
@@ -22,7 +20,11 @@ class TableLoader(object):
         # Sort columns by rank
         l_cols = sorted(l_cols, key=lambda t: t[1])
 
-        df = df.loc[:self.limit, [t[0] for t in l_cols]]
+        if not df.empty:
+            # Sort database and keep latest record
+            df = self.sort_df(df).loc[:self.limit, :]
+
+        df = df.loc[:, [t[0] for t in l_cols]]
 
         return df,  {'paginate': 'true', 'record_cnt': 'true'}
 

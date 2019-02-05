@@ -25,7 +25,6 @@ class LoginForm(Form):
 
     # format_ function should be re-defined in class that inherit from Form
     def format_(self, pstruct):
-
         user = Users.from_login(pstruct['username'], pstruct['password'])
         pstruct.update({'user': user})
 

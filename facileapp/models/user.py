@@ -63,7 +63,7 @@ class Users(object):
 
         if self.username not in df.username:
             df = df.append(pd.DataFrame([[self.username, self.password, self.rights]], index=[id_], columns=df.columns))
-            df.reset_index().to_csv(self.path)
+            df.reset_index().to_csv(self.path, index=False)
 
         else:
             raise ValueError('username {} already exists'.format(self.username))
@@ -78,7 +78,7 @@ class Users(object):
                 df.loc[self.id, c] = self.__getattribute__(c)
 
             # Save it
-            df.reset_index().to_csv(self.path)
+            df.reset_index().to_csv(self.path, index=False)
 
         else:
             raise ValueError('id {} does not exists'.format(self.username))

@@ -5,7 +5,6 @@ from jinja2 import Template
 # Local import
 from facileapp.models.employe import Employe
 from facileapp.models.views.feuille_travaux import FeuilleTravaux
-from facileapp.models.base_prix import Base_prix
 from facileapp.models.affaire import Affaire
 from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
@@ -20,9 +19,6 @@ def build_controls(table_key):
 
     if table_key == 'employe':
         d_control_data = Employe.control_loading()
-
-    elif table_key == 'base_prix':
-        d_control_data = Base_prix.control_loading()
 
     elif table_key == 'affaire':
         d_control_data = FeuilleTravaux.control_loading()
