@@ -29,11 +29,12 @@ class Contact(BaseModel):
             l_fields = \
                 [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
                               rank=1, multiple=True),
-                 StringFields(title='Raison social', name='raison_social',
+                 StringFields(title='Designation client / fournisseur', name='designation',
                               l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
                  StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='CS/BP', name='cs_bp'),
                  StringFields(title='Ville', name='ville'),
                  StringFields(title='Code postal', name='code_postal'),
                  StringFields(title='tel', name='num_tel'),
@@ -41,10 +42,11 @@ class Contact(BaseModel):
         else:
             l_fields = \
                 [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1, multiple=True),
-                 StringFields(title='Raison social', name='raison_social', table_reduce=True, rank=2),
+                 StringFields(title='Designation client / fournisseur', name='designation', table_reduce=True, rank=2),
                  StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
+                 StringFields(title='CS/BP', name='cs_bp'),
                  StringFields(title='Ville', name='ville'),
                  StringFields(title='Code postal', name='code_postal'),
                  StringFields(title='tel', name='num_tel'),
@@ -55,7 +57,7 @@ class Contact(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'client':
-            return zip(Client.load_db()['raison_social'].unique(), Client.load_db()['raison_social'].unique())
+            return zip(Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique())
 
         elif kw == 'fournisseur':
             return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())

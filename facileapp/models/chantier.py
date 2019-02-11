@@ -11,7 +11,6 @@ from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
-from facileapp.models.employe import Employe
 
 
 class Chantier(BaseModel):
@@ -27,7 +26,7 @@ class Chantier(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Raison social du client', name='raison_social', l_choices=Chantier.list('client'),
+                [StringFields(title='Designation du client', name='dasignation_client', l_choices=Chantier.list('client'),
                               table_reduce=True, rank=1),
                  StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
                  StringFields(title='Adresse', name='adresse'),
@@ -36,7 +35,7 @@ class Chantier(BaseModel):
                  ]
         else:
             l_fields = \
-                [StringFields(title='Raison social du client', name='raison_social', table_reduce=True, rank=1),
+                [StringFields(title='Designation du client', name='dasignation_client', table_reduce=True, rank=1),
                  StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='Ville', name='ville'),
@@ -48,7 +47,7 @@ class Chantier(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'client':
-            return zip(Client.load_db()['raison_social'].unique(), Client.load_db()['raison_social'].unique())
+            return zip(Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique())
 
         else:
             return []

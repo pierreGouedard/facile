@@ -55,7 +55,7 @@ class Facture(BaseModel):
         if kw == 'affaire':
             return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
         elif kw == 'situation':
-            return [(i, 'Situation numero {}'.format(i)) for i in range(12)]
+            return [(i, 'Situation numero {}'.format(i)) for i in range(1, 13)]
         elif kw == 'type':
             return [('facture', 'Facture'), ('avoir', 'Avoir')]
         else:

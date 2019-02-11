@@ -156,7 +156,7 @@ class Affaire(BaseModel):
         if step % Affaire.nb_step_form == 2:
             if data is not None and 'devis_id' in data.keys():
                 filters.update(
-                    {'raison_social': Devis.from_index_({'devis_id': data['devis_id']}).__getattribute__('rs_client')}
+                    {'raison_social': Devis.from_index_({'devis_id': data['devis_id']}).__getattribute__('designation_client')}
                 )
 
         form_man = FormLoader(Affaire.l_index, Affaire.l_fields(widget=True, **filters))

@@ -44,6 +44,7 @@ class Synthesizer():
         self.ville = Ville()
         self.tel = Tel()
         self.service = Service()
+        self.cs = CS()
         self.d_contacts = {}
 
     def save_database(self, df, name):
@@ -125,9 +126,10 @@ class Synthesizer():
         np.random.seed(1234)
 
         d_client = {
-            i: {
+            i: {'designation': 'client {} - site {}'.format(i, i),
                 'raison_social': 'client {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -150,6 +152,7 @@ class Synthesizer():
             i: {
                 'raison_social': 'fournisseur {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -172,10 +175,11 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_chantier',
-                'raison_social': 'client {}'.format(i % self.n_client),
+                'designation': 'client {}'.format(i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel sur chantier - client {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -191,10 +195,11 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_commande',
-                'raison_social': 'client {}'.format(i % self.n_client),
+                'designation': 'client {}'.format(i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel pour commande - client {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -210,10 +215,11 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_administration',
-                'raison_social': 'client {}'.format(i % self.n_client),
+                'designation': 'client {}'.format(i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel pour administration - client {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -229,10 +235,11 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'fournisseur',
-                'raison_social': 'fournisseur {}'.format(i % self.n_fournisseur),
+                'designation': 'fournisseur {}'.format(i % self.n_fournisseur),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'description of fournisseur contact {}'.format(i),
                 'adresse': self.adresse(),
+                'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
                 'code_postal': self.ville(**{'seed': i, 'key': 'cp'}),
                 'num_tel': self.tel(),
@@ -256,7 +263,7 @@ class Synthesizer():
         d_chantier = {
             i: {
                 'chantier_id': 'CH{0:0=4d}'.format(i),
-                'raison_social': 'client {}'.format(i),
+                'designation_client': 'client {}'.format(i),
                 'nom': 'Chantier client {}'.format(i),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
@@ -277,7 +284,7 @@ class Synthesizer():
         # Attached to affaire devis
         d_devis = {
             i: {'devis_id': 'DV{0:0=4d}'.format(int(i)),
-                'rs_client': 'client {}'.format(i),
+                'designation_client': 'client {} - site {}'.format(i, i),
                 'contact_id': np.random.choice([id_ for id_ in self.d_contacts.get('commande', ['unknown'])]),
                 'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
                 'object': 'Objet du devis correspond a un texte arbitraire',
@@ -309,7 +316,7 @@ class Synthesizer():
         # Add un attached devis
         d_ = {len(self.l_affaires): {
             'devis_id': 'DV{0:0=4d}'.format(int(len(self.l_affaires))),
-            'rs_client': 'client {}'.format(len(self.l_affaires)),
+            'designation_client': 'client {} - site {}'.format(len(self.l_affaires), len(self.l_affaires)),
             'contact_id': np.random.choice([id_ for id_ in self.d_contacts.get('commande', ['unknown'])]),
             'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
             'heure_prod': np.random.randint(100, 1000),
@@ -424,9 +431,9 @@ class Synthesizer():
                     'affaire_id': self.l_affaires[i],
                     'objet': 'facture num {}'.format(k),
                     'montant_ht': self.float(d['price'] / 3),
-                    'situation': i,
-                    'date_visa': 'yes' if k < 2 else np.random.choice(['yes', 'no']),
-                    'date_payed': 'yes' if k < 2 else 'no',
+                    'situation': i + 1,
+                    'date_visa': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
+                    'date_payed': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
                     'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                     'maj_date': str(pd.Timestamp.now())
                     }
@@ -440,11 +447,11 @@ class Synthesizer():
                 'type': 'avoir',
                 'facture_id': 'AV{0:0=4d}'.format(1),
                 'affaire_id': self.l_affaires[0],
-                'objet': 'avoir situation 0',
+                'objet': 'avoir situation 1',
                 'montant_ht': self.float(d_devis.values()[0]['price'] / 3),
                 'situation': 0,
-                'date_visa': np.random.choice(['yes', 'no']),
-                'date_payed': 'yes',
+                'date_visa': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
+                'date_payed': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             }
@@ -523,6 +530,9 @@ class Service:
         else:
             return self.service[n][0]
 
+class CS:
+    def __call__(self, *args, **kwargs):
+        return 'CS{}'.format(''.join(map(str, np.random.randint(0, 10, 5))))
 
 class Name:
     name = ('name_{}_surname_{}', 'name_{} surname_{}')

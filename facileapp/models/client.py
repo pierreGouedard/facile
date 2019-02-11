@@ -13,7 +13,7 @@ from facile.core.base_model import BaseModel
 class Client(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'client.csv')
-    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0)]
+    l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0)]
     l_documents = [('cmerci', 'Lettre de remerciement')]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -22,11 +22,13 @@ class Client(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='Adresse', name='adresse'),
-             StringFields(title='Ville', name='ville'),
+            [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=1),
+             StringFields(title='Adresse', name='adresse', rank=2),
+             StringFields(title='CS/BP', name='cs_bp'),
+             StringFields(title='Ville', name='ville', rank=3),
              StringFields(title='Code postal', name='code_postal'),
-             StringFields(title='tel', name='num_tel', table_reduce=True, rank=2),
-             StringFields(title='E-mail', name='mail', table_reduce=True, rank=3)]
+             StringFields(title='tel', name='num_tel', table_reduce=True),
+             StringFields(title='E-mail', name='mail', table_reduce=True)]
 
         return l_fields
 
@@ -55,7 +57,7 @@ class Client(BaseModel):
 
     @staticmethod
     def get_clients(path=None):
-        return Client.load_db(path)['raison_social'].unique()
+        return Client.load_db(path)['designation'].unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):
@@ -68,7 +70,7 @@ class Client(BaseModel):
         form_man = FormLoader(Client.l_index, Client.l_fields(widget=True))
         if step % Client.nb_step_form == 0:
             index_node = StringFields(
-                title='Raison social', name='index', missing='',
+                title='Designation', name='index', missing='',
                 l_choices=zip(Client.get_clients(), Client.get_clients()) + [('new', 'Nouveau')],
                 desc="En cas de modification ou supression, choisir la raison sociale du client"
             )
@@ -102,7 +104,7 @@ class Client(BaseModel):
     def form_document_loading():
 
         index_node = StringFields(
-            title='Raison social', name='index', l_choices=zip(Client.get_clients(), Client.get_clients())
+            title='Designation', name='index', l_choices=zip(Client.get_clients(), Client.get_clients())
         )
         document_node = StringFields(
             title='Nom document', name='document', l_choices=Client.l_documents

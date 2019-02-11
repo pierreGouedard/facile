@@ -29,8 +29,8 @@ class Devis(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Client', name='rs_client', l_choices=Devis.list('client'), table_reduce=True,
-                              rank=1),
+                [StringFields(title='Designation client', name='designation_client', l_choices=Devis.list('client'),
+                              table_reduce=True, rank=1),
                  StringFields(title='Contact client', name='contact_id', l_choices=Devis.list('contact')),
                  StringFields(title='Responsable devis', name='responsable', l_choices=Devis.list('responsable'),
                               table_reduce=True, rank=2),
@@ -47,7 +47,7 @@ class Devis(BaseModel):
                  MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
         else:
             l_fields = \
-                [StringFields(title='Client', name='rs_client', table_reduce=True, rank=1),
+                [StringFields(title='Designation client', name='designation_client', table_reduce=True, rank=1),
                  StringFields(title='Contact client', name='contact_id'),
                  StringFields(title='Responsable devis', name='responsable', table_reduce=True, rank=2),
                  StringFields(title='Designation devis', name='object'),
