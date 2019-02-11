@@ -99,15 +99,3 @@ class Fournisseur(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
-
-    @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title='Raison social', name='index', l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Fournisseur.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}

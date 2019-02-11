@@ -1,7 +1,7 @@
 # Global imports
 import os
 import pandas as pd
-from deform.widget import RadioChoiceWidget, HiddenWidget
+from deform.widget import HiddenWidget
 
 # Local import
 import settings
@@ -10,8 +10,6 @@ from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
-from facileapp.models.client import Client
-from facileapp.models.employe import Employe
 
 
 class Facture(BaseModel):
@@ -19,8 +17,6 @@ class Facture(BaseModel):
     path = os.path.join(settings.facile_project_path, 'facture.csv')
     l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0)]
-    l_documents = [('facture', 'Facture'), ('relance1', 'Lettre de relance 1'), ('relance2', 'Lettre de relance 2'),
-                   ('relance3', 'Lettre de relance 3'), ('misede', 'Lettre de mise en demeure')]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -154,28 +150,11 @@ class Facture(BaseModel):
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title='Numero de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Facture.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}
-
-    @staticmethod
     def control_loading():
         d_control_data = {}
         df = Facture.load_db()
 
-        # get dates of current and past business year
-        # business_year = dates.get_business_year_from_date(pd.Timestamp.now())
-        # date_cur = dates.get_bound_from_business_year(business_year)
-        # date_pas = dates.get_bound_from_business_year(business_year - 1)
-
-        # App 1 repartition bill waiting for mandat, waiting for payment, payed for current business year
+        # App 1 repartition bill waiting for visa, waiting for payment, payed for current business year
         df_statue = df[['is_visa', 'is_payed', 'montant_ht']].groupby(['is_visa', 'is_payed'])\
             .sum()\
             .reset_index()

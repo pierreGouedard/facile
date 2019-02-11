@@ -199,16 +199,3 @@ class Affaire(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df, l_extra_cols=l_extra_cols)
 
         return df, d_footer, kwargs
-
-    @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title="Numero d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Affaire.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}
-

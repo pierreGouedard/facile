@@ -7,28 +7,30 @@ from facile.core.document_generator import WordDocument
 from facileapp.models.views.base_view import BaseView
 from facileapp.models.devis import Devis
 from facileapp.models.affaire import Affaire
-from facileapp.models.facture import Facture
+from facileapp.models.commande import Commande
 from facileapp.models.contact import Contact
+from facileapp.models.chantier import Chantier
 
 
-class Facturation(BaseView):
-    l_documents = [('detail_facture', 'Detail facture')]
-    main_model = Facture
+class Achat(BaseView):
+    l_documents = [('detail_commande', 'Detail Commande')]
+    main_model = Commande
     l_models = [Affaire,  Devis]
 
     @staticmethod
     def load_view():
         # Load affaire db
-        df = Facture.load_db()
+        df = Commande.load_db()
         df['affaire_num'] = df.affaire_id.apply(lambda x: x.split('-')[0])
         df['affaire_ind'] = df.affaire_id.apply(lambda x: x.split('-')[1])
 
         # Join devis information
         df_devis = Devis.load_db()
-        df_devis = df_devis[['designation_client', 'objet', 'price', 'date_start', 'date_end', 'base_prix']]
+        df_devis = df_devis[['designation_client', 'objet', 'date_start', 'date_end', 'base_prix', 'montant_achat',
+                             'coef_achat']]
 
         df_info = Affaire.load_db()
-        df_info = df_info[['contact_facturation_client', 'responsable', 'fae']]\
+        df_info = df_info[['responsable', 'contact_chantier_interne', 'contact_chantier_client', 'chantier_id']]\
             .merge(df_devis, on='devis_id', how='left')
 
         # Join info to billing table
@@ -40,24 +42,24 @@ class Facturation(BaseView):
     def form_document_loading():
 
         index_node = StringFields(
-            title='Numero de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
+            title='Numero de facture', name='index', l_choices=zip(Commande.get_commande(), Commande.get_commande())
         )
         document_node = StringFields(
-            title='Nom document', name='document', l_choices=Facturation.l_documents
+            title='Nom document', name='document', l_choices=Achat.l_documents
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
 
-
     @staticmethod
     def document_(index, path, driver=FileDriver('doc_fact', ''), name='doc_fact.docx'):
 
-        df = Facturation.load_view()
+        df = Achat.load_view()
         df_contact = Contact.load_db()
-        s_contact = df_contact.loc[df_contact.contact_id == df['contact_facturation_client'].iloc[0]].iloc[0]
+        df_chantier = Chantier.load_db()
+
         word_document = WordDocument(path, driver, {})
 
-        title = 'FACTURE {}'.format(index)
+        title = 'COMMANDE {}'.format(index)
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # Info affaire
@@ -68,29 +70,28 @@ class Facturation(BaseView):
         )
         word_document.add_field('Designation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Objet du devis', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Montant du devis', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet du devis', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Montant achat devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Debut du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
 
         # Info facture
-        word_document.add_title('Infos facture', font_size=12, text_align='left', color='000000')
-        word_document.add_field('Montant facture HT', df['montant_ht'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Numero de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de visa', df['date_visa'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de paiement', df['date_payed'].iloc[0], left_indent=0.15, space_before=0.1)
+        s_chantier = df_chantier.loc[df_chantier['chantier_id'] == df['chantier_id'].iloc[0]].iloc[0]
+        contact_client_ch = df['contact_chantier_client'].iloc[0]
+        designation = df_contact.loc[df_contact.contact_id == contact_client_ch, 'contact'].iloc[0]
 
-        coord = '{}, {} - {} {}'.format(
-            s_contact['adresse'], s_contact['cs_bp'], s_contact['code_postal'], s_contact['ville']
+        word_document.add_title('Info Chantier', font_size=12, text_align='left', color='000000')
+        word_document.add_field(
+            'Adresse', '{}, {} {}'.format(
+            s_chantier['adresse'], s_chantier['code_postal'], s_chantier['ville']
+            ), left_indent=0.15
         )
-        word_document.add_simple_paragraph(
-            ['Adresse de facturation'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
+        word_document.add_field(
+            'Responsable chantier interne', df['contact_chantier_interne'].iloc[0], left_indent=0.15
         )
-        word_document.add_simple_paragraph(
-            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.06,
-            alignment='center'
+        word_document.add_field(
+            'Responsable chantier client', '{} ({})'.format(contact_client_ch, designation), left_indent=0.15
         )
 
         # Save document

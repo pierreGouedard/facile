@@ -14,7 +14,6 @@ class Client(BaseModel):
 
     path = os.path.join(settings.facile_project_path, 'client.csv')
     l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0)]
-    l_documents = [('cmerci', 'Lettre de remerciement')]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -99,15 +98,3 @@ class Client(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
-
-    @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title='Designation', name='index', l_choices=zip(Client.get_clients(), Client.get_clients())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Client.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}

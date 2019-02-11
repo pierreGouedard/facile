@@ -135,18 +135,6 @@ class Employe(BaseModel):
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title='Nom complet', name='index', l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Employe.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}
-
-    @staticmethod
     def control_loading():
         d_control_data = {}
         df = Employe.load_db()

@@ -6,7 +6,8 @@ from jinja2 import Template
 
 # Local import
 from facile.forms import login, download
-from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form
+from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form, \
+    process_document_form
 from facile.utils.tables import build_table
 from facile.utils.controls import build_controls
 from facile.layout import boostrap
@@ -157,7 +158,6 @@ def export():
             html = render_template("export.html", **{'export': export})
     else:
         # return xlsx of the table
-        # return pdf of the selected document
         from facileapp.models.affaire import Affaire
 
         driver = FileDriver('tmp_test', '')
@@ -200,16 +200,8 @@ def document():
                               '<p class="lead"> Choisissez un onglet pour editer un document</p>')
             html = render_template("document.html", **{'document': document})
     else:
-        # return pdf of the selected document
-        from facileapp.models.affaire import Affaire
-        driver = FileDriver('tmp_test', '')
-
-        df = Affaire.load_db()
-        tmpdir = driver.TempDir(create=True)
-
-        df.to_csv(driver.join(tmpdir.path, 'test.csv'))
-
-        return send_file(driver.join(tmpdir.path, 'test.csv'))
+        path = process_document_form(request.args['table'], request, deform_template_path)
+        return send_file(path)
 
     return html
 
@@ -240,14 +232,13 @@ def url_download_form():
 
 @app.route('/send_file_form', methods=['GET'])
 def send_file_form():
-    # return pdf of the selected document
-    from facileapp.models.affaire import Affaire
-    driver = FileDriver('tmp_test', '')
-
-    df = Affaire.load_db()
+    # Create tmp dir
+    driver = FileDriver('tmp_doc', '')
     tmpdir = driver.TempDir(create=True)
 
-    df.to_csv(driver.join(tmpdir.path, 'test.csv'))
+    # Create document from args
+    import IPython
+    IPython.embed()
 
     return send_file(driver.join(tmpdir.path, 'test.csv'), as_attachment=True)
 

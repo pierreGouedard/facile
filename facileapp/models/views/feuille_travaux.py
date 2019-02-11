@@ -1,11 +1,10 @@
 # Global import
 import pandas as pd
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
 
 # Local import
+from facile.core.fields import StringFields
+from facile.utils.drivers.comon import FileDriver
+from facile.core.document_generator import WordDocument
 from facile.core.table_loader import TableLoader
 from facileapp.models.views.base_view import BaseView
 from facileapp.models.client import Client
@@ -19,6 +18,7 @@ from facileapp.models.heure import Heure
 
 
 class FeuilleTravaux(BaseView):
+    l_documents = [('feuille_travaux', 'Feuille de travaux')]
     main_model = Affaire
     l_models = [Affaire,  Devis, Facture, Commande, Heure]
     l_main_index = [f.name for f in Affaire.l_index]
@@ -111,7 +111,19 @@ class FeuilleTravaux(BaseView):
         return df, d_footer, kwargs
 
     @staticmethod
-    def document_loading(key, index):
+    def form_document_loading():
+
+        index_node = StringFields(
+            title="Numero d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
+        )
+        document_node = StringFields(
+            title='Nom document', name='document', l_choices=FeuilleTravaux.l_documents
+        )
+
+        return {'nodes': [document_node.sn, index_node.sn]}
+
+    @staticmethod
+    def document_(index, path, driver=FileDriver('doc_fdt', '',), name='doc_fdt.docx'):
         df = FeuilleTravaux.load_view()
         df = df.loc[
             df[[f.name for f in Affaire.l_index]].apply(lambda r: all([r[c] == index[c] for c in r.index]), axis=1)
@@ -126,285 +138,111 @@ class FeuilleTravaux(BaseView):
         # Load chantier
         df_chantier = Chantier.load_db()
 
-        if key == 'ftravaux':
+        word_document = WordDocument(path, driver, {})
 
-            document = Document()
+        # Document title
+        title = 'Feuille de travaux {}'.format('/'.join(df[FeuilleTravaux.l_main_index].values[0]))
+        word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
-            sec = document.sections[0]
-            sec.top_margin = Inches(1)
-            sec.left_margin = Inches(0.5)
-            sec.right_margin = Inches(0.5)
-            line_size = 40
-            style = document.styles['Normal']
-            font = style.font
-            font.name = 'DejaVu Sans Mono'
-            font.size = Pt(8)
+        # CLIENT
+        s_client = df_client.loc[df_client.designation == df['designation_client_devis'].iloc[0]].iloc[0]
 
-            title = 'Feuille de travaux {}'.format('/'.join(df[FeuilleTravaux.l_main_index].values[0]))
-            _ = add_title(document, title, font_size=15, text_align='center', color='000000')
-
-            ########### CLIENT
-            _ = add_title(document, 'Client', font_size=12, text_align='left', color='000000')
-            s_client = df_client.loc[df_client.designation == df['designation_client_devis'].iloc[0]].iloc[0]
-
-            title = 'Designation'
-            value = s_client['designation']
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
-
-            title = 'Raison sociale'
-            value = s_client['raison_social']
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
-
-            title = 'Adresse'
-            value = '{}, {} - {} {}'.format(
+        word_document.add_title('Client', font_size=12, text_align='left', color='000000')
+        word_document.add_field('Designation', s_client['designation'], left_indent=0.15)
+        word_document.add_field('Raison sociale', s_client['raison_social'], left_indent=0.15)
+        word_document.add_field(
+            'Adresse', value='{}, {} - {} {}'.format(
                 s_client['adresse'], s_client['cs_bp'], s_client['code_postal'], s_client['ville']
-            )
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+            ),
+            left_indent=0.15
+        )
+        word_document.add_field(
+            'Responsable commande',
+            df_contact.loc[df_contact.contact_id == df['contact_id_devis'].iloc[0], 'contact'].iloc[0],
+            left_indent=0.15
+        )
 
-            title = 'Responsable commande'
-            value = df_contact.loc[df_contact.contact_id == df['contact_id_devis'].iloc[0], 'contact'].iloc[0]
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        # DEVIS
+        word_document.add_title('Devis', font_size=12, text_align='left', color='000000')
 
-            ########### DEVIS
-            _ = add_title(document, 'Devis', font_size=12, text_align='left', color='000000')
+        word_document.add_field('Numero', df['devis_id'].iloc[0], left_indent=0.15)
+        word_document.add_field('Objet', df['object_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field('Responsable devis', df['responsable_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field('Montant total du devis', '{} euros'.format(df['price_devis'].iloc[0]), left_indent=0.15)
+        word_document.add_simple_paragraph(
+            ['Details'], space_before=0.06, space_after=0.06, left_indent=0.15, bold=True
+        )
 
-            title = 'Numero'
-            value = df['devis_id'].iloc[0]
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        l_values = [[df['heure_prod_devis'].iloc[0], df['prix_heure_prod_devis'].iloc[0],
+                     df['heure_autre_devis'].iloc[0], df['prix_heure_autre_devis'].iloc[0],
+                     df['montant_achat_devis'].iloc[0], df['coef_achat_devis'].iloc[0]]]
 
-            title = 'Objet'
-            value = df['object_devis'].iloc[0]
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        df_table = pd.DataFrame(
+            l_values, columns=['Heures Prod', 'Prix Heures Prod', 'Heures Autres', 'Prix Heures Autres',
+                               'Montant achat', 'Coef achat']
+        )
 
-            title = 'Responsable devis'
-            value = df['responsable_devis'].iloc[0]
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        word_document.add_table(df_table, index_column=-1, left_indent=0.15)
 
-            title = 'Montant total du devis'
-            value = '{} euros'.format(df['price_devis'].iloc[0])
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        # CHANTIER
+        s_chantier = df_chantier.loc[df_chantier['chantier_id'] == df['chantier_id'].iloc[0]].iloc[0]
+        contact_client_ch = df['contact_chantier_client'].iloc[0]
+        designation = df_contact.loc[df_contact.contact_id == contact_client_ch, 'contact'].iloc[0]
 
-            add_simple_paragraph(
-                document, ['Details'], space_before=0.06, space_after=0.06, left_indent=0.15, bold=True
-            )
+        word_document.add_title('Chantier', font_size=12, text_align='left', color='000000')
+        word_document.add_field(
+            'Adresse', '{}, {} {}'.format(
+            s_chantier['adresse'], s_chantier['code_postal'], s_chantier['ville']
+            ), left_indent=0.15
+        )
+        word_document.add_field('Responsable interne', df['contact_chantier_interne'].iloc[0], left_indent=0.15)
+        word_document.add_field(
+            'Responsable client', '{} ({})'.format(contact_client_ch, designation), left_indent=0.15
+        )
 
-            l_values = [[df['heure_prod_devis'].iloc[0], df['prix_heure_prod_devis'].iloc[0],
-                         df['heure_autre_devis'].iloc[0], df['prix_heure_autre_devis'].iloc[0],
-                         df['montant_achat_devis'].iloc[0], df['coef_achat_devis'].iloc[0]]]
+        # SUIVI
+        heure_prod = df['heure_prod_saisie'].sum() + df['heure_prod_saisie_interim'].sum()
+        heure_autre = df['heure_autre_saisie'].sum() + df['heure_autre_saisie_interim'].sum()
+        montant_achat = df['montant_total_commande'].sum()
 
-            df_table = pd.DataFrame(
-                l_values, columns=['Heures Prod', 'Prix Heures Prod', 'Heures Autres', 'Prix Heures Autres',
-                                   'Montant achat', 'Coef achat']
-            )
-            add_table(document, df_table, index_column=-1, left_indent=0.15)
+        word_document.add_title('Suivi', font_size=12, text_align='left', color='000000')
 
-            ########### CHANTIER
-            _ = add_title(document, 'Chantier', font_size=12, text_align='left', color='000000')
-            s_chantier = df_chantier.loc[df_chantier['chantier_id'] == df['chantier_id'].iloc[0]].iloc[0]
-            contact_client_ch = df['contact_chantier_client'].iloc[0]
-            designation = df_contact.loc[df_contact.contact_id == contact_client_ch, 'contact'].iloc[0]
+        l_values = [["REALISE", heure_prod, heure_autre, montant_achat],
+                    ["ECART DEVIS", heure_prod - df['heure_prod_devis'].sum(),
+                     heure_autre - df['heure_autre_devis'].sum(),
+                     montant_achat - df['montant_achat_devis'].sum()]]
 
-            coord = '{}, {} {}'.format(
-                s_chantier['adresse'], s_chantier['code_postal'], s_chantier['ville']
-            )
+        df_table = pd.DataFrame(l_values, columns=[' ', 'Heures prod', 'Heures autre', 'Achat'])
 
-            title = 'Adresse'
-            value = coord
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        word_document.add_table(df_table, index_column=0, left_indent=0.15)
 
-            title = 'Responsable interne'
-            value = df['contact_chantier_interne'].iloc[0]
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        # FACTURATION
+        s_contact = df_contact.loc[df_contact.contact_id == df['contact_facturation_client'].iloc[0]].iloc[0]
+        coord = '{}, {} - {} {}'.format(
+            s_contact['adresse'], s_contact['cs_bp'], s_contact['code_postal'], s_contact['ville']
+        )
+        word_document.add_title('Facturation', font_size=12, text_align='left', color='000000')
+        word_document.add_simple_paragraph(
+            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.06,
+            alignment='center'
+        )
 
-            title = 'Responsable client'
-            value = '{} ({})'.format(contact_client_ch, designation)
-            add_field(document, title, value, line_size=line_size, left_indent=0.15)
+        l_values = [['Visa'] + [str('__/__/____')] * 6, ['Encaissement'] + [str('__/__/____')] * 6]
+        df_table = pd.DataFrame(
+            l_values, columns=['Situation'] + ['{}'.format(i + 1) for i in range(6)]
+        )
+        word_document.add_table(df_table, index_column=0, left_indent=0.15)
 
-            ########### SUIVI
-            _ = add_title(document, 'Suivi', font_size=12, text_align='left', color='000000')
-            heure_prod = df['heure_prod_saisie'].sum() + df['heure_prod_saisie_interim'].sum()
-            heure_autre = df['heure_autre_saisie'].sum() + df['heure_autre_saisie_interim'].sum()
-            montant_achat = df['montant_total_commande'].sum()
+        l_values = [['Visa'] + [str('__/__/____')] * 6, ['Encaissement'] + [str('__/__/____')] * 6]
 
-            l_values = [["REALISE", heure_prod, heure_autre, montant_achat],
-                        ["ECART DEVIS", heure_prod - df['heure_prod_devis'].sum(),
-                         heure_autre - df['heure_autre_devis'].sum(),
-                         montant_achat - df['montant_achat_devis'].sum()]]
+        df_table = pd.DataFrame(
+            l_values, columns=['Situation'] + ['{}'.format(i + 7) for i in range(6)]
+        )
+        word_document.add_table(df_table, index_column=0, left_indent=0.15)
 
-            df_table = pd.DataFrame(l_values, columns=[' ', 'Heures prod', 'Heures autre', 'Achat'])
-
-            add_table(document, df_table, index_column=0, left_indent=0.15)
-
-            ########### FACTURATION
-            _ = add_title(document, 'Facturation', font_size=12, text_align='left', color='000000')
-            s_contact = df_contact.loc[df_contact.contact_id == df['contact_chantier_client'].iloc[0]].iloc[0]
-            coord = '{}, {} - {} {}'.format(
-                s_contact['adresse'], s_contact['cs_bp'], s_contact['code_postal'], s_contact['ville']
-            )
-
-            add_simple_paragraph(
-                document, [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.06,
-                alignment='center'
-            )
-
-            l_values = [['Visa'] + [str('__/__/____')] * 6, ['Encaissement'] + [str('__/__/____')] * 6]
-            df_table = pd.DataFrame(
-                l_values, columns=['Situation'] + ['{}'.format(i + 1) for i in range(6)]
-            )
-            add_table(document, df_table, index_column=0, left_indent=0.15)
-
-            l_values = [['Visa'] + [str('__/__/____')] * 6, ['Encaissement'] + [str('__/__/____')] * 6]
-
-            df_table = pd.DataFrame(
-                l_values, columns=['Situation'] + ['{}'.format(i + 7) for i in range(6)]
-            )
-            add_table(document, df_table, index_column=0, left_indent=0.15)
-
-            document.save('test.docx')
+        # Save document
+        word_document.save_document(name)
 
     @staticmethod
     def control_loading():
-        d_control_data = {}
-        df = FeuilleTravaux.load_view()
-        df['affaire_id'] = df[['affaire_num', 'affaire_ind']]\
-            .apply(lambda r: '{} - {}'.join([r['affaire_num'], r['affaire_ind']]), axis=1)
-
-        d_name = {True: 'Cloture', False: 'En cours'}
-        df_state = df[['affaire_id', 'montant_encaisse', 'montant_facture']]
-        df_state['state'] = df_state[['montant_encaisse', 'montant_facture']]\
-            .apply(lambda r: d_name[r['montant_encaisse'] == r['montant_facture']], axis=1)
-
-        # App 1 repartition statue of Affaires
-        df_state = df_state[['affaire_id', 'state']].groupby('state')\
-            .count()\
-            .reset_index()\
-            .rename(columns={'state': 'name', 'affaire_id': 'value'})
-
-        d_control_data['repstate'] = {
-            'plot': {'k': 'pie', 'd': df_state, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': 'Repartition des affaire', 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 0
-                }
-
-        # App 2 amount of digned affaire by charge d'aff
-        df_chardaff = df[['responsable', 'montant_facture']].groupby('responsable')\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'responsable': 'label'})
-
-        d_control_data['affaireresp'] = {
-            'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'montant_facture'}},
-            'rows': [('title', [{'content': 'title', 'value': "Affaire facture par charge d'affaire", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 1
-        }
-
-        # App 3 amount of digned affaire by cient
-        df_client = df[['rs_client_devis', 'montant_facture']].groupby('rs_client_devis') \
-            .sum() \
-            .reset_index() \
-            .rename(columns={'rs_client_devis': 'label'})
-
-        d_control_data['affaireclient'] = {
-            'plot': {'k': 'bar', 'd': df_client, 'o': {'val_col': 'montant_facture'}},
-            'rows': [('title',
-                      [{'content': 'title', 'value': "Affaire facture par client", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 2
-        }
-
-        return d_control_data
-
-
-def add_title(document, title, font_size=12, text_align='center', color='000000', left_indent=0.):
-
-    h = document.add_heading(title, 1)
-    h.paragraph_format.left_indent = Inches(left_indent)
-
-    if text_align == 'center':
-        h.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
-    elif text_align == 'left':
-        h.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.LEFT
-
-    if text_align == 'right':
-        h.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-
-    h.style.font.bold = True
-    h.style.font.color.rgb = RGBColor.from_string(color)
-    h.style.font.size = Pt(font_size)
-    h.paragraph_format.space_before = Inches(0.12)
-    h.paragraph_format.space_after = Inches(0.12)
-    return h
-
-
-def add_table(document, df, index_column=-1, left_indent=0.15):
-
-    # Load values from dataframe
-    l_col_names = df.columns
-    l_values = [[row[c] for c in l_col_names] for _, row in df.iterrows()]
-
-    table = document.add_table(rows=1, cols=len(l_col_names))
-    table.style.paragraph_format.left_indent = Inches(left_indent)
-    table.alignment = WD_TABLE_ALIGNMENT.CENTER
-
-    # Build header row
-    row = table.rows[0]
-    l_cells = row.cells
-    for cell, name in zip(l_cells, l_col_names):
-        cell.text = name
-        cell.paragraphs[0].runs[0].bold = True
-        cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-        cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-
-    # Build body rows
-    for l_row_values in l_values:
-        l_cells = table.add_row().cells
-        for i, (cell, name) in enumerate(zip(l_cells, l_row_values)):
-            cell.text = str(name)
-            cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            cell.vertical_alignment = WD_ALIGN_PARAGRAPH.CENTER
-            if i == index_column:
-                cell.paragraphs[0].runs[0].bold = True
-
-
-def add_field(document, title, value, line_size, left_indent=0., space_before=0.06, space_after=0.):
-
-    # create and format paragraph
-    p = document.add_paragraph()
-    p.paragraph_format.left_indent = Inches(left_indent)
-    p.paragraph_format.space_before = Inches(space_before)
-    p.paragraph_format.space_after = Inches(space_after)
-    tab = ' ' + " ".join(['.'] * ((line_size - len(title)) / 2)) + ' ' * (len(title) % 2)
-
-    # Add info
-    p.add_run(title).bold = True
-    p.add_run(tab)
-    p.add_run(str(value))
-
-    return p
-
-
-def add_simple_paragraph(document, l_runs, break_run=False, left_indent=0., space_before=0.06, space_after=0.,
-                         bold=False, alignment=None):
-
-    p = document.add_paragraph()
-
-    if alignment == 'center':
-        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    elif alignment == 'right':
-        p.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-
-    p.paragraph_format.left_indent = Inches(left_indent)
-    p.paragraph_format.space_before = Inches(space_before)
-    p.paragraph_format.space_after = Inches(space_after)
-
-    for text in l_runs:
-        r = p.add_run(text)
-        r.bold = bold
-
-        if break_run:
-            r.add_break()
-
-    return p
+        raise NotImplementedError

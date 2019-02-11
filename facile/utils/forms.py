@@ -8,6 +8,10 @@ from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
 from facileapp.models.commande import Commande
 from facileapp.models.heure import Heure
+from facileapp.models.views.feuille_travaux import FeuilleTravaux
+from facileapp.models.views.facturation import Facturation
+from facileapp.models.views.achat import Achat
+
 from facile.forms import mutlistep, document
 
 
@@ -77,7 +81,7 @@ def process_form(table_key, d_data, action):
     script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
              '.done(function (response, status, request) {alert(%s %s);});'
 
-    if table_key in ['affaire', 'devis', 'facture', 'commande']:
+    if table_key in ['affaire', 'devis', 'facture']:
         script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
                  '.done(function (response, status, request) { alert(%s %s);' \
                  'var url = response["url"].concat(response["data"]);' \
@@ -247,30 +251,23 @@ def get_title_from_step(step, data):
 
 def build_document_form(table_key, request, deform_template_path):
 
-    if table_key == 'employe':
-        d_form_data = Employe.form_document_loading()
-
-    elif table_key == 'fournisseur':
-        d_form_data = Fournisseur.form_document_loading()
-
-    elif table_key == 'client':
-        d_form_data = Client.form_document_loading()
-
-    elif table_key == 'affaire':
-        d_form_data = Affaire.form_document_loading()
+    if table_key == 'affaire':
+        d_form_data = FeuilleTravaux.form_document_loading()
 
     elif table_key == 'devis':
         d_form_data = Devis.form_document_loading()
 
     elif table_key == 'facture':
-        d_form_data = Facture.form_document_loading()
+        d_form_data = Facturation.form_document_loading()
 
     elif table_key == 'commande':
-        d_form_data = Commande.form_document_loading()
-
+        d_form_data = Achat.form_document_loading()
     else:
         raise ValueError('key not understood {}'.format(table_key))
 
     web, _ = document.DocumentForm(request, deform_template_path, **d_form_data).process_form()
 
     return web
+
+def process_document_form(table_key, request, deform_template_path):
+    raise NotImplementedError

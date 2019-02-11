@@ -6,6 +6,8 @@ from deform.widget import HiddenWidget
 # Local import
 import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields, MoneyFields
+from facile.utils.drivers.comon import FileDriver
+from facile.core.document_generator import WordDocument
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -209,6 +211,53 @@ class Devis(BaseModel):
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
+
+    @staticmethod
+    def document_(index, path, driver=FileDriver('doc_devis', ''), name='doc_devis.docx'):
+        df = Devis.load_db()
+        df = df.loc[df.devis_id == index]
+
+        # Load contact
+        df_contact = Contact.load_db()
+
+        # Load client
+        df_client = Client.load_db()
+        s_client = df_client.loc[df_client.designation == df['designation_client'].iloc[0]].iloc[0]
+        s_contact = df_contact.loc[df_contact.contact_id == df['contact_id'].iloc[0]].iloc[0]
+        word_document = WordDocument(path, driver, {})
+
+        # Document title
+        title = 'DEVIS {}'.format(index)
+        word_document.add_title(title, font_size=15, text_align='center', color='000000')
+        word_document.add_field('Designation client', s_client['designation'], left_indent=0.15, space_before=0.1)
+        word_document.add_field(
+            'Contact client',
+            '{} ({})'.format(s_contact['contact'], s_contact['designation']),
+            left_indent=0.15, space_before=0.1
+        )
+        word_document.add_field('Responsable devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Objet', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Date de debut', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Date de fin', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Prix total de fin', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_simple_paragraph(
+            ['Details'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
+        )
+
+        l_values = [[df['heure_prod'].iloc[0], df['prix_heure_prod'].iloc[0],
+                     df['heure_autre'].iloc[0], df['prix_heure_autre'].iloc[0],
+                     df['montant_achat'].iloc[0], df['coef_achat'].iloc[0]]]
+
+        df_table = pd.DataFrame(
+            l_values, columns=['Heures Prod', 'Prix Heures Prod', 'Heures Autres', 'Prix Heures Autres',
+                               'Montant achat', 'Coef achat']
+        )
+
+        word_document.add_table(df_table, index_column=-1, left_indent=0.15)
+
+        # Save document
+        word_document.save_document(name)
 
     @staticmethod
     def control_loading():

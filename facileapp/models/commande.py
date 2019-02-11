@@ -163,18 +163,6 @@ class Commande(BaseModel):
         return df, d_footer, kwargs
 
     @staticmethod
-    def form_document_loading():
-
-        index_node = StringFields(
-            title='Numero de commande', name='index', l_choices=zip(Commande.get_commande(), Commande.get_commande())
-        )
-        document_node = StringFields(
-            title='Nom document', name='document', l_choices=Commande.l_documents
-        )
-
-        return {'nodes': [document_node.sn, index_node.sn]}
-
-    @staticmethod
     def control_loading():
         d_control_data = {}
         df = Commande.load_db()
