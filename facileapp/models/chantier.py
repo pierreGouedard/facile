@@ -91,15 +91,16 @@ class Chantier(BaseModel):
                 .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
             ]
 
+        df = df.set_index('chantier_id', drop=True)\
+            .loc[:, ['designation_client', 'nom']] \
+            .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
+            .to_dict()
+
         if return_id:
-            l_chantier = df.loc[:, ['raison_social', 'nom']] \
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
-                .to_dict().items()
+            l_chantier = df.items()
 
         else:
-            l_chantier = df.loc[:, ['raison_social', 'nom']]\
-                .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
-                .unique()
+            l_chantier = df.values()
 
         return l_chantier
 

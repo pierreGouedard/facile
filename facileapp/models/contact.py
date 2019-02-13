@@ -115,8 +115,8 @@ class Contact(BaseModel):
 
         if df.empty:
             return []
-
-        d_contacts = df.loc[:, ['raison_social', 'contact']]\
+        d_contacts = df.set_index('contact_id', drop=True)\
+            .loc[:, ['designation', 'contact']]\
             .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
             .to_dict()
 

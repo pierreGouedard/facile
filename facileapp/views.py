@@ -11,7 +11,7 @@ from facile.utils.forms import build_form, process_form, get_args_forms, get_tit
 from facile.utils.tables import build_table
 from facile.utils.controls import build_controls
 from facile.layout import boostrap
-from settings import deform_template_path, facile_driver_file_tmpdir
+from settings import deform_template_path
 from facile.utils.drivers.comon import FileDriver
 
 
@@ -200,8 +200,8 @@ def document():
                               '<p class="lead"> Choisissez un onglet pour editer un document</p>')
             html = render_template("document.html", **{'document': document})
     else:
-        path = process_document_form(request.args['table'], request, deform_template_path)
-        return send_file(path)
+        path, tmpdir = process_document_form(request.args['table'], request.form)
+        return send_file(path, as_attachment=True)
 
     return html
 
@@ -232,24 +232,6 @@ def url_download_form():
 
 @app.route('/send_file_form', methods=['GET'])
 def send_file_form():
-    # Create tmp dir
-    driver = FileDriver('tmp_doc', '')
-    tmpdir = driver.TempDir(create=True)
-
     # Create document from args
-    import IPython
-    IPython.embed()
-
-    return send_file(driver.join(tmpdir.path, 'test.csv'), as_attachment=True)
-
-
-@app.route('/clean_tmp_dir', methods=['POST'])
-def clean_tmp_dir():
-    driver = FileDriver('tmp_test', '')
-    for f in driver.listdir(facile_driver_file_tmpdir):
-        try:
-            driver.remove(driver.join(facile_driver_file_tmpdir, f), recursive=True)
-        except OSError:
-            continue
-
-    return jsonify({'success': True})
+    path, tmpdir = process_document_form(request.args['table_key'], request.args)
+    return send_file(path, as_attachment=True)

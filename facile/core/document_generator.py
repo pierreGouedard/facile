@@ -3,7 +3,7 @@ from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL, WD_TABLE_ALIGNMENT
-
+from pandas import Timestamp
 # Local import
 
 
@@ -16,7 +16,7 @@ class Documents(object):
 
     def save_document(self, name):
         if self.document is not None:
-            self.document.save(driver.join(self.path, name))
+            self.document.save(self.driver.join(self.path, name))
         else:
             raise ValueError('Document is None')
 
@@ -29,11 +29,11 @@ class WordDocument(Documents):
         self.document = Document()
         
         # Set document global parameter
-        self.field_size = document_settings.get('line_size', 40)
+        self.field_size = document_settings.get('field_size', 40)
 
         # Set margin
         sec = self.document.sections[0]
-        sec.top_margin = Inches(document_settings.get('top_margin', 1))
+        sec.top_margin = Inches(document_settings.get('top_margin', 1.))
         sec.left_margin = Inches(document_settings.get('left_margin', 0.5))
         sec.right_margin = Inches(document_settings.get('right_margin', 0.5))
 
@@ -43,7 +43,14 @@ class WordDocument(Documents):
         font.name = document_settings.get('font_name', 'DejaVu Sans Mono')
         font.size = Pt(int(document_settings.get('font_size', 8)))
 
-    def add_title(self, title, font_size=12, text_align='center', color='000000', left_indent=0.):
+    def save_document(self, name):
+
+        # Add footer to document
+        self.add_footer('Edition du document: {}'.format(Timestamp.now().date()))
+        Documents.save_document(self, name)
+
+    def add_title(self, title, font_size=12, text_align='center', color='000000', left_indent=0.,
+                  space_before=0.12, space_after=0.12):
 
         h = self.document.add_heading(title, 1)
         h.paragraph_format.left_indent = Inches(left_indent)
@@ -60,8 +67,8 @@ class WordDocument(Documents):
         h.style.font.bold = True
         h.style.font.color.rgb = RGBColor.from_string(color)
         h.style.font.size = Pt(font_size)
-        h.paragraph_format.space_before = Inches(0.12)
-        h.paragraph_format.space_after = Inches(0.12)
+        h.paragraph_format.space_before = Inches(space_before)
+        h.paragraph_format.space_after = Inches(space_after)
 
     def add_table(self, df, index_column=-1, left_indent=0.15):
 
@@ -99,7 +106,7 @@ class WordDocument(Documents):
         p.paragraph_format.left_indent = Inches(left_indent)
         p.paragraph_format.space_before = Inches(space_before)
         p.paragraph_format.space_after = Inches(space_after)
-        tab = ' ' + " ".join(['.'] * ((self.line_size - len(title)) / 2)) + ' ' * (len(title) % 2)
+        tab = ' ' + " ".join(['.'] * ((self.field_size - len(title)) / 2)) + ' ' * (len(title) % 2)
 
         # Add info
         p.add_run(title).bold = True
@@ -126,3 +133,11 @@ class WordDocument(Documents):
 
             if break_run:
                 r.add_break()
+
+    def add_footer(self, text):
+        footer = self.document.sections[0].footer
+        p = footer.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(text)
+        r.add_break()
+        p.add_run('CASOE')

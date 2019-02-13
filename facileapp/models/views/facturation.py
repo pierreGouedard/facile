@@ -25,14 +25,14 @@ class Facturation(BaseView):
 
         # Join devis information
         df_devis = Devis.load_db()
-        df_devis = df_devis[['designation_client', 'objet', 'price', 'date_start', 'date_end', 'base_prix']]
+        df_devis = df_devis[['devis_id', 'designation_client', 'object', 'price', 'date_start', 'date_end', 'base_prix']]
 
         df_info = Affaire.load_db()
-        df_info = df_info[['contact_facturation_client', 'responsable', 'fae']]\
+        df_info = df_info[['affaire_num', 'affaire_ind', 'devis_id', 'contact_facturation_client', 'responsable', 'fae']]\
             .merge(df_devis, on='devis_id', how='left')
 
         # Join info to billing table
-        df = df.merge(df_info)
+        df = df.merge(df_info, on=['affaire_num', 'affaire_ind'], how='left')
 
         return df
 
@@ -48,36 +48,40 @@ class Facturation(BaseView):
 
         return {'nodes': [document_node.sn, index_node.sn]}
 
-
     @staticmethod
     def document_(index, path, driver=FileDriver('doc_fact', ''), name='doc_fact.docx'):
 
         df = Facturation.load_view()
+        df = df.loc[df[Facture.l_index[0].name] == index[Facture.l_index[0].name]]
         df_contact = Contact.load_db()
         s_contact = df_contact.loc[df_contact.contact_id == df['contact_facturation_client'].iloc[0]].iloc[0]
+
         word_document = WordDocument(path, driver, {})
 
-        title = 'FACTURE {}'.format(index)
+        title = 'FACTURE {}'.format(index[Facture.l_index[0].name])
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # Info affaire
-        word_document.add_title('Details Affaire', font_size=12, text_align='left', color='000000')
+        word_document.add_title('Details Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
         word_document.add_field(
             "Numero d'affaire", '{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
             space_before=0.1
         )
         word_document.add_field('Designation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet du devis', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Montant du devis', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet du devis', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Debut du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
 
         # Info facture
-        word_document.add_title('Infos facture', font_size=12, text_align='left', color='000000')
-        word_document.add_field('Montant facture HT', df['montant_ht'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_title('Infos facture', font_size=12, text_align='left', color='000000', space_before=1.)
+        word_document.add_field(
+            'Montant facture HT', '{} Euros'.format(float(int(df['montant_ht'].iloc[0] * 100) / 100)), left_indent=0.15,
+            space_before=0.1
+        )
         word_document.add_field('Numero de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Date de visa', df['date_visa'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Date de paiement', df['date_payed'].iloc[0], left_indent=0.15, space_before=0.1)
@@ -89,7 +93,7 @@ class Facturation(BaseView):
             ['Adresse de facturation'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
         )
         word_document.add_simple_paragraph(
-            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.06,
+            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.4,
             alignment='center'
         )
 

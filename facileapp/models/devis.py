@@ -214,8 +214,9 @@ class Devis(BaseModel):
 
     @staticmethod
     def document_(index, path, driver=FileDriver('doc_devis', ''), name='doc_devis.docx'):
+
         df = Devis.load_db()
-        df = df.loc[df.devis_id == index]
+        df = df.loc[df.devis_id == index[Devis.l_index[0].name]]
 
         # Load contact
         df_contact = Contact.load_db()
@@ -227,22 +228,22 @@ class Devis(BaseModel):
         word_document = WordDocument(path, driver, {})
 
         # Document title
-        title = 'DEVIS {}'.format(index)
+        title = 'DEVIS {}'.format(index[Devis.l_index[0].name])
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
-        word_document.add_field('Designation client', s_client['designation'], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Designation client', s_client['designation'], left_indent=0.15, space_before=1.)
         word_document.add_field(
             'Contact client',
-            '{} ({})'.format(s_contact['contact'], s_contact['designation']),
+            '{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
             left_indent=0.15, space_before=0.1
         )
         word_document.add_field('Responsable devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet', df['objet'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field('Objet', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Date de debut', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Date de fin', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field('Prix total de fin', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_simple_paragraph(
-            ['Details'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
+            ['Details'], space_before=0.3, space_after=0.2, left_indent=0.15, bold=True
         )
 
         l_values = [[df['heure_prod'].iloc[0], df['prix_heure_prod'].iloc[0],

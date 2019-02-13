@@ -96,7 +96,7 @@ class FeuilleTravaux(BaseView):
         return df
 
     @staticmethod
-    def html_table_loading():
+    def table_loading():
         l_index = FeuilleTravaux.main_model.l_index
         l_fields = FeuilleTravaux.main_model.l_fields()
 
@@ -123,8 +123,10 @@ class FeuilleTravaux(BaseView):
         return {'nodes': [document_node.sn, index_node.sn]}
 
     @staticmethod
-    def document_(index, path, driver=FileDriver('doc_fdt', '',), name='doc_fdt.docx'):
+    def document_(index, path, driver, name='doc_fdt.docx'):
         df = FeuilleTravaux.load_view()
+        import IPython
+        IPython.embed()
         df = df.loc[
             df[[f.name for f in Affaire.l_index]].apply(lambda r: all([r[c] == index[c] for c in r.index]), axis=1)
         ]
@@ -138,7 +140,7 @@ class FeuilleTravaux(BaseView):
         # Load chantier
         df_chantier = Chantier.load_db()
 
-        word_document = WordDocument(path, driver, {})
+        word_document = WordDocument(path, driver, {'top_margin': 0.5})
 
         # Document title
         title = 'Feuille de travaux {}'.format('/'.join(df[FeuilleTravaux.l_main_index].values[0]))
@@ -156,18 +158,20 @@ class FeuilleTravaux(BaseView):
             ),
             left_indent=0.15
         )
+        s_contact = df_contact.loc[df_contact.contact_id == df['contact_id_devis'].iloc[0]].iloc[0]
         word_document.add_field(
             'Responsable commande',
-            df_contact.loc[df_contact.contact_id == df['contact_id_devis'].iloc[0], 'contact'].iloc[0],
-            left_indent=0.15
+            '{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
+            left_indent=0.15, space_before=0.1
         )
-
         # DEVIS
         word_document.add_title('Devis', font_size=12, text_align='left', color='000000')
 
         word_document.add_field('Numero', df['devis_id'].iloc[0], left_indent=0.15)
         word_document.add_field('Objet', df['object_devis'].iloc[0], left_indent=0.15)
         word_document.add_field('Responsable devis', df['responsable_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field('Date de debut', df['date_start_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field('Date de fin', df['date_end_devis'].iloc[0], left_indent=0.15)
         word_document.add_field('Montant total du devis', '{} euros'.format(df['price_devis'].iloc[0]), left_indent=0.15)
         word_document.add_simple_paragraph(
             ['Details'], space_before=0.06, space_after=0.06, left_indent=0.15, bold=True

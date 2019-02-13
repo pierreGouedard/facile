@@ -146,7 +146,7 @@ class FileDriver(Driver):
         return super(FileDriver, self).TempFile(
             prefix=prefix,
             suffix=suffix,
-            dir=dir if dir is not None else self.settings.facile_driver_file_tmpdir,
+            dir=dir if dir is not None else self.settings.facile_driver_tmpdir,
             destination=destination,
             create=create
         )
@@ -155,7 +155,7 @@ class FileDriver(Driver):
         return super(FileDriver, self).TempDir(
             prefix=prefix,
             suffix=suffix,
-            dir=dir if dir is not None else self.settings.facile_driver_file_tmpdir,
+            dir=dir if dir is not None else self.settings.facile_driver_tmpdir,
             destination=destination,
             create=create
         )

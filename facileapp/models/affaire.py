@@ -98,7 +98,7 @@ class Affaire(BaseModel):
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
 
     @staticmethod
-    def get_affaire(path=None, sep=' '):
+    def get_affaire(path=None, sep='/'):
         df = Affaire.load_db(path)
 
         if df.empty:
@@ -147,7 +147,7 @@ class Affaire(BaseModel):
     def form_loading(step, index=None, data=None):
         if index is not None:
             l_index = [sch.name for sch in Affaire.l_index]
-            d_index = {k: v for k, v in zip(l_index, index.split('-'))}
+            d_index = {k: v for k, v in zip(l_index, index.split('/'))}
         else:
             d_index = None
 
@@ -164,7 +164,7 @@ class Affaire(BaseModel):
         if step % Affaire.nb_step_form == 0:
             index_node = StringFields(
                 title="Numero d'affaire", name='index', missing=-1,
-                l_choices=zip(Affaire.get_affaire(sep='-'), Affaire.get_affaire(sep=' - ')) + [('new', 'Nouveau')],
+                l_choices=zip(Affaire.get_affaire(sep='/'), Affaire.get_affaire(sep='/')) + [('new', 'Nouveau')],
                 desc="En cas de modification: choisir un numero d'affair.\n"
                      "En cas d'affaire secondaire: choisir le numero assortie de l'indice "
                      "le plus eleve")
@@ -184,18 +184,12 @@ class Affaire(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_loading(reduced=True):
+    def table_loading():
         # Load database
         df = Affaire.load_db()
 
-        if reduced:
-            table_man = TableLoader(Affaire.l_index, Affaire.l_fields(), limit=10)
-            df, kwargs = table_man.load_reduce_table(df)
-            d_footer = None
-        else:
-            l_model_cols = [f.name for f in Affaire.l_index + Affaire.l_fields()]
-            table_man = TableLoader(Affaire.l_index, Affaire.l_fields())
-            l_extra_cols = [c for c in df.columns if c not in l_model_cols]
-            df, d_footer, kwargs = table_man.load_full_table(df, l_extra_cols=l_extra_cols)
+        table_man = TableLoader(Affaire.l_index, Affaire.l_fields(), limit=10)
+        df, kwargs = table_man.load_reduce_table(df)
+        d_footer = None
 
         return df, d_footer, kwargs

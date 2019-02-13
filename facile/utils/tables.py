@@ -34,9 +34,9 @@ def build_table(table_key, reduced=True, load_jQuery=False, head_class="table-ac
 
     elif table_key == 'affaire':
         if reduced:
-            df_table, d_footer, kwargs = Affaire.table_loading(reduced=reduced)
+            df_table, d_footer, kwargs = Affaire.table_loading()
         else:
-            df_table, d_footer, kwargs = FeuilleTravaux.html_table_loading()
+            df_table, d_footer, kwargs = FeuilleTravaux.table_loading()
 
     elif table_key == 'devis':
         df_table, d_footer, kwargs = Devis.table_loading(reduced=reduced)

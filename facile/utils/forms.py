@@ -11,8 +11,9 @@ from facileapp.models.heure import Heure
 from facileapp.models.views.feuille_travaux import FeuilleTravaux
 from facileapp.models.views.facturation import Facturation
 from facileapp.models.views.achat import Achat
-
+from facile.utils.drivers.comon import FileDriver
 from facile.forms import mutlistep, document
+from settings import deform_template_path, facile_driver_tmpdir
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True,
@@ -81,12 +82,11 @@ def process_form(table_key, d_data, action):
     script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
              '.done(function (response, status, request) {alert(%s %s);});'
 
-    if table_key in ['affaire', 'devis', 'facture']:
+    if table_key in ['affaire', 'devis', 'facture', 'commande']:
         script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
                  '.done(function (response, status, request) { alert(%s %s);' \
                  'var url = response["url"].concat(response["data"]);' \
-                 'window.location = url;' \
-                 '$.ajax({method: "POST", url: "/clean_tmp_dir"});});'
+                 'window.location = url});'
 
     if table_key == 'employe':
         l_index, l_fields = Employe.l_index, Employe.l_fields()
@@ -185,9 +185,9 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
                       {f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_fields}) \
                 .add()
 
-            index = '-'.join(map(str, [m.__getattribute__(f.name) for f in l_index]))
+            index = '/'.join(map(str, [m.__getattribute__(f.name) for f in l_index]))
             data = ('"{}"'.format(table_key), '"{}"'.format(index),
-                    '"{}: {}'.format(table_key, index.replace('-', ' ')),
+                    '"{}: {}'.format(table_key, index.replace('/', ' ')),
                     '{} avec succes"'.format(action))
 
         except IndexError:
@@ -269,5 +269,47 @@ def build_document_form(table_key, request, deform_template_path):
 
     return web
 
-def process_document_form(table_key, request, deform_template_path):
-    raise NotImplementedError
+
+def process_document_form(table_key, d_request):
+
+    # Clean facile doc tmpdir
+    clean_tmp_dir()
+
+    # Create tmp dir
+    driver = FileDriver('tmp_doc', '')
+    tmpdir = driver.TempDir(create=True, prefix='tmp_doc_')
+
+    if table_key == 'affaire':
+        d_index = {f.name: c for f, c in zip(Affaire.l_index, d_request['index'].split('/'))}
+        FeuilleTravaux.document_(d_index, tmpdir.path, driver, name='doc_fdt.docx')
+        full_path = driver.join(tmpdir.path, 'doc_fdt.docx')
+
+    elif table_key == 'devis':
+        d_index = {Devis.l_index[0].name: d_request['index']}
+        Devis.document_(d_index, tmpdir.path, driver, name='doc_devis.docx')
+        full_path = driver.join(tmpdir.path, 'doc_devis.docx')
+
+    elif table_key == 'facture':
+        d_index = {Facture.l_index[0].name: d_request['index']}
+        Facturation.document_(d_index, tmpdir.path, driver, name='doc_facture.docx')
+        full_path = driver.join(tmpdir.path, 'doc_facture.docx')
+
+    elif table_key == 'commande':
+        d_index = {Commande.l_index[0].name: d_request['index']}
+        Achat.document_(d_index, tmpdir.path, driver, name='doc_achat.docx')
+        full_path = driver.join(tmpdir.path, 'doc_achat.docx')
+
+    else:
+        raise ValueError('key not understood {}'.format(table_key))
+
+    return full_path, tmpdir
+
+
+def clean_tmp_dir():
+    driver = FileDriver('tmp_doc', '')
+    for f in driver.listdir(facile_driver_tmpdir):
+        if 'tmp_doc_' in f:
+            try:
+                driver.remove(driver.join(facile_driver_tmpdir, f), recursive=True)
+            except OSError:
+                continue
