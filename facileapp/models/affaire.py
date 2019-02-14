@@ -184,11 +184,17 @@ class Affaire(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_loading():
+    def table_loading(type='html'):
+
         # Load database
         df = Affaire.load_db()
 
-        table_man = TableLoader(Affaire.l_index, Affaire.l_fields(), limit=10)
+        if type == 'excel':
+            print 'todo'
+
+            return
+
+        table_man = TableLoader(Affaire.l_index, Affaire.l_fields(), limit=10, type=type)
         df, kwargs = table_man.load_reduce_table(df)
         d_footer = None
 

@@ -3,7 +3,6 @@ import pandas as pd
 
 # Local import
 from facile.core.fields import StringFields
-from facile.utils.drivers.comon import FileDriver
 from facile.core.document_generator import WordDocument
 from facile.core.table_loader import TableLoader
 from facileapp.models.views.base_view import BaseView
@@ -50,15 +49,19 @@ class FeuilleTravaux(BaseView):
         return df
 
     @staticmethod
-    def load_view():
+    def load_view(return_cols=True):
+
         # Load affaire db
         df = Affaire.load_db()
+        l_models_cols = []
 
         # Join devis information
         df_devis = Devis.load_db()
         df_devis = df_devis[[c for c in df_devis.columns if c not in ['creation_date', 'maj_date']]]
         df_devis = df_devis.rename(columns={c: '{}_devis'.format(c) for c in df_devis.columns if c != 'devis_id'})
         df = df.merge(df_devis, on='devis_id', how='left')
+
+        l_models_cols += [c for c in df_devis.columns if c != 'devis_id']
 
         # Load billing and Build affaire index
         df_facture = Facture.load_db()
@@ -69,6 +72,7 @@ class FeuilleTravaux(BaseView):
             df_facture_ = df_facture.loc[df_facture['situation'] == i]\
                 .rename(columns={'montant_ht': 'montant_situation_{}'.format(i)})
             df = FeuilleTravaux.merge_to_main(df, df_facture_, ['montant_situation_{}'.format(i)])
+            l_models_cols += ['montant_situation_{}'.format(i)]
 
         # Join command information
         df_commande = Commande.load_db()
@@ -78,6 +82,8 @@ class FeuilleTravaux(BaseView):
             .merge_to_main(
                 df, df_commande.rename(columns={'montant_ht': 'montant_total_commande'}), ['montant_total_commande']
             )
+
+        l_models_cols += ['montant_total_commande']
 
         # Load hours information
         df_heure = Heure.load_db()
@@ -93,15 +99,34 @@ class FeuilleTravaux(BaseView):
             .rename(columns={'heure_prod': 'heure_prod_saisie_interim', 'heure_autre': 'heure_autre_saisie_interim'})
         df = FeuilleTravaux.merge_to_main(df, df_heure_, ['heure_prod_saisie_interim', 'heure_autre_saisie_interim'])
 
+        l_models_cols += ['heure_prod_saisie', 'heure_autre_saisie', 'heure_prod_saisie_interim',
+                          'heure_autre_saisie_interim']
+
+        if return_cols:
+            return df, l_models_cols
+
         return df
 
     @staticmethod
-    def table_loading():
+    def table_loading(type='html', full_path=None):
         l_index = FeuilleTravaux.main_model.l_index
         l_fields = FeuilleTravaux.main_model.l_fields()
 
         # Load database
-        df = FeuilleTravaux.load_view()
+        df, l_model_cols = FeuilleTravaux.load_view(return_cols=True)
+        table_man = TableLoader(l_index, l_fields, type=type)
+
+        if type == 'excel':
+
+            # Get processed table
+            df = table_man.load_full_table(df, l_extra_cols=l_model_cols)
+
+            # Save excel file
+            writer = pd.ExcelWriter(full_path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Feuille1', index=False)
+            writer.save()
+
+            return
 
         l_model_cols = [f.name for f in l_index + l_fields]
         l_extra_cols = [c for c in df.columns if c not in l_model_cols]
@@ -125,8 +150,6 @@ class FeuilleTravaux(BaseView):
     @staticmethod
     def document_(index, path, driver, name='doc_fdt.docx'):
         df = FeuilleTravaux.load_view()
-        import IPython
-        IPython.embed()
         df = df.loc[
             df[[f.name for f in Affaire.l_index]].apply(lambda r: all([r[c] == index[c] for c in r.index]), axis=1)
         ]

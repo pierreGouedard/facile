@@ -13,7 +13,7 @@ from facileapp.models.views.facturation import Facturation
 from facileapp.models.views.achat import Achat
 from facile.utils.drivers.comon import FileDriver
 from facile.forms import mutlistep, document
-from settings import deform_template_path, facile_driver_tmpdir
+from settings import facile_driver_tmpdir
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True,

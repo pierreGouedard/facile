@@ -7,12 +7,38 @@ from facile.core.base_model import BaseModel
 
 class TableLoader(object):
 
-    def __init__(self, l_index, l_fields, limit=None):
+    def __init__(self, l_index, l_fields, limit=None, type='html'):
         self.l_index = l_index
         self.l_fields = l_fields
         self.limit = limit
+        self.type = type
 
     def load_reduce_table(self, df):
+        if self.type == 'html':
+            return self.load_reduce_table_html(df)
+
+    def load_full_table(self, df, l_extra_cols=None):
+        if self.type == 'html':
+            return self.load_full_table_html(df, l_extra_cols=l_extra_cols)
+        else:
+            return self.load_table_excel(df, l_extra_cols=l_extra_cols)
+
+    def load_table_excel(self, df, l_extra_cols=None):
+        if not df.empty:
+            # Sort database
+            df = self.sort_df(df)
+
+        # Get columns to display and corresponding sizes
+        l_cols = [f.name for f in self.l_index + self.l_fields]
+
+        if l_extra_cols is not None:
+            l_cols += l_extra_cols
+
+        df = df[l_cols]
+
+        return df
+
+    def load_reduce_table_html(self, df):
 
         # Get columns to display
         l_cols = [(f.name, f.rank) for f in self.l_index + self.l_fields if f.table_reduce]
@@ -28,7 +54,7 @@ class TableLoader(object):
 
         return df,  {'paginate': 'true', 'record_cnt': 'true'}
 
-    def load_full_table(self, df, l_extra_cols=None):
+    def load_full_table_html(self, df, l_extra_cols=None):
 
         if not df.empty:
             # Sort database

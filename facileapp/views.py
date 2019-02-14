@@ -8,7 +8,7 @@ from jinja2 import Template
 from facile.forms import login, download
 from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form, \
     process_document_form
-from facile.utils.tables import build_table
+from facile.utils.tables import build_table, process_table
 from facile.utils.controls import build_controls
 from facile.layout import boostrap
 from settings import deform_template_path
@@ -157,17 +157,8 @@ def export():
                             '<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
             html = render_template("export.html", **{'export': export})
     else:
-        # return xlsx of the table
-        from facileapp.models.affaire import Affaire
-
-        driver = FileDriver('tmp_test', '')
-
-        df = Affaire.load_db()
-        tmpdir = driver.TempDir(create=True)
-
-        df.to_csv(driver.join(tmpdir.path, 'test.csv'))
-
-        return send_file(driver.join(tmpdir.path, 'test.csv'))
+        path, tmpdir = process_table(request.args['table'])
+        return send_file(path, as_attachment=True)
 
     return html
 

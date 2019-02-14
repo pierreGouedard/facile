@@ -176,12 +176,23 @@ class Contact(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_loading(reduced=True):
+    def table_loading(reduced=True, type='html', full_path=None):
         # Load database
         df = Contact.load_db()
+        table_man = TableLoader(Contact.l_index, Contact.l_fields(), limit=10, type=type)
+
+        if type == 'excel':
+            # Get processed table
+            df = table_man.load_full_table(df)
+
+            # Save excel file
+            writer = pd.ExcelWriter(full_path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Feuille1', index=False)
+            writer.save()
+
+            return
 
         if reduced:
-            table_man = TableLoader(Contact.l_index, Contact.l_fields(), limit=10)
             df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
         else:

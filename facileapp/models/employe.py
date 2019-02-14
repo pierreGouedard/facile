@@ -120,14 +120,28 @@ class Employe(BaseModel):
         return form_man.d_form_data
 
     @staticmethod
-    def table_loading(reduced=True):
+    def table_loading(reduced=True, type='html', full_path=None):
         # Load database
         df = Employe.load_db()
 
+        # Instantiate table manager
+        table_man = TableLoader(Employe.l_index, Employe.l_fields(), limit=10, type=type)
+
+        if type == 'excel':
+            # Get processed table
+            df = table_man.load_full_table(df)
+
+            # Save excel file
+            writer = pd.ExcelWriter(full_path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Feuille1', index=False)
+            writer.save()
+
+            return
+
         if reduced:
-            table_man = TableLoader(Employe.l_index, Employe.l_fields(), limit=10)
             df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
+
         else:
             table_man = TableLoader(Employe.l_index, Employe.l_fields())
             df, d_footer, kwargs = table_man.load_full_table(df)

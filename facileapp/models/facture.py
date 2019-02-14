@@ -31,8 +31,8 @@ class Facture(BaseModel):
                  StringFields(title='Objet', name='objet'),
                  MoneyFields(title='Montant facture HT', name='montant_ht'),
                  IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation')),
-                 DateFields(title='Visa', name='date_visa'),
-                 DateFields(title='Encaissement', name='date_payed')
+                 DateFields(title='Visa', name='date_visa', missing='1970-01-01'),
+                 DateFields(title='Encaissement', name='date_payed', missing='1970-01-01')
                  ]
         else:
             l_fields = \
@@ -131,18 +131,29 @@ class Facture(BaseModel):
 
             form_man.load(step % Facture.nb_step_form, data_db=data_db, data_form=data)
 
-        print form_man.d_form_data
         return form_man.d_form_data
 
     @staticmethod
-    def table_loading(reduced=True):
+    def table_loading(reduced=True, type='html', full_path=None):
         # Load database
         df = Facture.load_db()
+        table_man = TableLoader(Facture.l_index, Facture.l_fields(), limit=10, type=type)
+
+        if type == 'excel':
+            # Get processed table
+            df = table_man.load_full_table(df)
+
+            # Save excel file
+            writer = pd.ExcelWriter(full_path, engine='xlsxwriter')
+            df.to_excel(writer, sheet_name='Feuille1', index=False)
+            writer.save()
+
+            return
 
         if reduced:
-            table_man = TableLoader(Facture.l_index, Facture.l_fields(), limit=10)
             df, kwargs = table_man.load_reduce_table(df)
             d_footer = None
+
         else:
             table_man = TableLoader(Facture.l_index, Facture.l_fields())
             df, d_footer, kwargs = table_man.load_full_table(df)

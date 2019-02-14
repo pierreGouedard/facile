@@ -8,7 +8,7 @@ import copy
 
 class StringFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, l_choices=None, multiple=False, desc=None,
-                 table_reduce=False, rank=0):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         # Form display
         self.title = title
@@ -16,6 +16,8 @@ class StringFields(object):
         self.round = round
         self.type = str
         self.desc = desc
+        self.required = required
+        self.missing_msg = missing_msg
         self.multiple = multiple
         self.mapinit = None if not self.multiple else []
 
@@ -34,16 +36,21 @@ class StringFields(object):
         self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
 
         if not multiple:
-            self.sn = sn(String(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
+            self.sn = sn(String(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc,
+                         required=self.required, missing_msg=self.missing_msg)
         else:
             self.processing_form.update(
                 {'form': lambda x: ';'.join(map(str, x)) if x else missing, 'db': lambda x: x.split(';')}
             )
-            self.sn = sn(Set(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
+            self.sn = sn(Set(), title=self.title, name=name, widget=self.widget, description=desc)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
         return StringFields(
-            self.title, self.name, self.round, widget=self.widget, desc=self.desc, multiple=self.multiple
+            self.title, self.name, self.round, widget=self.widget, desc=self.desc, multiple=self.multiple,
+            required=self.required, missing_msg=self.missing_msg
         )
 
     def hidden_mode(self):
@@ -52,7 +59,7 @@ class StringFields(object):
 
 class IntegerFields(object):
     def __init__(self, title, name, round=1, missing=-1, widget=None, l_choices=None, desc=None,
-                 table_reduce=False, rank=0):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         # Form display & param
         self.title = title
@@ -60,6 +67,8 @@ class IntegerFields(object):
         self.name = name
         self.type = int
         self.desc = desc
+        self.required = required
+        self.missing_msg = missing_msg
         self.mapinit = None
 
         # Table display & param
@@ -76,10 +85,15 @@ class IntegerFields(object):
         self.processing_form = {'form': lambda x: int(x) if x else missing, 'db': lambda x: int(x)}
         self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
 
-        self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc)
+        self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
-        return IntegerFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc)
+        return IntegerFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc,
+                             required=self.required, missing_msg=self.missing_msg)
 
     def hidden_mode(self):
         return IntegerFields(self.title, self.name, self.round, widget=HiddenWidget())
@@ -87,13 +101,16 @@ class IntegerFields(object):
 
 class FloatFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, desc=None,
-                 decimal=100, table_reduce=False, rank=0):
+                 decimal=100, table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         # Form display & param
         self.title = title
         self.round = round
         self.name = name
         self.type = float
+        self.missing = missing
+        self.required = required
+        self.missing_msg = missing_msg
         self.desc = desc
         self.mapinit = None
 
@@ -111,10 +128,15 @@ class FloatFields(object):
         self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
         self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
 
-        self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc, missing=missing)
+        self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
-        return FloatFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc)
+        return FloatFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc, missing=self.missing,
+                           required=self.required, missing_msg=self.missing_msg)
 
     def hidden_mode(self):
         return FloatFields(self.title, self.name, self.round, widget=HiddenWidget())
@@ -122,13 +144,16 @@ class FloatFields(object):
 
 class MoneyFields(object):
     def __init__(self, title, name, round=1, missing=0., widget=None, l_choices=None, desc=None, decimal=100,
-                 table_reduce=False, rank=0):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         # Form display & param
         self.title = title
         self.round = round
         self.name = name
         self.type = float
+        self.missing = missing
+        self.required = required
+        self.missing_msg = missing_msg
         self.desc = desc
         self.mapinit = None
 
@@ -146,10 +171,15 @@ class MoneyFields(object):
         self.processing_form = {'form': lambda x: float(x.replace(',', '')) if x else missing, 'db': lambda x: float(x)}
         self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
 
-        self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc, missing=missing)
+        self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
-        return MoneyFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc)
+        return MoneyFields(self.title, self.name, self.round, widget=self.widget, desc=self.desc, missing=self.missing,
+                           required=self.required, missing_msg=self.missing_msg)
 
     def hidden_mode(self):
         return MoneyFields(self.title, self.name, self.round, widget=HiddenWidget())
@@ -157,11 +187,13 @@ class MoneyFields(object):
 
 class DateFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None,
-                 desc=None, table_reduce=False, rank=0):
+                 desc=None, table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         self.title = title
         self.name = name
         self.type = str
+        self.required = required
+        self.missing_msg = missing_msg
         self.missing = missing
         self.desc = desc
         self.table_reduce, self.rank, = table_reduce, rank
@@ -172,13 +204,18 @@ class DateFields(object):
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
         self.processing_db = {'upload': lambda x: pd.Timestamp(x).date(), 'download': lambda x: x}
 
-        self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, missign=missing, description=desc)
+        self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
 
         return DateFields(self.title, self.name, self.round,
                           widget=DateInputWidget(**{'key': '{}-date'.format(self.name)}), mapinit={'date': None},
-                          processing_form=lambda x: pd.Timestamp(x['date']), desc=self.desc, missing=self.missing)
+                          processing_form=lambda x: pd.Timestamp(x['date']), desc=self.desc, missing=self.missing,
+                          required=self.required, missing_msg=self.missing_msg)
 
     def hidden_mode(self):
         return DateFields(self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
@@ -187,10 +224,12 @@ class DateFields(object):
 
 class DateTimeFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None, desc=None,
-                 table_reduce=False, rank=0):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
 
         self.title = title
         self.name = name
+        self.required = required
+        self.missing_msg = missing_msg
         self.type = str
         self.desc = desc
 
@@ -203,7 +242,11 @@ class DateTimeFields(object):
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
         self.processing_db = {'upload': lambda x: pd.Timestamp(x), 'download': lambda x: x}
 
-        self.sn = sn(DateTime(), title=self.title, name=name, widget=self.widget, missign=missing, description=desc)
+        self.sn = sn(DateTime(), title=self.title, name=name, widget=self.widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
 
     def set_mode(self):
         keyw = {'key_date': '{}-date'.format(self.name),

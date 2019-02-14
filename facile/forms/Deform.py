@@ -59,7 +59,7 @@ class Form(object):
                     _ = form.validate_pstruct(pstruct)
                     pstruct = self.validate_(pstruct)
 
-                # Deffered read only input
+                # Deffered missing values
                 pstruct = self.deffered_missing_(pstruct)
 
                 # Format entry of spots
