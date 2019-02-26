@@ -3,7 +3,7 @@ import pandas as pd
 import os
 
 # Local import
-from settings import facile_project_path
+from settings import facile_db_path
 from facile.core.base_model import BaseModel
 from facileapp.models.employe import Employe
 from facileapp.models.client import Client
@@ -22,7 +22,7 @@ __maintainer__ = 'Pierre Gouedard'
 class Initializer():
 
     def __init__(self):
-        self.path = os.path.join(facile_project_path)
+        self.path = os.path.join(facile_db_path)
 
     def save_database(self, df,name, ):
         df.to_csv(os.path.join(self.path, name), index=None)

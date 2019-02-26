@@ -12,7 +12,7 @@ from facile.core.base_model import BaseModel
 
 class Client(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'client.csv')
+    path = os.path.join(settings.facile_db_path, 'client.csv')
     l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0)]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -21,11 +21,11 @@ class Client(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=1),
-             StringFields(title='Adresse', name='adresse', rank=2),
+            [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=1, required=True),
+             StringFields(title='Adresse', name='adresse', rank=2, required=True),
              StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville', rank=3),
-             StringFields(title='Code postal', name='code_postal'),
+             StringFields(title='Ville', name='ville', rank=3, required=True),
+             StringFields(title='Code postal', name='code_postal', required=True),
              StringFields(title='tel', name='num_tel', table_reduce=True),
              StringFields(title='E-mail', name='mail', table_reduce=True)]
 

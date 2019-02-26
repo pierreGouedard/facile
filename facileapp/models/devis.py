@@ -18,7 +18,7 @@ from facileapp.models.employe import Employe
 
 class Devis(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'devis.csv')
+    path = os.path.join(settings.facile_db_path, 'devis.csv')
 
     l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0)]
@@ -32,20 +32,20 @@ class Devis(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title='Designation client', name='designation_client', l_choices=Devis.list('client'),
-                              table_reduce=True, rank=1),
-                 StringFields(title='Contact client', name='contact_id', l_choices=Devis.list('contact')),
+                              table_reduce=True, rank=1, required=True),
+                 StringFields(title='Contact client', name='contact_id', l_choices=Devis.list('contact'), required=True),
                  StringFields(title='Responsable devis', name='responsable', l_choices=Devis.list('responsable'),
-                              table_reduce=True, rank=2),
-                 StringFields(title='Designation devis', name='object'),
+                              table_reduce=True, rank=2, required=True),
+                 StringFields(title='Designation devis', name='object', required=True),
                  IntegerFields(title="Heure autre", name='heure_autre', l_choices=zip(range(9000), range(9000))),
                  IntegerFields(title="Heure Production", name='heure_prod', l_choices=zip(range(1000), range(1000))),
-                 MoneyFields(title="Prix heure autre", name='prix_heure_autre'),
-                 MoneyFields(title="Prix heure Production", name='prix_heure_prod'),
-                 MoneyFields(title='Montant achat', name='montant_achat'),
-                 FloatFields(title='Coefficient achat', name='coef_achat'),
-                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix')),
-                 DateFields(title='Date de debut', name='date_start'),
-                 DateFields(title='Date de fin', name='date_end'),
+                 MoneyFields(title="Prix heure autre", name='prix_heure_autre', required=True),
+                 MoneyFields(title="Prix heure Production", name='prix_heure_prod', required=True),
+                 MoneyFields(title='Montant achat', name='montant_achat', required=True),
+                 FloatFields(title='Coefficient achat', name='coef_achat', required=True),
+                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix'), required=True),
+                 DateFields(title='Date de debut', name='date_start', required=True),
+                 DateFields(title='Date de fin', name='date_end', required=True),
                  MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
         else:
             l_fields = \
@@ -277,14 +277,16 @@ class Devis(BaseModel):
         d_control_data = {}
         df = Devis.load_db()
 
-        # App 2 amount of signed affaire by charge d'aff
+        # App 2 amount (euros) of signed devis by charge d'aff
         df_chardaff = df[['responsable', 'price']].groupby('responsable')\
             .sum()\
             .reset_index()\
-            .rename(columns={'responsable': 'label'})
+            .rename(columns={'responsable': 'label', 'price': 'montant'})
+
+        df_chardaff['hover'] = df_chardaff.montant.apply(lambda x: '{:,.2f} Euros'.format(float(int(x * 100) / 100)))
 
         d_control_data['devisresp'] = {
-            'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'price'}},
+            'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'montant', 'hover_col': 'hover'}},
             'rows': [('title', [{'content': 'title', 'value': "Devis envoye par charge d'affaire", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0

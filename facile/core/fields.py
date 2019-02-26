@@ -1,8 +1,9 @@
 # Global import
 import pandas as pd
-from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, Money, Float, Sequence, Set, List
+from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, Money, Float, Sequence, Set
+from deform import FileData
 from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, MoneyInputWidget, HiddenWidget, \
-    TextInputWidget
+    TextInputWidget, FileUploadWidget
 import copy
 
 
@@ -201,7 +202,7 @@ class DateFields(object):
         self.widget = widget
         self.round = round
         self.mapinit = mapinit
-        self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
+        self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x).date()}
         self.processing_db = {'upload': lambda x: pd.Timestamp(x).date(), 'download': lambda x: x}
 
         self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, description=desc,
@@ -264,6 +265,52 @@ class DateTimeFields(object):
         )
 
 
+class FileFields(object):
+    def __init__(self, title, name, round=1, missing=None, widget=None, mapinit=None, desc=None, table_reduce=False,
+                 rank=0, required=False, missing_msg='champ requis'):
+
+        self.title = title
+        self.name = name
+        self.required = required
+        self.missing_msg = missing_msg
+        self.type = str
+        self.desc = desc
+        self.tmpstore = FileUploadTempStore(dict())
+
+        self.table_reduce, self.rank, = table_reduce, rank
+
+        self.widget = widget
+        self.round = round
+        self.mapinit = {'filename': None, 'fp': None, 'mimetype': None, 'preview_url': None, 'size': None, 'uid': None}
+
+        if mapinit is not None:
+            self.mapinit.update(mapinit)
+
+        if missing is None:
+            missing = {'filename': '', 'uid': ''}
+
+        self.processing_form = {'form': lambda x: x, 'db': lambda x: {'filename': x}}
+        self.processing_db = {'upload': lambda x: x.get('filename', ''), 'download': lambda x: x}
+
+        self.sn = sn(FileData(), title=self.title, name=name, widget=self.widget, description=desc,
+                     required=self.required, missing_msg=self.missing_msg)
+
+        if not required:
+            self.sn.missing = missing
+
+    def set_mode(self):
+        kwargs = {'key': self.name}
+        return FileFields(
+            self.title, self.name, self.round, widget=FileUploadWidget(self.tmpstore, **kwargs), mapinit=None,
+            desc=self.desc
+        )
+
+    def hidden_mode(self):
+        return FileFields(
+            self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
+        )
+
+
 class MappingFields(object):
 
     def __init__(self, title, name, prefix, l_fields, round=1, desc=None, widget=None):
@@ -317,3 +364,11 @@ class SequenceFields(object):
         return SequenceFields(self.title, self.name, self.field, self.round, widget=HiddenWidget())
 
 
+class FileUploadTempStore(dict):
+    """ A temporary storage for file uploads
+    File uploads are stored in the session so that you don't need to upload
+    your file again if validation of another schema node fails. """
+
+    @staticmethod
+    def preview_url(name=None):
+        return None

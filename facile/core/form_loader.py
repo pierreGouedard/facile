@@ -1,5 +1,8 @@
+import deform
+
+
 class FormLoader(object):
-    buttons = ('Retour', 'Suivant')
+    buttons = (deform.Button('Retour',  css_class='btn-danger'), deform.Button('Suivant', css_class='btn-success'))
 
     def __init__(self, l_index, l_fields, l_subindex=[], use_subindex=False, use_groupindex=False):
         self.l_index = l_index
@@ -12,7 +15,7 @@ class FormLoader(object):
     def load_init_form(self, action_node, index_node):
         self.d_form_data = {
             'nodes': [action_node.sn, index_node.sn],
-            'buttons': ('Suivant',),
+            'buttons': (deform.Button('Suivant',  css_class='btn-success'),),
             'mapping': {'Suivant': None, 'action': None, 'index': None},
             'formatting': {}
         }

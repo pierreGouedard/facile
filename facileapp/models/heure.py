@@ -16,7 +16,7 @@ from facile.utils import dates
 
 class Heure(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'heure.csv')
+    path = os.path.join(settings.facile_db_path, 'heure.csv')
     l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                              rank=0)]
     l_groupindex = [0]
@@ -34,13 +34,14 @@ class Heure(BaseModel):
                 [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
                               rank=1),
                  StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
-                              table_reduce=True,  rank=2),
+                              table_reduce=True,  rank=2, required=True),
                  StringFields(title="Designation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
-                              rank=3, desc="Choisir 'Interimaires' pour ajouter le cumul des heures des interimaires"),
+                              rank=3, desc="Choisir 'Interimaires' pour ajouter le cumul des heures des interimaires",
+                              required=True),
                  IntegerFields(title="Cumul heure prod", name='heure_prod', l_choices=Heure.list('heures'),
-                               missing=0, table_reduce=True, rank=4),
+                               missing=0, table_reduce=True, rank=4, required=True),
                  IntegerFields(title="Cumul heure autre", name='heure_autre', l_choices=Heure.list('heures'),
-                               missing=0, table_reduce=True, rank=5)]
+                               missing=0, table_reduce=True, rank=5, required=True)]
         else:
             l_fields = \
                 [StringFields(title="Semaine", name='semaine', table_reduce=True, rank=1),
@@ -181,63 +182,3 @@ class Heure(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
-
-    @staticmethod
-    def control_loading():
-        d_control_data = {}
-        df = Heure.load_db()
-
-        # App 1 heure de la semaine en cours par employe
-        semaine = dates.get_current_start_date() - pd.Timedelta(days=7)
-        df_ = df.loc[df.semaine == str(semaine)]
-        df_heures = df_[['employe', 'nb_heure_be', 'nb_heure_ch']].groupby(['employe'])\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'employe': 'label'})
-
-        d_control_data['heuresemaine'] = {
-            'plot': {'k': 'stack_bar', 'd': df_heures, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
-            'rows': [('title', [{'content': 'title', 'value': 'Heure de la semaine {}'.format(semaine), 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 0
-                }
-
-        # App 2 & 3 heure de l'annee en cours par employe et par semaine
-        df_heures_emp = df[['employe', 'nb_heure_be', 'nb_heure_ch']].groupby(['employe'])\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'employe': 'label'})
-
-        d_control_data['heuresannecumul'] = {
-            'plot': {'k': 'stack_bar', 'd': df_heures_emp, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
-            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par employe)", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 1
-                }
-
-        # App 3 heure de l'anne en cours par affaire
-        df_heures_week = df[['semaine', 'nb_heure_be', 'nb_heure_ch']].groupby(['semaine'])\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'semaine': 'label'})
-
-        d_control_data['heuresanne'] = {
-            'plot': {'k': 'stack_bar', 'd': df_heures_week, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
-            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par semaine", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 2
-                }
-
-        # App 4 heure de l'anne en cours par affaire
-        df_heures_aff = df[['affaire_id', 'nb_heure_be', 'nb_heure_ch']].groupby(['affaire_id'])\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'affaire_id': 'label'})
-
-        d_control_data['heuresaffaire'] = {
-            'plot': {'k': 'stack_bar', 'd': df_heures_aff, 'o': {'cat_cols': ['nb_heure_be', 'nb_heure_ch']}},
-            'rows': [('title', [{'content': 'title', 'value': "Heure de l'annee en cours par affaire", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 3
-        }
-        return d_control_data

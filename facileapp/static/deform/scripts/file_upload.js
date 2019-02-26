@@ -31,7 +31,7 @@
         template: '<div>'
             + '<div class="input-group">'
             + '<span class="input-group-btn">'
-            + '<span class="btn btn-default btn-file"></span>'
+            + '<span class="btn btn-primary btn-file"></span>'
             + '</span>'
             + '<input type="text" readonly=""'
             + ' class="form-control upload-filename"/>'

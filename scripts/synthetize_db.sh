@@ -1,3 +1,2 @@
 #!/bin/bash
-
-python scripts/python/synthetize_db.py
+python scripts/python/synthesize_db.py

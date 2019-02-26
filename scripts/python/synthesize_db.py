@@ -358,7 +358,7 @@ class Synthesizer():
                 'taux_tva': 0.196,
                 'montant_ttc': 0.,
                 'montant_tva': 0.,
-                'l_article': '',
+                'details': ''.join([random.choice(string.ascii_letters) for _ in range(10)]) + '.pdf',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             }

@@ -5,14 +5,13 @@ from flask import Markup, session, redirect, url_for, request, send_file, jsonif
 from jinja2 import Template
 
 # Local import
-from facile.forms import login, download
+from facile.forms import login, download, example
 from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form, \
     process_document_form
 from facile.utils.tables import build_table, process_table
 from facile.utils.controls import build_controls
 from facile.layout import boostrap
 from settings import deform_template_path
-from facile.utils.drivers.comon import FileDriver
 
 
 @app.route('/')
@@ -21,6 +20,14 @@ def home():
         return redirect(url_for('log_in'))
 
     return render_template("home.html")
+
+
+@app.route('/restricted')
+def restricted():
+    if 'username' not in session:
+        return redirect(url_for('log_in'))
+
+    return render_template("restricted.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -43,6 +50,25 @@ def log_in():
             return redirect(url_for('home'))
         else:
             html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
+
+    return html
+
+
+@app.route('/example', methods=['GET', 'POST'])
+def test_example():
+    # Create page global layout
+    custom_template = Template(render_template('example.html', form=Markup(boostrap.get_example_layout())))
+
+    # process request
+    web, data = example.ExampleForm(request, deform_template_path).process_form()
+
+    if request.method == 'GET':
+        html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
+
+    else:
+        import IPython
+        IPython.embed()
+        html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
 
     return html
 
@@ -125,44 +151,6 @@ def form():
     return html
 
 
-@app.route('/exports', methods=['GET', 'POST'])
-def export():
-    if 'username' not in session:
-        return redirect(url_for('log_in'))
-
-    if request.method == 'GET':
-        if request.args:
-
-            # Build title
-            title = "Exporter la table: {}".format(request.args['table'])
-
-            # Get template
-            custom_template = Template(
-                render_template('export.html', export=Markup(boostrap.get_export_layout(title)))
-            )
-
-            # Get form
-            web, data = download.DownloadForm(request, deform_template_path).process_form()
-
-            # Get Table
-            table = {'table': build_table(request.args['table'], reduced=False, load_jQuery=True,
-                                          head_class='table-active')}
-
-            # Gather context and render template
-            context = {k: Markup(v) for k, v in web.items() + table.items()}
-            html = render_template(custom_template, **context)
-
-        else:
-            export = Markup('<h1>Page des Exports</h1>'
-                            '<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
-            html = render_template("export.html", **{'export': export})
-    else:
-        path, tmpdir = process_table(request.args['table'])
-        return send_file(path, as_attachment=True)
-
-    return html
-
-
 @app.route('/documents', methods=['GET', 'POST'])
 def document():
     if 'username' not in session:
@@ -197,10 +185,54 @@ def document():
     return html
 
 
+@app.route('/exports', methods=['GET', 'POST'])
+def export():
+    if 'username' not in session:
+        return redirect(url_for('log_in'))
+
+    elif session['rights'] != 'ALL':
+        return redirect(url_for('restricted'))
+
+    if request.method == 'GET':
+        if request.args:
+
+            # Build title
+            title = "Exporter la table: {}".format(request.args['table'])
+
+            # Get template
+            custom_template = Template(
+                render_template('export.html', export=Markup(boostrap.get_export_layout(title)))
+            )
+
+            # Get form
+            web, data = download.DownloadForm(request, deform_template_path).process_form()
+
+            # Get Table
+            table = {'table': build_table(request.args['table'], reduced=False, load_jQuery=True,
+                                          head_class='table-active')}
+
+            # Gather context and render template
+            context = {k: Markup(v) for k, v in web.items() + table.items()}
+            html = render_template(custom_template, **context)
+
+        else:
+            export = Markup('<h1>Page des Exports</h1>'
+                            '<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
+            html = render_template("export.html", **{'export': export})
+    else:
+        path, tmpdir = process_table(request.args['table'])
+        return send_file(path, as_attachment=True)
+
+    return html
+
+
 @app.route('/controls', methods=['GET'])
 def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))
+
+    elif session['rights'] != 'ALL':
+        return redirect(url_for('restricted'))
 
     if request.args:
 
@@ -210,7 +242,7 @@ def control():
     else:
         control = Markup('<div class="jumbotron">'
                          '<h1>Page des controles</h1>'
-                         '<p class="lead"> Choisissez un onglet pour visualiser un control</p></div>')
+                         '<p class="lead"> Choisissez un onglet pour visualiser un controle</p></div>')
         html = render_template("control.html", **{'control': control})
 
     return html

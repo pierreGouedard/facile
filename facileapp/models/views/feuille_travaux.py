@@ -149,7 +149,7 @@ class FeuilleTravaux(BaseView):
 
     @staticmethod
     def document_(index, path, driver, name='doc_fdt.docx'):
-        df = FeuilleTravaux.load_view()
+        df, _ = FeuilleTravaux.load_view()
         df = df.loc[
             df[[f.name for f in Affaire.l_index]].apply(lambda r: all([r[c] == index[c] for c in r.index]), axis=1)
         ]
@@ -272,4 +272,27 @@ class FeuilleTravaux(BaseView):
 
     @staticmethod
     def control_loading():
-        raise NotImplementedError
+        # May be have a view of case sold out, case running
+        d_control_data = {}
+        df, _ = FeuilleTravaux.load_view()
+
+        # App 1 repartition categorie among employes
+        df['montant_facture'] = df[[c for c in df.columns if 'montant_situation_' in c]].sum(axis=1)
+        df['state'] = df[['price_devis', 'montant_facture']]\
+            .apply(lambda row: 'cloturee' if abs(row['price_devis'] - row['montant_facture']) < 10 else 'En cours',
+                   axis=1)
+
+        df_ca = df[['price_devis', 'state']].groupby('state')\
+            .sum()\
+            .reset_index()\
+            .rename(columns={'state': 'name', 'price_devis': 'value'})
+
+        df_ca['hover'] = df['price_devis'].apply(lambda x: '{:,.2f} Euros'.format(float(int(x * 100) / 100)))
+
+        d_control_data['repca'] = {
+            'plot': {'k': 'pie', 'd': df_ca, 'o': {'hover': True}},
+            'rows': [('title', [{'content': 'title', 'value': "Chiffre d'affaire cloture et en cours", 'cls': 'text-center'}]),
+                     ('figure', [{'content': 'plot'}])],
+            'rank': 0
+                }
+        return d_control_data

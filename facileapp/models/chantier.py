@@ -15,7 +15,7 @@ from facileapp.models.contact import Contact
 
 class Chantier(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'chantier.csv')
+    path = os.path.join(settings.facile_db_path, 'chantier.csv')
     l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0)]
     l_subindex = [0, 1]
     l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
@@ -27,19 +27,20 @@ class Chantier(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title='Designation du client', name='designation_client', l_choices=Chantier.list('client'),
-                              table_reduce=True, rank=1),
-                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
-                 StringFields(title='Adresse', name='adresse'),
-                 StringFields(title='Ville', name='ville'),
-                 StringFields(title='Code postal', name='code_postal'),
+                              table_reduce=True, rank=1, required=True),
+                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title='Adresse', name='adresse', required=True),
+                 StringFields(title='Ville', name='ville', required=True),
+                 StringFields(title='Code postal', name='code_postal', required=True),
                  ]
         else:
             l_fields = \
-                [StringFields(title='Designation du client', name='designation_client', table_reduce=True, rank=1),
-                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2),
-                 StringFields(title='Adresse', name='adresse'),
-                 StringFields(title='Ville', name='ville'),
-                 StringFields(title='Code postal', name='code_postal'),
+                [StringFields(title='Designation du client', name='designation_client', table_reduce=True, rank=1,
+                              required=True),
+                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title='Adresse', name='adresse', required=True),
+                 StringFields(title='Ville', name='ville', required=True),
+                 StringFields(title='Code postal', name='code_postal', required=True),
                  ]
 
         return l_fields

@@ -17,10 +17,7 @@ from facile.tables.html_table import Table
 
 def build_controls(table_key):
 
-    if table_key == 'employe':
-        d_control_data = Employe.control_loading()
-
-    elif table_key == 'affaire':
+    if table_key == 'affaire':
         d_control_data = FeuilleTravaux.control_loading()
 
     elif table_key == 'devis':
@@ -29,11 +26,8 @@ def build_controls(table_key):
     elif table_key == 'facture':
         d_control_data = Facture.control_loading()
 
-    elif table_key == 'commande':
-        d_control_data = Commande.control_loading()
-
-    elif table_key == 'heure':
-        d_control_data = Heure.control_loading()
+    # elif table_key == 'employe':
+    #     d_control_data = Employe.control_loading()
 
     else:
         raise ValueError('key not understood {}'.format(table_key))

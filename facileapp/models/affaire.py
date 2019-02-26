@@ -17,7 +17,7 @@ from facileapp.models.contact import Contact
 
 class Affaire(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'affaire.csv')
+    path = os.path.join(settings.facile_db_path, 'affaire.csv')
     l_index = [StringFields(title="Numero d'affaire", name='affaire_num', widget=HiddenWidget(), table_reduce=True,
                             rank=0),
                StringFields(title="Indice de l'affaire", name='affaire_ind', widget=HiddenWidget(), table_reduce=True,
@@ -35,26 +35,29 @@ class Affaire(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title="Numero de devis", name='devis_id', l_choices=Affaire.list('devis'),
-                              table_reduce=True, rank=2),
+                              table_reduce=True, rank=2, required=True),
                  StringFields(title='Responsable affaire', name='responsable', l_choices=Affaire.list('responsable'),
-                              table_reduce=True, rank=3),
-                 StringFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier'), round=2),
+                              table_reduce=True, rank=3, required=True),
+                 StringFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier'), round=2,
+                              required=True),
                  StringFields(title='Contact client - chantier', name='contact_chantier_client',
-                              l_choices=Affaire.list('contact_chantier_client', **kwlist), round=2),
+                              l_choices=Affaire.list('contact_chantier_client', **kwlist), round=2, required=True),
                  StringFields(title='Contact client - facturation', name='contact_facturation_client',
-                              l_choices=Affaire.list('contact_facturation_client', **kwlist), round=2),
+                              l_choices=Affaire.list('contact_facturation_client', **kwlist), round=2, required=True),
                  StringFields(title='Contact interne - chantier', name='contact_chantier_interne',
-                              l_choices=Affaire.list('contact_chantier_interne', **kwlist), round=2),
+                              l_choices=Affaire.list('contact_chantier_interne', **kwlist), round=2, required=True),
                  MoneyFields(title='FAE', name='fae', missing=0.0, widget=HiddenWidget())]
 
         else:
             l_fields = \
-                [StringFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=2),
-                 StringFields(title='Responsable Affaire', name='responsable', table_reduce=True, rank=3),
-                 StringFields(title='Chantier', name='chantier_id', round=2),
-                 StringFields(title='Contact client - chantier', name='contact_chantier_client', round=2),
-                 StringFields(title='Contact client - facturation', name='contact_facturation_client', round=2),
-                 StringFields(title='Contact interne - chantier', name='contact_chantier_interne', round=2),
+                [StringFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=2, required=True),
+                 StringFields(title='Responsable Affaire', name='responsable', table_reduce=True, rank=3, required=True),
+                 StringFields(title='Chantier', name='chantier_id', round=2, required=True),
+                 StringFields(title='Contact client - chantier', name='contact_chantier_client', round=2, required=True),
+                 StringFields(title='Contact client - facturation', name='contact_facturation_client', round=2,
+                              required=True),
+                 StringFields(title='Contact interne - chantier', name='contact_chantier_interne', round=2,
+                              required=True),
                  MoneyFields(title='FAE', name='fae', missing=0.0, widget=HiddenWidget())]
 
         return l_fields

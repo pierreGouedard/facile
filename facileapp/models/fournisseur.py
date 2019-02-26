@@ -12,21 +12,20 @@ from facile.core.base_model import BaseModel
 
 class Fournisseur(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'fournisseur.csv')
+    path = os.path.join(settings.facile_db_path, 'fournisseur.csv')
 
-    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0)]
+    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True)]
     l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
-    l_documents = [('fpay', 'Lettre pour paiement'), ('fmerci', 'Lettre de remerciement')]
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='Adresse', name='adresse'),
+            [StringFields(title='Adresse', name='adresse', required=True),
              StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville'),
-             StringFields(title='Code postal', name='code_postal'),
+             StringFields(title='Ville', name='ville', required=True),
+             StringFields(title='Code postal', name='code_postal', required=True),
              StringFields(title='tel', name='num_tel', table_reduce=True, rank=2),
              StringFields(title='E-mail', name='mail', table_reduce=True, rank=3)]
 

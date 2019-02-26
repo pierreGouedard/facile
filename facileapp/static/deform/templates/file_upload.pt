@@ -1,8 +1,9 @@
 <tal:block tal:define="oid oid|field.oid;
                        css_class css_class|field.widget.css_class;
-                       style style|field.widget.style;">
+                       style style|field.widget.style;
+                       key key|field.widget.key;">
   ${field.start_mapping()}
-  <input type="file" name="upload" id="${oid}"
+  <input type="file" name="${key}" id="${oid}"
          tal:attributes="style style;
                          accept accept|field.widget.accept;
                          data-filename cstruct.get('filename');"/>
@@ -12,6 +13,7 @@
   ${field.end_mapping()}
   <script type="text/javascript">
     deform.addCallback('${oid}', function (oid) {
+      console.log('here mother fucker');
       $('#' + oid).upload();
     });
   </script>

@@ -1,3 +1,7 @@
+# Global import
+import mimetypes
+
+# Local import
 from facileapp.models.employe import Employe
 from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.client import Client
@@ -13,7 +17,7 @@ from facileapp.models.views.facturation import Facturation
 from facileapp.models.views.achat import Achat
 from facile.utils.drivers.comon import FileDriver
 from facile.forms import mutlistep, document
-from settings import facile_driver_tmpdir
+from settings import facile_driver_tmpdir, facile_commande_path
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True,
@@ -118,9 +122,14 @@ def process_form(table_key, d_data, action):
         statue = generic_process_form(l_index, l_fields, Devis, action, d_data, table_key=table_key)
 
     elif table_key == 'commande':
+        import IPython
+        IPython.embed()
+        filename = ''.join(['{}', mimetypes.guess_extension(d_data['details']['mimetype'])])
+        d_files = {FileDriver('', '').join(facile_commande_path, filename): d_data['details']['fp']}
+
         l_index, l_fields = Commande.l_index, [f for f in Commande.l_fields()]
         d_data['montant_ttc'], d_data['montant_tva'] = 0, 0
-        statue = generic_process_form(l_index, l_fields, Commande, action, d_data, table_key=table_key)
+        statue = generic_process_form(l_index, l_fields, Commande, action, d_data, table_key=table_key, d_files=d_files)
 
     elif table_key == 'facture':
         l_index, l_fields = Facture.l_index, [f for f in Facture.l_fields()]
@@ -172,7 +181,7 @@ def process_form(table_key, d_data, action):
     return script
 
 
-def generic_process_form(l_index, l_fields, model, action, d_data=None, table_key=None):
+def generic_process_form(l_index, l_fields, model, action, d_data=None, table_key=None, d_files=None):
 
     # Get data to alert successful
     data = ('"{}"'.format(table_key), '"{}"'.format(d_data['index']),
@@ -189,6 +198,10 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
             data = ('"{}"'.format(table_key), '"{}"'.format(index),
                     '"{}: {}'.format(table_key, index.replace('/', ' ')),
                     '{} avec succes"'.format(action))
+
+            if d_files is not None:
+                for k, v in d_files.items():
+                    v.save(k.format(index.replace('/', '_')))
 
         except IndexError:
             error = {'error': 'index',

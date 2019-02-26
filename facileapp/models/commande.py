@@ -1,23 +1,21 @@
 # Global imports
 import os
 import pandas as pd
-from deform.widget import RadioChoiceWidget, HiddenWidget
+from deform.widget import HiddenWidget
 
 # Local import
 import settings
-from facile.core.fields import StringFields, IntegerFields, FloatFields, MoneyFields
+from facile.core.fields import StringFields, FileFields, FloatFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
-from facileapp.models.chantier import Chantier
-from facileapp.models.employe import Employe
 from facileapp.models.fournisseur import Fournisseur
 
 
 class Commande(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'commande.csv')
+    path = os.path.join(settings.facile_db_path, 'commande.csv')
     l_index = [StringFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0)]
     l_documents = [('comande', 'Resume de Commande')]
@@ -30,23 +28,23 @@ class Commande(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
-                              table_reduce=True, rank=1),
+                              table_reduce=True, rank=1, required=True),
                  StringFields(title='Fournisseur', name='raison_social', l_choices=Commande.list('fournisseur'),
-                              table_reduce=True, rank=2),
-                 MoneyFields(title='Montant Commande HT', name='montant_ht'),
-                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva')),
+                              table_reduce=True, rank=2, required=True),
+                 MoneyFields(title='Montant Commande HT', name='montant_ht', required=True),
+                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva'), required=True),
                  MoneyFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
                  MoneyFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
-                 StringFields(title="Liste des articles", name='l_article')]
+                 FileFields(title="Details commande", name='details', required=True)]
         else:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
-                 StringFields(title='Fournisseur', name='raison_social', table_reduce=True, rank=2),
-                 MoneyFields(title='Montant Commande HT', name='montant_ht'),
-                 FloatFields(title='Taux TVA', name='taux_tva'),
+                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                 StringFields(title='Fournisseur', name='raison_social', table_reduce=True, rank=2, required=True),
+                 MoneyFields(title='Montant Commande HT', name='montant_ht', required=True),
+                 FloatFields(title='Taux TVA', name='taux_tva', required=True),
                  MoneyFields(title='Montant TVA', name='montant_tva'),
                  MoneyFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
-                 StringFields(title="Liste des articles", name='l_article')]
+                 FileFields(title="Details commande", name='details', required=True)]
 
         return l_fields
 
@@ -173,55 +171,3 @@ class Commande(BaseModel):
             df, d_footer, kwargs = table_man.load_full_table(df)
 
         return df, d_footer, kwargs
-
-    @staticmethod
-    def control_loading():
-        d_control_data = {}
-        df = Commande.load_db()
-
-        # App 1 Commande en cours par affaire
-        df_com_aff = df[['affaire_id', 'montant_ttc']].groupby(['affaire_id'])\
-            .sum()\
-            .reset_index()\
-            .rename(columns={'affaire_id': 'label'})
-
-        d_control_data['comaffaire'] = {
-            'plot': {'k': 'bar', 'd': df_com_aff, 'o': {'val_col': 'montant_ttc'}},
-            'rows': [('title', [{'content': 'title', 'value': "Commande par affaire", 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 0
-        }
-
-        # Load table manager
-        table_man = TableLoader(Commande.l_index, Commande.l_fields())
-
-        # App 2 table of command waiting for mandat
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_visa == 'no'])
-
-        d_control_data['tablenomandat'] = {
-            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
-            'rows': [('title', [{'content': 'title', 'value': 'Commande en attente de mandat', 'cls': 'text-center'}]),
-                     ('Table', [{'content': 'table'}])],
-            'rank': 1
-                }
-        # App 3 table of command waiting for payment
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_visa == 'yes') & (df.is_payed == 'no')])
-
-        d_control_data['tablenopayement'] = {
-            'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'visa'},
-            'rows': [('title', [{'content': 'title', 'value': 'Commandes a payer', 'cls': 'text-center'}]),
-                     ('Table', [{'content': 'table'}])],
-            'rank': 2
-                }
-
-        # App 4 table of Commande payed
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_payed == 'yes'])
-
-        d_control_data['tablepayment'] = {
-            'table': {'df': df_, 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'payement'},
-            'rows': [('title', [{'content': 'title', 'value': 'Commandes payees', 'cls': 'text-center'}]),
-                     ('Table', [{'content': 'table'}])],
-            'rank': 3
-                }
-
-        return d_control_data

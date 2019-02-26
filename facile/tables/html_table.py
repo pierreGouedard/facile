@@ -106,7 +106,7 @@ class Table(object):
             for index, row in df.iterrows():
                 with tr():
                     for name in l_cols:
-                        td(row[name], cls="table-primary")
+                        td(str(row[name]), cls="table-primary")
 
         return html_body
 

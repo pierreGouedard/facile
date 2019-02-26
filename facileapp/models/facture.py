@@ -14,7 +14,7 @@ from facileapp.models.affaire import Affaire
 
 class Facture(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'facture.csv')
+    path = os.path.join(settings.facile_db_path, 'facture.csv')
     l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0)]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
@@ -26,23 +26,25 @@ class Facture(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
-                              table_reduce=True, rank=1),
-                 StringFields(title='Type', name='type', l_choices=Facture.list('type'), table_reduce=True),
+                              table_reduce=True, rank=1, required=True),
+                 StringFields(title='Type', name='type', l_choices=Facture.list('type'), table_reduce=True,
+                              required=True),
                  StringFields(title='Objet', name='objet'),
-                 MoneyFields(title='Montant facture HT', name='montant_ht'),
-                 IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation')),
+                 MoneyFields(title='Montant facture HT', name='montant_ht', required=True),
+                 IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation'),
+                               required=True),
                  DateFields(title='Visa', name='date_visa', missing='1970-01-01'),
                  DateFields(title='Encaissement', name='date_payed', missing='1970-01-01')
                  ]
         else:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1),
-                 StringFields(title='Type', name='type', table_reduce=True),
-                 StringFields(title='Objet', name='objet'),
-                 MoneyFields(title='Montant facture HT', name='montant_ht'),
-                 IntegerFields(title='Numero de situation', name='situation'),
-                 DateFields(title='Visa', name='date_visa'),
-                 DateFields(title='Encaissement', name='date_payed')]
+                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                 StringFields(title='Type', name='type', table_reduce=True, required=True),
+                 StringFields(title='Objet', name='objet', required=True),
+                 MoneyFields(title='Montant facture HT', name='montant_ht', required=True),
+                 IntegerFields(title='Numero de situation', name='situation', required=True),
+                 DateFields(title='Visa', name='date_visa', required=True),
+                 DateFields(title='Encaissement', name='date_payed', required=True)]
 
         return l_fields
 
@@ -165,50 +167,37 @@ class Facture(BaseModel):
         d_control_data = {}
         df = Facture.load_db()
 
-        # App 1 repartition bill waiting for visa, waiting for payment, payed for current business year
-        df_statue = df[['is_visa', 'is_payed', 'montant_ht']].groupby(['is_visa', 'is_payed'])\
-            .sum()\
-            .reset_index()
-        df_statue['name'] = df_statue[['is_visa', 'is_payed']].apply(lambda row: name_from_row(row), axis=1)
-        df_statue = df_statue[['name', 'montant_ht']].rename(columns={'montant_ht': 'value'})
-
-        d_control_data['repstatue'] = {
-            'plot': {'k': 'pie', 'd': df_statue, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': 'Repartition des factures', 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 0
-                }
-
         # Load table manager
         table_man = TableLoader(Facture.l_index, Facture.l_fields())
 
-        # App 2 table of bill waiting for mandat
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_visa == 'no'])
+        # App 1 table of bill waiting for visa
+        ref_date = pd.Timestamp('1970-01-01')
+        df['date_visa'] = df.date_visa.apply(lambda x: pd.Timestamp(x))
+        df['date_payed'] = df.date_payed.apply(lambda x: pd.Timestamp(x))
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.date_visa == ref_date])
 
-        d_control_data['tablenomandat'] = {
+        d_control_data['tablenovisa'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
             'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de visa', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
-            'rank': 1
+            'rank': 0
                 }
-        # App 3 table of bill waiting for payment
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.is_visa == 'yes') & (df.is_payed == 'no')])
-
+        # App 2 table of bill waiting for payment
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.date_visa > ref_date) & (df.date_payed == ref_date)])
         d_control_data['tablenopayement'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'visa'},
             'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de paiement', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
-            'rank': 2
+            'rank': 1
                 }
 
-        # App 4 table of bill payed
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.is_payed == 'yes'])
-
+        # App 3 table of bill payed
+        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.date_payed > ref_date])
         d_control_data['tablepayment'] = {
             'table': {'df': df_, 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'payement'},
             'rows': [('title', [{'content': 'title', 'value': 'Facture encaisse', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
-            'rank': 3
+            'rank': 2
                 }
 
         return d_control_data

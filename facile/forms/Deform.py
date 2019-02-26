@@ -54,6 +54,10 @@ class Form(object):
                 pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
                 pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))
 
+                # Get files
+                for i, (k, v) in enumerate(self.request.files.items()):
+                    pstruct[k] = {'filename': v.filename, 'uid': i, 'mimetype': v.mimetype, 'fp': v}
+
                 # Generate succeed form (with values posted)
                 if validate:
                     _ = form.validate_pstruct(pstruct)
@@ -82,6 +86,7 @@ class Form(object):
 
         # Get static requirements
         d_reqts = form.get_widget_resources()
+
         l_js_links = [self.js_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['js']]
         l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
 

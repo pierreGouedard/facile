@@ -12,7 +12,7 @@ from facile.core.table_loader import TableLoader
 
 class Employe(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'employe.csv')
+    path = os.path.join(settings.facile_db_path, 'employe.csv')
     l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0),
                StringFields(title='Nom', name='nom', table_reduce=True, rank=1)]
     l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
@@ -24,17 +24,17 @@ class Employe(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='N securite social', name='securite_social'),
-             StringFields(title='Carte de sejour', name='carte_sejoure'),
-             StringFields(title='Emploie', name='emploie', table_reduce=True, rank=2),
-             StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3),
-             StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4),
-             StringFields(title='Adresse', name='adresse'),
-             StringFields(title='Ville', name='ville'),
-             StringFields(title='Code postal', name='code_postal'),
+            [StringFields(title='N securite social', name='securite_social', required=True),
+             StringFields(title='Carte de sejour', name='carte_sejoure', required=False),
+             StringFields(title='Emploie', name='emploie', table_reduce=True, rank=2, required=True),
+             StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3, required=True),
+             StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4, required=True),
+             StringFields(title='Adresse', name='adresse', required=True),
+             StringFields(title='Ville', name='ville', required=True),
+             StringFields(title='Code postal', name='code_postal', required=True),
              StringFields(title='tel', name='num_tel'),
              StringFields(title='E-mail', name='mail'),
-             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=5),
+             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=5, required=True),
              DateFields(title='date de sortie', name='date_end', missing='1970-01-01'),
              ]
         if widget:
@@ -153,30 +153,18 @@ class Employe(BaseModel):
         d_control_data = {}
         df = Employe.load_db()
 
-        # App 1 repartition qualification among employes
-        df_qual = df[['prenom', 'qualification']].groupby('qualification')\
+        # App 1 repartition categorie among employes
+        df_qual = df[['prenom', 'categorie']].groupby('categorie')\
             .count()\
             .reset_index()\
-            .rename(columns={'qualification': 'name', 'prenom': 'value'})
+            .rename(columns={'categorie': 'name', 'prenom': 'value'})
+        df_qual['hover'] = df_qual('value')
 
         d_control_data['repqual'] = {
             'plot': {'k': 'pie', 'd': df_qual, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': 'Repartition des qualifications', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': "Repartition des categories d'employe", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
-                }
-
-        df_empl = df[['prenom', 'emploie']].groupby('emploie')\
-            .count()\
-            .reset_index()\
-            .rename(columns={'emploie': 'name', 'prenom': 'value'})
-
-        # App 2 repartition emploie among employes
-        d_control_data['repempl'] = {
-            'plot': {'k': 'pie', 'd': df_empl, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': 'Repartition des emploie', 'cls': 'text-center'}]),
-                     ('figure', [{'content': 'plot'}])],
-            'rank': 1
                 }
 
         return d_control_data

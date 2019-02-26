@@ -23,8 +23,10 @@ def plot_series(df, title=None):
     else:
         x_axis_type = None
 
-    fig = plotting.figure(x_axis_type=x_axis_type, title=title, plot_width=700, plot_height=400,
-                          tools='', toolbar_location=None, responsive=True)
+    fig = plotting.figure(
+        x_axis_type=x_axis_type, title=title, plot_width=700, plot_height=400, tools='', toolbar_location=None,
+        sizing_mode='stretch_both'
+    )
 
     for column_name, s in df.iteritems():
         fig.line(list(df.index), s.values, line_width=1.4, color=colors.next(), legend=column_name)
@@ -102,18 +104,18 @@ def plot_pie(df_data, hover=False):
     df_data['end_angle'] = ((df_data['value'] / df_data.value.sum()) * 2 * pi).cumsum()
     df_data['color'] = [colors.next() for _ in range(len(df_data))]
 
-    bokeh_plot = plotting.figure(plot_width=700, plot_height=400, tools='', toolbar_location=None, responsive=True)
-    for i, row in df_data.iterrows():
-        bokeh_plot.annular_wedge(x=[0], y=[0], inner_radius=0.3, outer_radius=0.5, start_angle=[row['start_angle']],
-                                 end_angle=[row['end_angle']], color=row['color'], alpha=0.6, legend=[row['name']])
-
     if hover:
-        bokeh_plot.annular_wedge(x=[0] * len(df_data), y=[0] * len(df_data), inner_radius=0.3, outer_radius=0.5,
-                                 start_angle=df_data['start_angle'], end_angle=df_data['end_angle'],
-                                 color=df_data['color'], alpha=0.0,  source=df_data)
+        bokeh_plot = plotting.figure(
+            plot_width=700, plot_height=400, tools='hover', toolbar_location=None, sizing_mode='scale_width',
+            tooltips="@name: @hover"
+        )
+    else:
+        bokeh_plot = plotting.figure(
+            plot_width=700, plot_height=400, tools='', toolbar_location=None, sizing_mode='scale_width',
+        )
 
-        hover = HoverTool(tooltips="@name: @value")
-        bokeh_plot.add_tools(hover)
+    bokeh_plot.annular_wedge(x=0, y=1, inner_radius=0.3, outer_radius=0.5, start_angle='start_angle',
+                             end_angle='end_angle', alpha=0.6, fill_color='color', legend='name', source=df_data)
 
     # deactivate axis grid and js tools
     bokeh_plot.axis.axis_label = None
@@ -122,27 +124,14 @@ def plot_pie(df_data, hover=False):
 
     return bokeh_plot
 
-# Deprecated , TODO: update using nokeh.plotting
-# def bar_plot(df_data, val_col='value'):
-#     bar = Bar(df_data,
-#               values=val_col,
-#               label=cat(columns='label', sort=False),
-#               tooltips=[(val_col, '@height')],
-#               responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None, legend=None
-#               )
-#
-#     return bar
-#
-#
-# def stack_bar_plot(df_data, cat_cols):
-#
-#     bar = Bar(df_data,
-#               values=blend(*cat_cols, labels_name='cat'),
-#               label=cat(columns='label', sort=False),
-#               stack=cat(columns='cat', sort=False),
-#               color=color(columns='cat', palette=[colors.next() for _ in cat_cols], sort=False),
-#               tooltips=[('cat', '@cat'), ('value', '@height')],
-#               responsive=True, plot_width=700, plot_height=400, tools='', toolbar_location=None
-#               )
-#
-#     return bar
+
+def bar_plot(df_data, val_col='value', hover_col='hover'):
+
+    bokeh_plot = plotting.figure(
+        plot_width=700, plot_height=400, tools='hover', toolbar_location=None, sizing_mode='scale_width',
+        tooltips=[(val_col, '@{}'.format(hover_col))], x_range=df_data['label']
+    )
+
+    bokeh_plot.vbar(x='label', top=val_col, width=0.9, source=df_data, line_color="white")
+
+    return bokeh_plot

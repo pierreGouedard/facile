@@ -15,7 +15,7 @@ from facileapp.models.client import Client
 
 class Contact(BaseModel):
 
-    path = os.path.join(settings.facile_project_path, 'contact.csv')
+    path = os.path.join(settings.facile_db_path, 'contact.csv')
     l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                             rank=0)]
     l_subindex = [1, 2]
@@ -28,10 +28,11 @@ class Contact(BaseModel):
         if widget:
             l_fields = \
                 [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
-                              rank=1, multiple=True),
+                              rank=1, multiple=True, required=True),
                  StringFields(title='Designation client / fournisseur', name='designation',
-                              l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2),
-                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
+                              l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2,
+                              required=True),
+                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3, required=True),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='CS/BP', name='cs_bp'),
@@ -41,9 +42,11 @@ class Contact(BaseModel):
                  StringFields(title='E-mail', name='mail')]
         else:
             l_fields = \
-                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1, multiple=True),
-                 StringFields(title='Designation client / fournisseur', name='designation', table_reduce=True, rank=2),
-                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3),
+                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1, multiple=True,
+                              required=True),
+                 StringFields(title='Designation client / fournisseur', name='designation', table_reduce=True, rank=2,
+                              required=True),
+                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3, required=True),
                  StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title='Adresse', name='adresse'),
                  StringFields(title='CS/BP', name='cs_bp'),
