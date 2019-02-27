@@ -1,3 +1,2 @@
 DEBUG = True
-SECRET_KEY = 'motherfuckingflaskthatdoesnothavefuckingsessionsattributeinrequest'
-
+SECRET_KEY = 'motherfuckingflaskerpforcasoe'

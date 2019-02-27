@@ -3,44 +3,67 @@ multitask ERP
 
 Tables:
 
-- Personel:
-    - Desc: Rajouter les informations du personel de la boite, suprimer / editer le profil d'un membre du personel
-    - Informations requises: Nom Prenom, poste, date d'entré dans l'entreprise, date de sortie de l'entreprise,
-                             tarif par heure
-    - Nom champ:
+- employe:
+    - Desc: Rajouter les informations les employees de l'entreprise, suprimer / editer le profil d'un employe
+    - Primary key: (prenom, nom)
+    - Other required fields: categorie, securite_social, type_contrat, emploie, date_start, ville, adresse, code_postal, creation_date, maj_date
+    - Other facultative fields: carte_sejoure, date_end, num_tel, mail
 
-- Fournisseur:
-    - Desc: Rajouter les informations sur les fournisseur de la boite, suprimer / editer le profil d'un fournisseur
-    - Informations requises: id fournisseur, raison social, adresse livraison, adresse facturation, contact financier,
-                             contact operationnel, date de création du fournisseur
-    - Nom champ:
+- fournisseur:
+    - Desc: Rajouter les informations sur les fournisseurs de l'entreprise, suprimer / editer le profil d'un fournisseur
+    - Primary key: raison_sociale
+    - Other required fields: adresse, ville, code_postal, maj_date, creation_date
+    - Other facultative fields: cs_bp, num_tel, mail
 
-- Client:
+- client:
     - Desc: Rajouter les informations sur les clients de la boite, suprimer / editer le profil d'un client
-    - Informations requises: id client, raison social, adresse livraison, adresse facturation, contact financier,
-                             contact operationnel, date de crétation du client, site de chantier
-    - Nom champ:
+    - Primary key: designation
+    - Other required fields: raison_social, ville, adresse, code_postal, creation_date, maj_date
+    - Other facultative fields: cs_bp, num_tel, mail
 
-- Affaire:
-    - Desc: Ouvrir une nouvelle affaire et la rajouté a la base de donnée des affaires, suprimer / editer une affaire
-    - Informations requises: Numero d'affaire, indice de l'affaire, chargé d'affaire, numero de devis associé (fac)
+- contact:
+    - Desc: Rajouter un contact qualifié en dehors de l'entreprise, suprimer / editer le profil d'un contact
+    - Primary key: contact_id
+    - Secondary key: (designation, contact)
+    - Other required fields: type, desc, maj_date, creation_date
+    - Other facultative fields: cs_bp, adresse, ville, code_postal, num_tel, mail
 
-- Devis:
+- chantier:
+    - Desc: Rajouter un chantier pour un client donné, suprimer / editer le profil d'un contact
+    - Primary key: chantier_id
+    - Secondary key: (designation_client, nom)
+    - Other required fields: , designation, desc, maj_date, creation_date
+    - Other facultative fields: cs_bp, adresse, ville, code_postal, num_tel, mail
+
+- affaire:
+    - Desc: Ouvrir une nouvelle affaire et l'assigner a un devis existant, suprimer / editer une affaire
+    - Primary key: (affaire_num, affaire_ind)
+    - Other required fields: devis_id, responsable, chantier_id, contact_chantier_client, contact_facturation_client, contact_chantier_interne, fae, maj_date, creation_date
+    - Other facultative fields: 
+
+- devis:
     - Desc: Ouvrir un nouveau devis, suprimer / editer un devis
-    - Informations requises: Numero de devis, nombre d'heures, Montant achat
-    - Nom champ:
+    - Primary key: devis_id
+    - Other required fields: designation_client, contact_id, responsable, object, montant_achat, coef_achat, base_prix, date_start, date_end, creation_date, maj_date
 
-- Commande:
+    - Other facultative fields: heure_autre, heure_prod, prix_heure_autre, prix_heure_prod
+- commande:
     - Ouvrir une nouvelle demande d'achat rattaché a une affaire, suprimer / editer une demande d'achat
-    - Informations requises: Numero de comande, Numréro d'affaire associé, Montant achat
-    - Nom champ:
+    - Primary key: (prenom, nom)
+    - Other required fields: categorie, securite_social, type_contrat, emploie, date_start, ville, adresse, code_postal, num_tel, mail, creation_date, maj_date
+    - Other facultative fields: carte_sejoure, date_end
 
-- Heure:
+- heure:
     - Ouvrir une nouvelle demande d'heure de travail, suprimer / editer une demande d'heure de travail
-    - Informations requises: Numero de comande, Numréro d'affaire associé, nombre d'heure imputé, montant prévue (via
-                             tarif heure de la table Personel)
-    - Nom champ:
+    - Primary key: (prenom, nom)
+    - Other required fields: categorie, securite_social, type_contrat, emploie, date_start, ville, adresse, code_postal, num_tel, mail, creation_date, maj_date
+    - Other facultative fields: carte_sejoure, date_end
 
+- facture:
+    - Ouvrir une nouvelle demande d'heure de travail, suprimer / editer une demande d'heure de travail
+    - Primary key: (prenom, nom)
+    - Other required fields: categorie, securite_social, type_contrat, emploie, date_start, ville, adresse, code_postal, num_tel, mail, creation_date, maj_date
+    - Other facultative fields: carte_sejoure, date_end
 
 Organisation:
 
