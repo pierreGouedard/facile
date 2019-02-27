@@ -1,2 +1,2 @@
 DEBUG = True
-SECRET_KEY = 'motherfuckingflaskerpforcasoe'
+SECRET_KEY = 'changethismotherfuckingsecretkey'

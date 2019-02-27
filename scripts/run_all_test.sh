@@ -1,5 +1,4 @@
 #!/bin/bash
-
 python -m unittest tests.models.affaire.TestAffaire.test_basic
 python -m unittest tests.models.affaire.TestAffaire.test_request
 python -m unittest tests.models.base_prix.TestBasePrix.test_request
