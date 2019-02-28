@@ -1,5 +1,5 @@
 # Global import
-from facileapp import app
+from facileapp import application
 from flask import render_template
 from flask import Markup, session, redirect, url_for, request, send_file, jsonify
 from jinja2 import Template
@@ -14,7 +14,7 @@ from facile.layout import boostrap
 from settings import deform_template_path
 
 
-@app.route('/')
+@application.route('/')
 def home():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -22,7 +22,7 @@ def home():
     return render_template("home.html")
 
 
-@app.route('/restricted')
+@application.route('/restricted')
 def restricted():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -30,7 +30,7 @@ def restricted():
     return render_template("restricted.html")
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@application.route('/login', methods=['GET', 'POST'])
 def log_in():
     # Create page global layout
     custom_template = Template(render_template('login.html', custom_html=Markup(boostrap.get_login_layout())))
@@ -54,7 +54,7 @@ def log_in():
     return html
 
 
-@app.route('/example', methods=['GET', 'POST'])
+@application.route('/example', methods=['GET', 'POST'])
 def test_example():
     # Create page global layout
     custom_template = Template(render_template('example.html', form=Markup(boostrap.get_example_layout())))
@@ -73,7 +73,7 @@ def test_example():
     return html
 
 
-@app.route('/logout', methods=['GET', 'POST'])
+@application.route('/logout', methods=['GET', 'POST'])
 def log_out():
    # Remove the username from the session if it is there
    session.pop('username', None)
@@ -82,7 +82,7 @@ def log_out():
    return redirect(url_for('home'))
 
 
-@app.route('/forms', methods=['GET', 'POST'])
+@application.route('/forms', methods=['GET', 'POST'])
 def form():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -151,7 +151,7 @@ def form():
     return html
 
 
-@app.route('/documents', methods=['GET', 'POST'])
+@application.route('/documents', methods=['GET', 'POST'])
 def document():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -185,7 +185,7 @@ def document():
     return html
 
 
-@app.route('/exports', methods=['GET', 'POST'])
+@application.route('/exports', methods=['GET', 'POST'])
 def export():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -226,7 +226,7 @@ def export():
     return html
 
 
-@app.route('/controls', methods=['GET'])
+@application.route('/controls', methods=['GET'])
 def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))
@@ -248,12 +248,12 @@ def control():
     return html
 
 
-@app.route('/url_download_form', methods=['POST'])
+@application.route('/url_download_form', methods=['POST'])
 def url_download_form():
     return jsonify({'url': '/send_file_form', 'data': '?' + '&'.join(['='.join(t) for t in request.form.items()])})
 
 
-@app.route('/send_file_form', methods=['GET'])
+@application.route('/send_file_form', methods=['GET'])
 def send_file_form():
     # Create document from args
     path, tmpdir = process_document_form(request.args['table_key'], request.args)
