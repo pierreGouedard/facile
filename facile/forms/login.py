@@ -14,6 +14,7 @@ class LoginForm(Form):
     def __init__(self, request, template_deform_path):
         Form.__init__(self, request, template_deform_path, self.LoginInputsSchema())
         self.mapping_name = {'username': None, 'password': None}
+        print 'the tempate path is {}'.format(template_deform_path)
 
     # validate_ method method should be re-defined in class that inherit from Form
     def validate_(self, pstruct):
