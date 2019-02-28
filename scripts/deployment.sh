@@ -14,6 +14,13 @@ echo "virtualenv created and activated" || echo "virtualenv created and activate
 # Install requirements
 pip install -qr requirements.txt
 
-# Install Elastic Beanstalk Environment
-pip install -q awsebcli && echo "fvirt" > .ebignore && echo n | eb init -p python-2.7 facile-erp-0001 --region eu-west-3a
+# Install and init Elastic Beanstalk Environment
+pip install -q awsebcli && echo "fvirt" > .ebignore &&
+eb init -k erepie -p python-2.7 --region eu-west-3 facile-erp-0001 && echo "Beanstalk environment initialized" ||
+echo "Beanstalk environment init failed"
+
+# Create application
+
+
+
 
