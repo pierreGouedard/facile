@@ -1,6 +1,6 @@
 import os
 
-facile_home = os.path.join(os.path.expanduser("~"), 'facile')
+facile_home = os.path.dirname(os.path.realpath(__file__))
 facile_data_path = os.path.join(facile_home, 'DATA/')
 facile_db_path = os.path.join(facile_data_path, 'DB')
 facile_commande_path = os.path.join(facile_db_path, 'LST_COM')
