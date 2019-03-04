@@ -1,14 +1,12 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
 from facile.core.fields import StringFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, engine
 from facileapp.models.devis import Devis
 from facileapp.models.employe import Employe
 from facileapp.models.chantier import Chantier
@@ -17,11 +15,11 @@ from facileapp.models.contact import Contact
 
 class Affaire(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'affaire.csv')
+    name = 'affaire'
     l_index = [StringFields(title="Numero d'affaire", name='affaire_num', widget=HiddenWidget(), table_reduce=True,
-                            rank=0),
+                            rank=0, primary_key=True),
                StringFields(title="Indice de l'affaire", name='affaire_ind', widget=HiddenWidget(), table_reduce=True,
-                            rank=1)
+                            rank=1, primary_key=True)
                ]
     l_documents = [('ftravaux', 'Feuille de travaux')]
     l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions) + \
@@ -63,6 +61,12 @@ class Affaire(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Affaire', name=Affaire.name, dbcols=[f.dbcol() for f in Affaire.l_index + Affaire.l_fields()]
+        )
+
+    @staticmethod
     def list(id_, **kwlist):
         if id_ == 'responsable':
             return zip(Employe.get_employes(**{'categorie': 'charge affaire'}),
@@ -82,27 +86,28 @@ class Affaire(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Affaire.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('affaire', d_index)
 
-        return Affaire(d_index, s.loc[[f.name for f in Affaire.l_fields()]].to_dict(), path=path)
+        return Affaire(d_index, s.loc[[f.name for f in Affaire.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Affaire.path
+    def load_db(**kwargs):
+
+        # Get fields
         l_fields = Affaire.l_index + Affaire.l_fields() + Affaire.l_hfields
 
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+        # Load table
+        df = BaseModel.load_db(table_name='affaire', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_affaire(path=None, sep='/'):
-        df = Affaire.load_db(path)
+    def get_affaire(sep='/'):
+
+        # TODO write the fucking sql request
+        df = pd.read_sql_table('affaire', con=engine, columns=['affaire_num', 'affaire_ind'])
 
         if df.empty:
             return []
@@ -112,36 +117,34 @@ class Affaire(BaseModel):
             .unique()
 
     def add(self):
-        df = self.load_db(self.path)
+        # Get list of affaire
+        l_affaires = map(lambda x: x.split('/'), Affaire.get_affaire())
 
         # Save current contact id
-        affaire_num_ = self.affaire_num
-        affaire_ind_ = self.affaire_ind
-        code_year = str(pd.Timestamp.now().year)[-2:]
+        affaire_num_, affaire_ind_, code_year = self.affaire_num, self.affaire_ind, str(pd.Timestamp.now().year)[-2:]
 
         if self.affaire_num == '' or self.affaire_num is None:
 
-            if 'AF{}0000'.format(code_year) in df.affaire_num.values:
+            if 'AF{}0000'.format(code_year) in [t[0] for t in l_affaires]:
                 self.affaire_num = 'AF{}'.format(code_year) + '{0:0=4d}'.format(
-                    df.affaire_num.apply(lambda x: int(x.replace('AF{}'.format(code_year), ''))).max() + 1
+                    max(l_affaires, key=lambda t: int(t[0].replace('AF{}'.format(code_year), ''))) + 1
                 )
             else:
                 self.affaire_num = 'AF{}0000'.format(code_year)
 
         if self.affaire_ind == '' or self.affaire_ind is None:
-            df_sub = df.loc[df.affaire_num == self.affaire_num]
-            if not df_sub.empty:
-                self.affaire_ind = '{0:0=3d}'.format(int(df_sub.affaire_ind.apply(lambda x: int(x)).max() + 1))
+            l_affaires_sub = [t for t in l_affaires if t[0] == self.affaire_num]
+            if len(l_affaires_sub) > 0:
+                self.affaire_ind = '{0:0=3d}'.format(max([int(t[1]) for t in l_affaires_sub] + 1))
             else:
                 self.affaire_ind = '{0:0=3d}'.format(1)
 
-        # Try to add and reset conatct id if failed
+        # Try to add and reset contact id if failed
         try:
             super(Affaire, self).add()
-        except ValueError, e:
-            self.affaire_num = affaire_num_
-            self.affaire_ind = affaire_ind_
 
+        except ValueError, e:
+            self.affaire_num, self.affaire_ind = affaire_num_, affaire_ind_
             raise ValueError(e.message)
 
         return self

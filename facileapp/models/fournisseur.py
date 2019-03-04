@@ -1,9 +1,7 @@
 # Global imports
-import os
 import pandas as pd
 
 # Local import
-import settings
 from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
@@ -12,9 +10,10 @@ from facile.core.base_model import BaseModel
 
 class Fournisseur(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'fournisseur.csv')
+    name = 'fournisseur'
 
-    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True)]
+    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True,
+                            primary_key=True)]
     l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -32,31 +31,35 @@ class Fournisseur(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Fournisseur', name=Fournisseur.name, dbcols=[f.dbcol() for f in Fournisseur.l_index + Fournisseur.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Fournisseur.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('fournisseur', d_index)
 
-        return Fournisseur(d_index, s.loc[[f.name for f in Fournisseur.l_fields()]].to_dict(), path=path)
+        return Fournisseur(d_index, s.loc[[f.name for f in Fournisseur.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Fournisseur.path
+    def load_db(**kwargs):
 
         l_fields = Fournisseur.l_index + Fournisseur.l_fields() + Fournisseur.l_hfields
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+        # Load table
+        df = BaseModel.load_db(table_name='fournisseur', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_fournisseurs(path=None):
-        return Fournisseur.load_db(path)['raison_social'].unique()
+    def get_fournisseurs():
+        return Fournisseur.load_db(columns=['raison_social']).unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

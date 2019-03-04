@@ -15,7 +15,7 @@ from facileapp.models.heure import Heure
 from facileapp.models.views.feuille_travaux import FeuilleTravaux
 from facileapp.models.views.facturation import Facturation
 from facileapp.models.views.achat import Achat
-from facile.utils.drivers.comon import FileDriver
+from facile.utils.drivers.files import FileDriver
 from facile.forms import mutlistep, document
 from settings import facile_driver_tmpdir, facile_commande_path
 
@@ -122,8 +122,6 @@ def process_form(table_key, d_data, action):
         statue = generic_process_form(l_index, l_fields, Devis, action, d_data, table_key=table_key)
 
     elif table_key == 'commande':
-        import IPython
-        IPython.embed()
         filename = ''.join(['{}', mimetypes.guess_extension(d_data['details']['mimetype'])])
         d_files = {FileDriver('', '').join(facile_commande_path, filename): d_data['details']['fp']}
 

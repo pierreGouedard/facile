@@ -31,7 +31,7 @@ class TestEmploye(unittest.TestCase):
         self.d_data = {
             'securite_social': '00 000 000 000 000 000',
             'carte_sejoure': 'XXXXXXXX',
-            'emploie': 'charge affaire',
+            'emploi': 'charge affaire',
             'adresse': '7 avenue de la republique',
             'ville': 'Paris',
             'code_postal': '75012',

@@ -1,22 +1,21 @@
 # Global imports
-import os
 import pandas as pd
-from deform.widget import RadioChoiceWidget, HiddenWidget
+from deform.widget import HiddenWidget
 
 # Local import
-import settings
-from facile.core.fields import StringFields, IntegerFields
+from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, engine
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
 
 
 class Chantier(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'chantier.csv')
-    l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0)]
+    name = 'chantier'
+    l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0,
+                            primary_key=True)]
     l_subindex = [0, 1]
     l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -46,51 +45,58 @@ class Chantier(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Chantier', name=Chantier.name, dbcols=[f.dbcol() for f in Chantier.l_index + Chantier.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         if kw == 'client':
-            return zip(Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique())
+            return zip(
+                Client.load_db(columns=['designation']).unique(), Client.load_db(columns=['designation']).unique()
+            )
 
         else:
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Chantier.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('chantier', d_index)
 
-        return Chantier(d_index, s.loc[[f.name for f in Chantier.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def from_subindex_(d_subindex, path=None):
-        df = Chantier.load_db(path)
-        d_index = BaseModel.from_subindex(d_subindex, [f.name for f in Chantier.l_index], df)
-        return Chantier.from_index_(d_index, path=path)
+        return Chantier(d_index, s.loc[[f.name for f in Chantier.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Chantier.path
+    def from_subindex_(d_subindex):
+        d_index = BaseModel.from_subindex('chantier', d_subindex, [f.name for f in Chantier.l_index])
+        return Chantier.from_index_(d_index)
+
+    @staticmethod
+    def load_db(**kwargs):
+        # Get fields
         l_fields = Chantier.l_index + Chantier.l_fields() + Chantier.l_hfields
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+        # Load table
+        df = BaseModel.load_db(table_name='chantier', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_chantier(path=None, return_id=False, **kwargs):
+    def get_chantier(return_id=False, **kwargs):
 
-        # Load chantier database and apply filter if any in kwargs
-        df = Chantier.load_db(path)
+        # TODO write the fucking sql request using kwargs mother fucker
+        df = pd.read_sql(sql='chantier', con=engine)
 
         if df.empty:
             return []
 
         if len(set(kwargs.keys()).intersection(df.columns)) > 0:
-            df = df.loc[
-                df[[c for c in df.columns if c in kwargs.keys()]]
-                .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
-            ]
+            print 'todo'
+            # df = df.loc[
+            #     df[[c for c in df.columns if c in kwargs.keys()]]
+            #     .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
+            # ]
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \
@@ -106,14 +112,13 @@ class Chantier(BaseModel):
         return l_chantier
 
     def add(self):
-
-        df = self.load_db(self.path)
+        l_chantiers = Chantier.get_chantier(return_id=True)
 
         # Save current contact id
         chantier_id_ = self.chantier_id
 
         if self.chantier_id is None or self.chantier_id == '':
-            self.chantier_id = 'CH{0:0=4d}'.format(df.chantier_id.apply(lambda x: int(x.replace('CH', ''))).max() + 1)
+            self.chantier_id = 'CH{0:0=4d}'.format(max(l_chantiers, key=lambda t: int(t[0].replace('CH', ''))) + 1)
 
         # Try to add and reset conatct id if failed
         try:

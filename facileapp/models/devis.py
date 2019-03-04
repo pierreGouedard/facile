@@ -1,12 +1,10 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
 from facile.core.fields import StringFields, IntegerFields, FloatFields, DateFields, MoneyFields
-from facile.utils.drivers.comon import FileDriver
+from facile.utils.drivers.files import FileDriver
 from facile.core.document_generator import WordDocument
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
@@ -18,10 +16,10 @@ from facileapp.models.employe import Employe
 
 class Devis(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'devis.csv')
+    name = 'devis'
 
     l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
-                            rank=0)]
+                            rank=0, primary_key=True)]
     l_documents = [('devis', 'Devis')]
     l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -67,6 +65,12 @@ class Devis(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Devis', name=Devis.name, dbcols=[f.dbcol() for f in Devis.l_index + Devis.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
 
         d_month = {
@@ -89,35 +93,35 @@ class Devis(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Devis.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('devis', d_index)
 
-        return Devis(d_index, s.loc[[f.name for f in Devis.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Devis.path
-
-        return pd.read_csv(path, dtype={f.name: f.type for f in Devis.l_index + Devis.l_fields() + Devis.l_hfields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in Devis.l_index + Devis.l_fields() + Devis.l_hfields})
+        return Devis(d_index, s.loc[[f.name for f in Devis.l_fields()]].to_dict())
 
     @staticmethod
-    def get_devis(path=None):
-        return Devis.load_db(path)['devis_id'].unique()
+    def load_db(**kwargs):
+
+        l_fields = Devis.l_index + Devis.l_fields() + Devis.l_hfields
+
+        # Load table
+        df = BaseModel.load_db(table_name='contact', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
+
+    @staticmethod
+    def get_devis():
+        return Devis.load_db(columns=['devis_id']).unique()
 
     def add(self):
-        df = self.load_db(self.path)
+
+        l_devis = Devis.get_devis()
 
         # Save current contact id
         devis_id_ = self.devis_id
 
         if self.devis_id == '' or self.devis_id is None:
-            self.devis_id = 'DV{0:0=4d}'.format(df.devis_id.apply(lambda x: int(x.replace('DV', ''))).max() + 1)
+            self.devis_id = 'DV{0:0=4d}'.format(max(l_devis, key=lambda x: int(x.replace('DV', ''))) + 1)
 
         self.price = Devis.compute_price(
             {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),

@@ -1,9 +1,7 @@
 # Global imports
-import os
 import pandas as pd
 
 # Local import
-import settings
 from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
@@ -12,8 +10,8 @@ from facile.core.base_model import BaseModel
 
 class Client(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'client.csv')
-    l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0)]
+    name = 'client'
+    l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -32,31 +30,33 @@ class Client(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Client', name=Client.name, dbcols=[f.dbcol() for f in Client.l_index + Client.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Client.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
-
-        return Client(d_index, s.loc[[f.name for f in Client.l_fields()]].to_dict(), path=path)
+        s = BaseModel.from_index('chantier', d_index)
+        return Client(d_index, s.loc[[f.name for f in Client.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Client.path
-
+    def load_db(**kwargs):
         l_fields = Client.l_index + Client.l_fields() + Client.l_hfields
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+        # Load table
+        df = BaseModel.load_db(table_name='client', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_clients(path=None):
-        return Client.load_db(path)['designation'].unique()
+    def get_clients():
+        return Client.load_db(columns=['designation']).unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

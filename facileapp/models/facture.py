@@ -14,9 +14,9 @@ from facileapp.models.affaire import Affaire
 
 class Facture(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'facture.csv')
+    name = 'facture'
     l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
-                            rank=0)]
+                            rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -49,6 +49,12 @@ class Facture(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Facture', name=Facture.name, dbcols=[f.dbcol() for f in Facture.l_index + Facture.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         if kw == 'affaire':
             return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
@@ -60,41 +66,41 @@ class Facture(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Facture.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('facture', d_index)
 
-        return Facture(d_index, s.loc[[f.name for f in Facture.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Facture.path
-
-        return pd.read_csv(path, dtype={f.name: f.type for f in Facture.l_index + Facture.l_fields() + Facture.l_hfields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in Facture.l_index + Facture.l_fields() + Facture.l_hfields})
+        return Facture(d_index, s.loc[[f.name for f in Facture.l_fields()]].to_dict())
 
     @staticmethod
-    def get_facture(path=None):
-        return Facture.load_db(path)['facture_id'].unique()
+    def load_db(**kwargs):
+        l_fields = Facture.l_index + Facture.l_fields() + Facture.l_hfields
+
+        # Load table
+        df = BaseModel.load_db(table_name='contact', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
+
+    @staticmethod
+    def get_facture():
+        return Facture.load_db(columns=['facture_id']).unique()
 
     def add(self):
-        df = self.load_db(self.path)
+        l_factures = list(Facture.load_db(columns=['facture_id', 'type']).values)
 
         # Save current facture id
         facture_id_ = self.facture_id
 
         if self.facture_id == '' or self.facture_id is None:
-            df = df.loc[df.type == self.type]
 
             if self.type == 'facture':
-                self.facture_id = 'FC{0:0=4d}'.format(df.facture_id.apply(lambda x: int(x.replace('FC', ''))).max() + 1)
+                l_factures_sub = [t for t in l_factures if t[1] == 'facture']
+                self.facture_id = 'FC{0:0=4d}'.format(max(l_factures_sub, key=lambda x: int(x.replace('FC', ''))) + 1)
 
             else:
-                self.facture_id = 'AV{0:0=4d}'.format(df.facture_id.apply(lambda x: int(x.replace('AV', ''))).max() + 1)
+                l_factures_sub = [t for t in l_factures if t[1] == 'facture']
+                self.facture_id = 'AV{0:0=4d}'.format(max(l_factures_sub, key=lambda x: int(x.replace('AV', ''))) + 1)
+
                 if self.montant_ht > 0:
                     self.montant_ht *= -1
 

@@ -1,12 +1,18 @@
 # Global imports
 import pandas as pd
-import os
 import numpy as np
 import string
 import random
+from sqlalchemy import create_engine, insert, delete, update
+from sqlalchemy.exc import IntegrityError
+from facile.utils.drivers import rdbms
+
 
 # Local import
-from settings import facile_test_path
+from facileapp import facile_base
+from config import SQL_DATABASE_URI as db_uri
+
+driver = rdbms.RdbmsDriver(facile_base, db_uri)
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -14,13 +20,13 @@ __maintainer__ = 'Pierre Gouedard'
 class Synthesizer():
 
     def __init__(self):
-        self.path = os.path.join(facile_test_path)
 
         self.n_client = 5
         self.n_fournisseur = 4
         self.n_ouvrier = 7
         self.n_charge = 3
         self.n_admin = 2
+
         self.n_contact_client_chantier = 5
         self.n_contact_client_commandes = 5
         self.n_contact_client_admin = 5
@@ -48,7 +54,15 @@ class Synthesizer():
         self.d_contacts = {}
 
     def save_database(self, df, name):
-        df.to_csv(os.path.join(self.path, name), index=None)
+        driver.insert(df, name)
+
+    def Build_user_table_table(self):
+        df_users = pd.DataFrame.from_dict(
+            {0: {'username': 'admin', 'password': '12345678', 'rights': 'ALL'},
+             1: {'username': 'standarduser', 'password': '1234', 'rights': 'ALL'}}, orient='index'
+        )
+
+        self.save_database(df_users, 'users')
 
     def Build_employe_table(self):
         np.random.seed(1234)
@@ -59,7 +73,7 @@ class Synthesizer():
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': ''.join([random.choice(string.ascii_letters) for _ in range(10)]),
-                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'emploi': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
                 'categorie': 'chantier',
                 'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),
                 'adresse': self.adresse(),
@@ -80,7 +94,7 @@ class Synthesizer():
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': '',
-                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'emploi': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
                 'categorie': np.random.choice(['charge affaire', 'charge etude']),
                 'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),
                 'adresse': self.adresse(),
@@ -101,7 +115,7 @@ class Synthesizer():
                 'nom': 'num {}'.format(i),
                 'securite_social': str(np.random.randint(1e6, 9e6)),
                 'carte_sejoure': '',
-                'emploie': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
+                'emploi': np.random.choice(['emploie 1', 'emploie 2', 'emploie 3']),
                 'categorie': 'administration',
                 'type_contrat': np.random.choice(['CDD', 'CDI', 'Stagiaire']),                'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
@@ -120,7 +134,7 @@ class Synthesizer():
             {k: v for k, v in d_ouvrier.items() + d_charge.items() + d_admin.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_employe, 'employe.csv')
+        self.save_database(df_employe, 'employe')
 
     def Build_client_table(self):
         np.random.seed(1234)
@@ -143,7 +157,7 @@ class Synthesizer():
             {k: v for k, v in d_client.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_client, 'client.csv')
+        self.save_database(df_client, 'client')
 
     def Build_fournisseur_table(self):
         np.random.seed(1234)
@@ -166,7 +180,7 @@ class Synthesizer():
             {k: v for k, v in d_fournisseur.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_fournisseur, 'fournisseur.csv')
+        self.save_database(df_fournisseur, 'fournisseur')
 
     def Build_contact_table(self):
         np.random.seed(1234)
@@ -255,7 +269,7 @@ class Synthesizer():
              d_contact_client_admin.items() + d_contact_fournisseur.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_contact, 'contact.csv')
+        self.save_database(df_contact, 'contact')
 
     def Build_chantier_table(self):
         np.random.seed(1234)
@@ -277,7 +291,7 @@ class Synthesizer():
             {k: v for k, v in d_chantier.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_chantier, 'chantier.csv')
+        self.save_database(df_chantier, 'chantier')
 
     def Build_devis_table(self, return_dict_affaire=False):
         np.random.seed(1234)
@@ -345,7 +359,7 @@ class Synthesizer():
             {k: v for k, v in d_devis.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_devis, 'devis.csv')
+        self.save_database(df_devis, 'devis')
 
     def Build_commande_table(self, return_df=False):
         np.random.seed(1234)
@@ -377,7 +391,7 @@ class Synthesizer():
         if return_df:
             return df_commande
 
-        self.save_database(df_commande, 'commande.csv')
+        self.save_database(df_commande, 'commande')
 
     def Build_heure_table(self, return_df=False):
         np.random.seed(1234)
@@ -399,7 +413,7 @@ class Synthesizer():
                 'heure_id': len(d_heure_ouvrier) + i,
                 'affaire_id': affaire,
                 'semaine': np.random.choice(self.l_semaine),
-                'employe': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+                'name': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
                 'heure_autre': np.random.randint(20, 35),
                 'heure_prod': 0.,
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
@@ -414,7 +428,7 @@ class Synthesizer():
         if return_df:
             return df_heures
 
-        self.save_database(df_heures, 'heure.csv')
+        self.save_database(df_heures, 'heure')
 
     def Build_facture_table(self, return_df=False):
         np.random.seed(1234)
@@ -465,7 +479,7 @@ class Synthesizer():
         if return_df:
             return df_facture
 
-        self.save_database(df_facture, 'facture.csv')
+        self.save_database(df_facture, 'facture')
 
     def Build_affaire_table(self):
         d_affaire = {i: {
@@ -486,7 +500,7 @@ class Synthesizer():
             {k: v for k, v in d_affaire.items()}, orient='index'
         ).reset_index(drop=True)
 
-        self.save_database(df_affaire, 'affaire.csv')
+        self.save_database(df_affaire, 'affaire')
 
 
 class Adresse:
@@ -530,9 +544,11 @@ class Service:
         else:
             return self.service[n][0]
 
+
 class CS:
     def __call__(self, *args, **kwargs):
         return 'CS{}'.format(''.join(map(str, np.random.randint(0, 10, 5))))
+
 
 class Name:
     name = ('name_{}_surname_{}', 'name_{} surname_{}')
@@ -549,6 +565,7 @@ class Name:
 
 if __name__ == '__main__':
     synt = Synthesizer()
+    synt.Build_user_table_table()
     synt.Build_employe_table()
     synt.Build_client_table()
     synt.Build_fournisseur_table()
@@ -559,4 +576,7 @@ if __name__ == '__main__':
     synt.Build_heure_table()
     synt.Build_facture_table()
     synt.Build_affaire_table()
+    import IPython
+    IPython.embed()
+
 

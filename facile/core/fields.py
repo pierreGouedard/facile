@@ -4,12 +4,15 @@ from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, 
 from deform import FileData
 from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, MoneyInputWidget, HiddenWidget, \
     TextInputWidget, FileUploadWidget
+from sqlalchemy import Column as Colsql, Integer as Intsql, String as Strsql, Float as Fltsql, Date as Datesql, \
+    DateTime as DateTimesql
+
 import copy
 
 
 class StringFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, l_choices=None, multiple=False, desc=None,
-                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
         # Form display
         self.title = title
@@ -21,6 +24,9 @@ class StringFields(object):
         self.missing_msg = missing_msg
         self.multiple = multiple
         self.mapinit = None if not self.multiple else []
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Strsql(250), primary_key=primary_key))
 
         # Table display
         self.table_reduce, self.rank = table_reduce, rank
@@ -57,10 +63,13 @@ class StringFields(object):
     def hidden_mode(self):
         return StringFields(self.title, self.name, self.round, widget=HiddenWidget())
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class IntegerFields(object):
     def __init__(self, title, name, round=1, missing=-1, widget=None, l_choices=None, desc=None,
-                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
         # Form display & param
         self.title = title
@@ -71,6 +80,9 @@ class IntegerFields(object):
         self.required = required
         self.missing_msg = missing_msg
         self.mapinit = None
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Intsql, primary_key=primary_key))
 
         # Table display & param
         self.table_reduce, self.rank, = table_reduce, rank
@@ -99,10 +111,14 @@ class IntegerFields(object):
     def hidden_mode(self):
         return IntegerFields(self.title, self.name, self.round, widget=HiddenWidget())
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class FloatFields(object):
     def __init__(self, title, name, round=1, missing=-1., widget=None, l_choices=None, desc=None,
-                 decimal=100, table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 decimal=100, table_reduce=False, rank=0, required=False, missing_msg='champ requis',
+                 primary_key=False):
 
         # Form display & param
         self.title = title
@@ -114,6 +130,9 @@ class FloatFields(object):
         self.missing_msg = missing_msg
         self.desc = desc
         self.mapinit = None
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Fltsql, primary_key=primary_key))
 
         # Table display & param
         self.table_reduce, self.rank, = table_reduce, rank
@@ -142,10 +161,13 @@ class FloatFields(object):
     def hidden_mode(self):
         return FloatFields(self.title, self.name, self.round, widget=HiddenWidget())
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class MoneyFields(object):
     def __init__(self, title, name, round=1, missing=0., widget=None, l_choices=None, desc=None, decimal=100,
-                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
         # Form display & param
         self.title = title
@@ -157,6 +179,9 @@ class MoneyFields(object):
         self.missing_msg = missing_msg
         self.desc = desc
         self.mapinit = None
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Fltsql, primary_key=primary_key))
 
         # Table display & param
         self.table_reduce, self.rank, = table_reduce, rank
@@ -185,11 +210,15 @@ class MoneyFields(object):
     def hidden_mode(self):
         return MoneyFields(self.title, self.name, self.round, widget=HiddenWidget())
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class DateFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None,
-                 desc=None, table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 desc=None, table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
+        # Form display
         self.title = title
         self.name = name
         self.type = str
@@ -197,11 +226,17 @@ class DateFields(object):
         self.missing_msg = missing_msg
         self.missing = missing
         self.desc = desc
-        self.table_reduce, self.rank, = table_reduce, rank
-
         self.widget = widget
         self.round = round
         self.mapinit = mapinit
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
+
+        # table display
+        self.table_reduce, self.rank, = table_reduce, rank
+
+        # Processing
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x).date()}
         self.processing_db = {'upload': lambda x: pd.Timestamp(x).date(), 'download': lambda x: x}
 
@@ -222,23 +257,30 @@ class DateFields(object):
         return DateFields(self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
                           processing_form=lambda x: pd.Timestamp(x), missing=self.missing)
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class DateTimeFields(object):
     def __init__(self, title, name, round=1, missing='', widget=None, mapinit=None, processing_form=None, desc=None,
-                 table_reduce=False, rank=0, required=False, missing_msg='champ requis'):
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
+        # Form display
         self.title = title
         self.name = name
         self.required = required
         self.missing_msg = missing_msg
         self.type = str
         self.desc = desc
-
-        self.table_reduce, self.rank, = table_reduce, rank
-
         self.widget = widget
         self.round = round
         self.mapinit = mapinit
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
+
+        # Table display
+        self.table_reduce, self.rank, = table_reduce, rank
 
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
         self.processing_db = {'upload': lambda x: pd.Timestamp(x), 'download': lambda x: x}
@@ -264,11 +306,15 @@ class DateTimeFields(object):
             processing_form=lambda x: pd.Timestamp(x)
         )
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
+
 
 class FileFields(object):
     def __init__(self, title, name, round=1, missing=None, widget=None, mapinit=None, desc=None, table_reduce=False,
-                 rank=0, required=False, missing_msg='champ requis'):
+                 rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
+        # Form display
         self.title = title
         self.name = name
         self.required = required
@@ -276,12 +322,15 @@ class FileFields(object):
         self.type = str
         self.desc = desc
         self.tmpstore = FileUploadTempStore(dict())
-
-        self.table_reduce, self.rank, = table_reduce, rank
-
         self.widget = widget
         self.round = round
         self.mapinit = {'filename': None, 'fp': None, 'mimetype': None, 'preview_url': None, 'size': None, 'uid': None}
+
+        # Table display
+        self.table_reduce, self.rank, = table_reduce, rank
+
+        # Db column
+        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
 
         if mapinit is not None:
             self.mapinit.update(mapinit)
@@ -310,6 +359,8 @@ class FileFields(object):
             self.title, self.name, self.round, widget=HiddenWidget(), mapinit=None,
         )
 
+    def dbcol(self):
+        return copy.deepcopy(self.dbcol_)
 
 class MappingFields(object):
 

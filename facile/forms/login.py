@@ -6,7 +6,7 @@ _ = TranslationStringFactory('deform')
 
 # Local import
 from facile.forms.Deform import Form
-from facileapp.models.user import Users
+from facileapp.models.user import User
 
 
 class LoginForm(Form):
@@ -19,14 +19,14 @@ class LoginForm(Form):
     # validate_ method method should be re-defined in class that inherit from Form
     def validate_(self, pstruct):
         try:
-            _ = Users.from_login(pstruct['username'], pstruct['password'])
+            _ = User.from_login(pstruct['username'], pstruct['password'])
             return pstruct
         except ValueError:
             raise deform.ValidationFailure
 
     # format_ function should be re-defined in class that inherit from Form
     def format_(self, pstruct):
-        user = Users.from_login(pstruct['username'], pstruct['password'])
+        user = User.from_login(pstruct['username'], pstruct['password'])
         pstruct.update({'user': user})
 
         return pstruct

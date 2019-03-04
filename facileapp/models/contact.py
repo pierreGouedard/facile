@@ -1,23 +1,21 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
-from facile.core.fields import StringFields, IntegerFields
+from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, engine
 from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.client import Client
 
 
 class Contact(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'contact.csv')
+    name = 'contact'
     l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
-                            rank=0)]
+                            rank=0, primary_key=True)]
     l_subindex = [1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -58,6 +56,12 @@ class Contact(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Contact', name=Contact.name, dbcols=[f.dbcol() for f in Contact.l_index + Contact.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         if kw == 'client':
             return zip(Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique())
@@ -75,40 +79,38 @@ class Contact(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Contact.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
-
-        return Contact(d_index, s.loc[[f.name for f in Contact.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def from_subindex_(d_subindex, path=None):
-        df = Contact.load_db(path)
-        d_index = BaseModel.from_subindex(d_subindex, [f.name for f in Contact.l_index], df)
-        return Contact.from_index_(d_index, path=path)
+        s = BaseModel.from_index('contact', d_index)
+        return Contact(d_index, s.loc[[f.name for f in Contact.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Contact.path
+    def from_subindex_(d_subindex):
+        d_index = BaseModel.from_subindex('contact', d_subindex, [f.name for f in Contact.l_index])
+        return Contact.from_index_(d_index)
+
+    @staticmethod
+    def load_db(**kwargs):
+
         l_fields = Contact.l_index + Contact.l_fields() + Contact.l_hfields
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+        # Load table
+        df = BaseModel.load_db(table_name='contact', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_contact(type_='all', path=None, return_id=False, **kwargs):
+    def get_contact(type_='all', return_id=False, **kwargs):
 
-        # Load contact database and apply filter if any in kwargs and load different type of contact
-        df = Contact.load_db(path)
+        # TODO write the fucking sql request using kwargs mother fucker
+        df = pd.read_sql(sql='contact', con=engine)
 
         if len(set(kwargs.keys()).intersection(df.columns)) > 0:
-            df = df.loc[
-                df[[c for c in df.columns if c in kwargs.keys()]]
-                .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
-            ]
+            print 'todo'
+            # df = df.loc[
+            #     df[[c for c in df.columns if c in kwargs.keys()]]
+            #     .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
+            # ]
 
         if df.empty:
             return []
@@ -118,6 +120,7 @@ class Contact(BaseModel):
 
         if df.empty:
             return []
+
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\
             .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
@@ -131,13 +134,13 @@ class Contact(BaseModel):
         return l_contacts
 
     def add(self):
-        df = self.load_db(self.path)
+        l_contacts = Contact.get_contact(return_id=True)
 
         # Save current contact id
         contact_id_ = self.contact_id
 
         if self.contact_id == '' or self.contact_id is None:
-            self.contact_id = 'CT{0:0=4d}'.format(df.contact_id.apply(lambda x: int(x.replace('CT', ''))).max() + 1)
+            self.contact_id = 'CT{0:0=4d}'.format(max(l_contacts, key=lambda x: int(x.replace('CT', ''))) + 1)
 
         # Try to add and reset contact id if failed
         try:

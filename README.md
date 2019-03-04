@@ -5,7 +5,7 @@
 - ### employe:
     - **Form desc**: Rajouter les informations les employees de l'entreprise, suprimer / editer le profil d'un employe
     - **Primary key**: (prenom, nom)
-    - **Other required fields**: categorie, securite_social, type_contrat, emploie, date_start, ville, adresse, code_postal, creation_date, maj_date
+    - **Other required fields**: categorie, securite_social, type_contrat, emploi, date_start, ville, adresse, code_postal, creation_date, maj_date
     - **Other facultative fields**: carte_sejoure, date_end, num_tel, mail
 
 - ### fournisseur:

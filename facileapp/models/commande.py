@@ -1,10 +1,8 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
 from facile.core.fields import StringFields, FileFields, FloatFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
@@ -15,9 +13,9 @@ from facileapp.models.fournisseur import Fournisseur
 
 class Commande(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'commande.csv')
+    name = 'commande'
     l_index = [StringFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
-                            rank=0)]
+                            rank=0, primary_key=True)]
     l_documents = [('comande', 'Resume de Commande')]
     l_actions = map(lambda x: (x.format('une commande'), x.format('une commande')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -49,6 +47,12 @@ class Commande(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Commande', name=Commande.name, dbcols=[f.dbcol() for f in Commande.l_index + Commande.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
 
         if kw == 'fournisseur':
@@ -61,38 +65,36 @@ class Commande(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Commande.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
-
-        return Commande(d_index, s.loc[[f.name for f in Commande.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Commande.path
-
-        return pd.read_csv(path, dtype={f.name: f.type for f in Commande.l_index + Commande.l_fields() + Commande.l_hfields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in Commande.l_index + Commande.l_fields() + Commande.l_hfields})
+        s = BaseModel.from_index('commande', d_index)
+        return Commande(d_index, s.loc[[f.name for f in Commande.l_fields()]].to_dict())
 
     @staticmethod
-    def get_commande(path=None):
-        return Commande.load_db(path)['commande_id'].unique()
+    def load_db(**kwargs):
+        l_fields = Commande.l_index + Commande.l_fields() + Commande.l_hfields
+
+        # Load table
+        df = BaseModel.load_db(table_name='commande', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
+
+    @staticmethod
+    def get_commande():
+        return Commande.load_db(columns=['commande_id']).unique()
 
     def add(self):
-        df = self.load_db(self.path)
+        l_commandes = Commande.get_commande()
 
         # Save current contact id
         commande_id_ = self.commande_id
 
         if self.commande_id == '' or self.commande_id is None:
-            self.commande_id = 'CM{0:0=4d}'.format(df.commande_id.apply(lambda x: int(x.replace('CM', ''))).max() + 1)
+            self.commande_id = 'CM{0:0=4d}'.format(max(l_commandes, key=lambda x: int(x.replace('CM', ''))) + 1)
 
-        self.montant_ttc, self.montant_tva = Commande.get_montant(self.__getattribute__('montant_ht'),
-                                                                  self.__getattribute__('taux_tva'))
+        self.montant_ttc, self.montant_tva = Commande.get_montant(
+            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
+        )
 
         # Try to add and reset conatct id if failed
         try:
@@ -106,8 +108,9 @@ class Commande(BaseModel):
 
     def alter(self):
 
-        self.montant_ttc, self.montant_tva = Commande.get_montant(self.__getattribute__('montant_ht'),
-                                                                  self.__getattribute__('taux_tva'))
+        self.montant_ttc, self.montant_tva = Commande.get_montant(
+            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
+        )
 
         super(Commande, self).alter()
 

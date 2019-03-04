@@ -75,6 +75,7 @@ def test_example():
 
 @application.route('/logout', methods=['GET', 'POST'])
 def log_out():
+
    # Remove the username from the session if it is there
    session.pop('username', None)
    session.pop('rights', None)

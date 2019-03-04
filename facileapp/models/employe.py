@@ -1,20 +1,18 @@
 # Global imports
-import os
 import pandas as pd
 
 # Local import
-import settings
 from facile.core.fields import StringFields, DateFields
 from facile.core.form_loader import FormLoader
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, engine
 from facile.core.table_loader import TableLoader
-
+from facile.utils.drivers.rdbms import RdbmsDriver
 
 class Employe(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'employe.csv')
-    l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0),
-               StringFields(title='Nom', name='nom', table_reduce=True, rank=1)]
+    name = 'employe'
+    l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0, primary_key=True),
+               StringFields(title='Nom', name='nom', table_reduce=True, rank=1, primary_key=True)]
     l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
     l_documents = [('convoc', 'Lettre de convocation'), ('miseap', 'Lettre de mise a pied')]
     l_apps = ['repqual', 'repemp']
@@ -26,7 +24,7 @@ class Employe(BaseModel):
         l_fields = \
             [StringFields(title='N securite social', name='securite_social', required=True),
              StringFields(title='Carte de sejour', name='carte_sejoure', required=False),
-             StringFields(title='Emploie', name='emploie', table_reduce=True, rank=2, required=True),
+             StringFields(title='Emploi', name='emploi', table_reduce=True, rank=2, required=True),
              StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3, required=True),
              StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4, required=True),
              StringFields(title='Adresse', name='adresse', required=True),
@@ -49,6 +47,12 @@ class Employe(BaseModel):
         return l_fields
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Employe', name=Employe.name, dbcols=[f.dbcol() for f in Employe.l_index + Employe.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         if kw == 'categorie':
             return [('administration', 'Administration'), ('charge affaire', "Charge d'affaire"),
@@ -59,36 +63,30 @@ class Employe(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Employe.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('employe', d_index)
 
-        return Employe(d_index, s.loc[[f.name for f in Employe.l_fields()]].to_dict(), path=path)
+        return Employe(d_index, s.loc[[f.name for f in Employe.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Employe.path
-
+    def load_db(**kwargs):
+        # Get fields
         l_fields = Employe.l_index + Employe.l_fields() + Employe.l_hfields
-        return pd.read_csv(path, dtype={f.name: f.type for f in l_fields})\
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+
+        # Load table
+        df = BaseModel.load_db(table_name='employe', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_employes(path=None, sep=' ', **kwargs):
-        df = Employe.load_db(path)
+    def get_employes(sep=' ', **kwargs):
 
-        if df.empty:
-            return []
+        # TODO write the fucking sql request using kwargs mother fucker
+        df = pd.read_sql(sql='employe', con=engine, columns=['prenom', 'nom'])
 
-        for k, v in kwargs.items():
-            df = df.loc[df[k] == v]
-
-        return df[['prenom', 'nom']]\
-            .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1)\
+        return df[['prenom', 'nom']] \
+            .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1) \
             .unique()
 
     @staticmethod

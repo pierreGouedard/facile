@@ -2,7 +2,7 @@
 
 # Local import
 from facile.core.fields import StringFields
-from facile.utils.drivers.comon import FileDriver
+from facile.utils.drivers.files import FileDriver
 from facile.core.document_generator import WordDocument
 from facileapp.models.views.base_view import BaseView
 from facileapp.models.devis import Devis

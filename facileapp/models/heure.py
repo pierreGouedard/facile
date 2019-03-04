@@ -1,14 +1,12 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
 from facile.core.fields import StringFields, IntegerFields, MappingFields, SequenceFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel
+from facile.core.base_model import BaseModel, engine
 from facileapp.models.affaire import Affaire
 from facileapp.models.employe import Employe
 from facile.utils import dates
@@ -16,9 +14,9 @@ from facile.utils import dates
 
 class Heure(BaseModel):
 
-    path = os.path.join(settings.facile_db_path, 'heure.csv')
+    name = 'heure'
     l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
-                             rank=0)]
+                             rank=0, primary_key=True)]
     l_groupindex = [0]
 
     l_actions = [('Editer les heures', 'Editer les heures')]
@@ -59,6 +57,12 @@ class Heure(BaseModel):
         return sequence_field
 
     @staticmethod
+    def declarative_base():
+        return BaseModel.declarative_base(
+            clsname='Heure', name=Heure.name, dbcols=[f.dbcol() for f in Heure.l_index + Heure.l_fields()]
+        )
+
+    @staticmethod
     def list(kw):
         if kw == 'employe':
             return zip(Employe.get_employes(), Employe.get_employes()) + [('interim', 'Interimaires')]
@@ -76,47 +80,44 @@ class Heure(BaseModel):
             return []
 
     @staticmethod
-    def from_index_(d_index, path=None):
-        # Load table employe
-        df = Heure.load_db(path)
-
+    def from_index_(d_index):
         # Series
-        s = BaseModel.from_index(d_index, df)
+        s = BaseModel.from_index('heure', d_index)
 
-        return Heure(d_index, s.loc[[f.name for f in Heure.l_fields()]].to_dict(), path=path)
-
-    @staticmethod
-    def from_groupindex_(d_groupindex, path=None):
-
-        df = Heure.load_db(path)
-        l_indices = BaseModel.from_groupindex(d_groupindex, [f.name for f in Heure.l_index], df)
-
-        return [Heure.from_index_(d_index, path=path) for d_index in l_indices]
+        return Heure(d_index, s.loc[[f.name for f in Heure.l_fields()]].to_dict())
 
     @staticmethod
-    def load_db(path=None):
-        if path is None:
-            path = Heure.path
+    def from_groupindex_(d_groupindex):
+        l_indices = BaseModel.from_groupindex('heure', d_groupindex, [f.name for f in Heure.l_index])
 
-        return pd.read_csv(path, dtype={f.name: f.type for f in Heure.l_index + Heure.l_fields() + Heure.l_hfields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in Heure.l_index + Heure.l_fields() + Heure.l_hfields})
+        return [Heure.from_index_(d_index) for d_index in l_indices]
 
     @staticmethod
-    def get_heure(path=None):
-        return Heure.load_db(path)['heure_id'].unique()
+    def load_db(**kwargs):
+        l_fields = Heure.l_index + Heure.l_fields() + Heure.l_hfields
+
+        # Load table
+        df = BaseModel.load_db(table_name='heure', l_fields=l_fields, columns=kwargs.get('columns', None))
+
+        return df
 
     @staticmethod
-    def get_groupindex(path=None):
-        return Heure.load_db(path)['semaine'].unique()
+    def get_heure():
+        return Heure.load_db(columns=['heure_id']).unique()
+
+    @staticmethod
+    def get_groupindex():
+        return Heure.load_db(columns=['semaine']).unique()
 
     def add(self):
-        df = self.load_db(self.path)
+
+        l_heures = self.get_heure()
 
         # Save current contact id
         heure_id_ = self.heure_id
 
         if self.heure_id == -1 or self.heure_id is None:
-            self.heure_id = df.heure_id.apply(lambda x: int(x)).max() + 1
+            self.heure_id = max(map(int, l_heures)) + 1
 
         # Try to add and reset conatct id if failed
         try:
@@ -127,9 +128,6 @@ class Heure(BaseModel):
             raise ValueError(e.message)
 
         return self
-
-    def alter(self):
-        super(Heure, self).alter()
 
     @staticmethod
     def form_loading(step, index=None, data=None):
