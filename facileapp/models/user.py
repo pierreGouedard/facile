@@ -3,8 +3,9 @@ import pandas as pd
 from sqlalchemy import Column, String
 
 # Local import
-from facile.core.base_model import engine
 from facileapp import facile_base
+from config import SQL_DATABASE_URI as db_uri
+from facile.utils.drivers.rdbms import RdbmsDriver
 
 
 class User(object):
@@ -15,6 +16,8 @@ class User(object):
         'password': Column(String(250)),
         'rights': Column(String(250))
     }
+
+    driver = RdbmsDriver(facile_base, db_uri, 'UserDB driver')
 
     def __init__(self, username, password, rights=None):
         self.username = username
@@ -44,38 +47,43 @@ class User(object):
     @staticmethod
     def from_username(username):
 
-        # TODO: make correct request
-        df = pd.read_sql(sql='users', con=engine)
+        # Get entry with correct username
+        df = User.driver.select('users', **{'username': username})
 
         s = df.iloc[0]
         if not s.empty:
-            return User(df[0, 'username'], df[0, 'password'], df[0, 'rights'])
+            return User(df.loc[0, 'username'], df.loc[0, 'password'], df.loc[0, 'rights'])
         else:
             raise ValueError('username {} does not exists'.format(username))
 
     @staticmethod
     def from_login(username, password):
 
-        # TODO: make correct request
-        df = pd.read_sql(sql='users', con=engine)
+        # Get entry with correct username
+        df = User.driver.select('users', **{'username': username})
 
+        # Check password is ok !
         if not df.empty:
-            if str(password) == str(df[0, 'password']):
-                User.from_username(username)
+            if str(password) == str(df.loc[0, 'password']):
+                return User.from_username(username)
+
             else:
                 raise ValueError('password is not correct')
         else:
             raise ValueError('username {} does not exists'.format(username))
 
     def add(self):
-        # Add record and save dataframe as csv
+        # Add User
         df_ = pd.DataFrame([[self.username, self.password, self.rights]], columns=['username', 'password', 'rights'])
-        df_.to_sql('users', engine)
+        self.driver.insert(df_, 'users')
 
     def alter(self):
-        df_ = pd.DataFrame([[self.username, self.password, self.rights]], columns=['username', 'password', 'rights'])
-        df_.to_sql('users', engine, if_exists='replace')
+        # Update user
+        d_value = {k: self.__getattribute__(k) for k in ['username', 'password', 'rights']}
+        self.driver.update_row(d_value, 'users')
 
     @staticmethod
     def delete(self):
-        raise NotImplementedError
+        # Delete user
+        d_value = {k: self.__getattribute__(k) for k in ['username', 'password', 'rights']}
+        self.driver.delete_row(d_value, 'users')

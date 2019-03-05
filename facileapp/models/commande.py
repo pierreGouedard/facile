@@ -13,7 +13,7 @@ from facileapp.models.fournisseur import Fournisseur
 
 class Commande(BaseModel):
 
-    name = 'commande'
+    table_name = 'commande'
     l_index = [StringFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
     l_documents = [('comande', 'Resume de Commande')]
@@ -49,7 +49,7 @@ class Commande(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Commande', name=Commande.name, dbcols=[f.dbcol() for f in Commande.l_index + Commande.l_fields()]
+            clsname='Commande', name=Commande.table_name, dbcols=[f.dbcol() for f in Commande.l_index + Commande.l_fields()]
         )
 
     @staticmethod
@@ -58,7 +58,7 @@ class Commande(BaseModel):
         if kw == 'fournisseur':
             return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
         elif kw == 'affaire':
-            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
+            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'tva':
             return [(0.2, '20%'), (0.1, '10%'), (0.055, '5,5%'), (0.021, '2,1%')]
         else:
@@ -81,7 +81,7 @@ class Commande(BaseModel):
 
     @staticmethod
     def get_commande():
-        return Commande.load_db(columns=['commande_id']).unique()
+        return Commande.load_db(columns=['commande_id'])['commande_id'].unique()
 
     def add(self):
         l_commandes = Commande.get_commande()
@@ -90,7 +90,7 @@ class Commande(BaseModel):
         commande_id_ = self.commande_id
 
         if self.commande_id == '' or self.commande_id is None:
-            self.commande_id = 'CM{0:0=4d}'.format(max(l_commandes, key=lambda x: int(x.replace('CM', ''))) + 1)
+            self.commande_id = 'CM{0:0=4d}'.format(max(map(lambda x: int(x.replace('CM', '')), l_commandes)) + 1)
 
         self.montant_ttc, self.montant_tva = Commande.get_montant(
             self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')

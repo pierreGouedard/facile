@@ -16,15 +16,15 @@ class RdbmsDriver(object):
     def __str__(self):
         return '{}'.format(self.desc)
 
-    def read_table(self, table_name):
-        return pd.read_sql_table(table_name, con=self.base.metadata.bind)
+    def read_table(self, table_name, columns=None):
+        return pd.read_sql_table(table_name, columns=columns, con=self.base.metadata.bind)
 
     def insert(self, df, table_name):
         query = insert(self.base.metadata.tables[table_name], values=df.to_dict(orient='records'))
         try:
             self.base.metadata.bind.execute(query)
         except IntegrityError:
-            print 'primary_key already exist'
+            raise IndexError
 
     def delete_rows(self, df, table_name):
 
@@ -59,15 +59,13 @@ class RdbmsDriver(object):
         try:
             self.base.metadata.bind.execute(query)
         except IntegrityError:
-            import IPython
-            IPython.embed()
             print 'primary_key does not exist'
 
     def select(self, table_name, columns=None, **kwargs):
         l_where_clause = []
 
         if columns is None:
-            columns = list(self.base.metadata.table[table_name].columns)
+            columns = [c.name for c in list(self.base.metadata.tables[table_name].columns)]
 
         for k, v in kwargs.items():
             col = self.base.metadata.tables[table_name].columns[k]
@@ -75,7 +73,8 @@ class RdbmsDriver(object):
                 l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, v)]
             else:
                 l_where_clause += ["{}.{} = {}".format(table_name, col.name, v)]
-        if len(l_where_clause) > 1:
+
+        if len(l_where_clause) > 0:
             query = select(
                 from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=' AND '.join(l_where_clause)
             )

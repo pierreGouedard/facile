@@ -43,8 +43,8 @@ class FeuilleTravaux(BaseView):
 
     @staticmethod
     def split_main_indices(df):
-        df['affaire_num'] = df.affaire_id.apply(lambda x: x.split('-')[0])
-        df['affaire_ind'] = df.affaire_id.apply(lambda x: x.split('-')[1])
+        df['affaire_num'] = df.affaire_id.apply(lambda x: x.split('/')[0])
+        df['affaire_ind'] = df.affaire_id.apply(lambda x: x.split('/')[1])
 
         return df
 

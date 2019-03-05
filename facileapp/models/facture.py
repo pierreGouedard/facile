@@ -1,10 +1,8 @@
 # Global imports
-import os
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-import settings
 from facile.core.fields import StringFields, IntegerFields, MoneyFields, DateFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
@@ -14,7 +12,7 @@ from facileapp.models.affaire import Affaire
 
 class Facture(BaseModel):
 
-    name = 'facture'
+    table_name = 'facture'
     l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
@@ -51,13 +49,13 @@ class Facture(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Facture', name=Facture.name, dbcols=[f.dbcol() for f in Facture.l_index + Facture.l_fields()]
+            clsname='Facture', name=Facture.table_name, dbcols=[f.dbcol() for f in Facture.l_index + Facture.l_fields()]
         )
 
     @staticmethod
     def list(kw):
         if kw == 'affaire':
-            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
+            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'situation':
             return [(i, 'Situation numero {}'.format(i)) for i in range(1, 13)]
         elif kw == 'type':
@@ -77,13 +75,13 @@ class Facture(BaseModel):
         l_fields = Facture.l_index + Facture.l_fields() + Facture.l_hfields
 
         # Load table
-        df = BaseModel.load_db(table_name='contact', l_fields=l_fields, columns=kwargs.get('columns', None))
+        df = BaseModel.load_db(table_name='facture', l_fields=l_fields, columns=kwargs.get('columns', None))
 
         return df
 
     @staticmethod
     def get_facture():
-        return Facture.load_db(columns=['facture_id']).unique()
+        return Facture.load_db(columns=['facture_id'])['facture_id'].unique()
 
     def add(self):
         l_factures = list(Facture.load_db(columns=['facture_id', 'type']).values)
@@ -94,12 +92,12 @@ class Facture(BaseModel):
         if self.facture_id == '' or self.facture_id is None:
 
             if self.type == 'facture':
-                l_factures_sub = [t for t in l_factures if t[1] == 'facture']
-                self.facture_id = 'FC{0:0=4d}'.format(max(l_factures_sub, key=lambda x: int(x.replace('FC', ''))) + 1)
+                l_factures_sub = [t[0] for t in l_factures if t[1] == 'facture']
+                self.facture_id = 'FC{0:0=4d}'.format(max(map(lambda x: int(x.replace('FC', '')), l_factures_sub)) + 1)
 
             else:
-                l_factures_sub = [t for t in l_factures if t[1] == 'facture']
-                self.facture_id = 'AV{0:0=4d}'.format(max(l_factures_sub, key=lambda x: int(x.replace('AV', ''))) + 1)
+                l_factures_sub = [t[0] for t in l_factures if t[1] == 'facture']
+                self.facture_id = 'AV{0:0=4d}'.format(max(map(lambda x: int(x.replace('AV', '')), l_factures_sub)) + 1)
 
                 if self.montant_ht > 0:
                     self.montant_ht *= -1

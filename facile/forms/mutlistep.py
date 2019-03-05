@@ -25,7 +25,8 @@ class MultipleStepForm(Form):
 
         Form.__init__(self, request, static_path,
                       self.get_schema(kwargs['nodes'], d_action.get(0, False), d_index.get(0, False)),
-                      appstruct, buttons=kwargs['buttons'])
+                      appstruct, buttons=kwargs['buttons'], mapping_fields=kwargs.get('mapping_fields', None),
+                      sequence_mapping_fields=kwargs.get('sequence_mapping_fields', None))
 
         self.mapping_name.update(kwargs['mapping'])
 

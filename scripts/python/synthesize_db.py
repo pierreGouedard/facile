@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import string
 import random
-from sqlalchemy import create_engine, insert, delete, update
-from sqlalchemy.exc import IntegrityError
 from facile.utils.drivers import rdbms
 
 
@@ -33,7 +31,7 @@ class Synthesizer():
 
         self.n_contact_fournisseur = 4
         self.n_chantier = 5
-        self.l_affaires = ['AF19{0:0=4d}-001'.format(i) for i in range(4)]
+        self.l_affaires = ['AF19{0:0=4d}/001'.format(i) for i in range(4)]
         self.d_month = {1: 'Janvier {}', 2: 'Fevrier {}', 3: 'Mars {}', 4: 'Avril {}', 5: 'Mai {}', 6: 'Juin {}',
                         7: 'Juillet {}', 8: 'Aout {}', 9: 'Septembre {}', 10: 'Octobre {}', 11: 'Novembre {}',
                         12: 'Decembre {}'}
@@ -189,7 +187,7 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_chantier',
-                'designation': 'client {}'.format(i % self.n_client),
+                'designation': 'client {} - site {}'.format(i % self.n_client, i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel sur chantier - client {}'.format(i),
                 'adresse': self.adresse(),
@@ -209,7 +207,7 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_commande',
-                'designation': 'client {}'.format(i % self.n_client),
+                'designation': 'client {} - site {}'.format(i % self.n_client, i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel pour commande - client {}'.format(i),
                 'adresse': self.adresse(),
@@ -229,7 +227,7 @@ class Synthesizer():
             i + n: {
                 'contact_id': 'CT{0:0=4d}'.format(i + n),
                 'type': 'client_administration',
-                'designation': 'client {}'.format(i % self.n_client),
+                'designation': 'client {} - site {}'.format(i % self.n_client, i % self.n_client),
                 'contact': self.name(**{'seed': i, 'key': 'name'}),
                 'desc': 'Operationel pour administration - client {}'.format(i),
                 'adresse': self.adresse(),
@@ -277,7 +275,7 @@ class Synthesizer():
         d_chantier = {
             i: {
                 'chantier_id': 'CH{0:0=4d}'.format(i),
-                'designation_client': 'client {}'.format(i),
+                'designation_client': 'client {} - site {}'.format(i, i),
                 'nom': 'Chantier client {}'.format(i),
                 'adresse': self.adresse(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
@@ -483,8 +481,8 @@ class Synthesizer():
 
     def Build_affaire_table(self):
         d_affaire = {i: {
-                'affaire_num': affaire.split('-')[0],
-                'affaire_ind': affaire.split('-')[1],
+                'affaire_num': affaire.split('/')[0],
+                'affaire_ind': affaire.split('/')[1],
                 'devis_id': 'DV{0:0=4d}'.format(i),
                 'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
                 'chantier_id': 'CH{0:0=4d}'.format(i),
@@ -576,7 +574,3 @@ if __name__ == '__main__':
     synt.Build_heure_table()
     synt.Build_facture_table()
     synt.Build_affaire_table()
-    import IPython
-    IPython.embed()
-
-

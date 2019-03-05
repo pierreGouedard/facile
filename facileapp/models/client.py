@@ -10,7 +10,7 @@ from facile.core.base_model import BaseModel
 
 class Client(BaseModel):
 
-    name = 'client'
+    table_name = 'client'
     l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
@@ -32,7 +32,7 @@ class Client(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Client', name=Client.name, dbcols=[f.dbcol() for f in Client.l_index + Client.l_fields()]
+            clsname='Client', name=Client.table_name, dbcols=[f.dbcol() for f in Client.l_index + Client.l_fields()]
         )
 
     @staticmethod
@@ -42,7 +42,7 @@ class Client(BaseModel):
     @staticmethod
     def from_index_(d_index):
         # Series
-        s = BaseModel.from_index('chantier', d_index)
+        s = BaseModel.from_index('client', d_index)
         return Client(d_index, s.loc[[f.name for f in Client.l_fields()]].to_dict())
 
     @staticmethod
@@ -56,7 +56,7 @@ class Client(BaseModel):
 
     @staticmethod
     def get_clients():
-        return Client.load_db(columns=['designation']).unique()
+        return Client.load_db(columns=['designation'])['designation'].unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

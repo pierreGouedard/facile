@@ -362,6 +362,7 @@ class FileFields(object):
     def dbcol(self):
         return copy.deepcopy(self.dbcol_)
 
+
 class MappingFields(object):
 
     def __init__(self, title, name, prefix, l_fields, round=1, desc=None, widget=None):
@@ -372,6 +373,11 @@ class MappingFields(object):
         self.l_fields = []
 
         for f in l_fields:
+            try:
+                assert(not isinstance(f, MappingFields))
+            except AssertionError:
+                raise ValueError("Only 1 depth of mapping is allowed")
+
             f_ = copy.deepcopy(f)
             f_.sn.name = '{}-{}'.format(prefix, f.name)
             self.l_fields += [f_]

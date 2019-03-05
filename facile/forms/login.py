@@ -21,15 +21,26 @@ class LoginForm(Form):
         try:
             _ = User.from_login(pstruct['username'], pstruct['password'])
             return pstruct
-        except ValueError:
-            raise deform.ValidationFailure
+        except ValueError as e:
+            if 'password' in e.message:
+                pstruct['password'] = ''
+            else:
+                pstruct['username'] = ''
+                pstruct['password'] = ''
+
+            return pstruct
 
     # format_ function should be re-defined in class that inherit from Form
     def format_(self, pstruct):
-        user = User.from_login(pstruct['username'], pstruct['password'])
-        pstruct.update({'user': user})
+        try:
+            user = User.from_login(pstruct['username'], pstruct['password'])
+            pstruct.update({'user': user})
+
+        except ValueError:
+            return pstruct
 
         return pstruct
+
 
     @staticmethod
     def LoginInputsSchema():
@@ -38,12 +49,16 @@ class LoginForm(Form):
 
             username = colander.SchemaNode(
                 colander.String(),
-                title="User name")
+                title="User name",
+                required=True,
+                missing_msg='Username is not correct'
+            )
 
             password = colander.SchemaNode(
                 colander.String(),
-                validator=colander.Length(min=4, max=100),
-                widget=deform.widget.PasswordWidget())
+                widget=deform.widget.PasswordWidget(),
+                required=True,
+                missing_msg='Password is not correct')
 
         return LoginSchema()
 

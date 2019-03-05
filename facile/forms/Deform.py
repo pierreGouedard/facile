@@ -1,6 +1,7 @@
 # Global import
 import deform
 import colander
+import copy
 from flask import render_template_string
 
 
@@ -14,13 +15,30 @@ class Form(object):
     script = '<script type="text/javascript">{}</script>'
     href = "{{url_for('static', filename='deform/%s')}}"
 
-    def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',), use_ajax=False):
+    def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',), use_ajax=False,
+                 mapping_fields=None, sequence_mapping_fields=None):
+
         self.request = request
         self.search_path = search_path
         self.schema = schema
         self.appstruct = appstruct
         self.buttons = buttons
         self.use_ajax = use_ajax
+
+        # Manage complexe nested mapping
+        if sequence_mapping_fields is not None:
+            self.d_lambda_mapping = {sm: lambda x: {'{}-{}'.format(sm, k): v for k, v in x.items()}
+                                     for sm in sequence_mapping_fields}
+            self.d_lambda_sequence_mapping = {sm: lambda x: [self.d_lambda_mapping[sm](m) for m in x]
+                                              for sm in sequence_mapping_fields}
+
+        elif mapping_fields is not None:
+            self.d_lambda_sequence_mapping = None
+            self.d_lambda_mapping = {m: lambda x: {'{}-{}'.format(mapping_fields, k): v for k, v in x.items()}
+                                     for m in mapping_fields}
+        else:
+            self.d_lambda_mapping = None
+            self.d_lambda_sequence_mapping = None
 
     def validate_(self, pstruct):
         return pstruct
@@ -54,14 +72,18 @@ class Form(object):
                 pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
                 pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))
 
-                # Get files
                 for i, (k, v) in enumerate(self.request.files.items()):
                     pstruct[k] = {'filename': v.filename, 'uid': i, 'mimetype': v.mimetype, 'fp': v}
 
                 # Generate succeed form (with values posted)
                 if validate:
-                    _ = form.validate_pstruct(pstruct)
+                    pstruct_validate = copy.deepcopy(pstruct)
+                    if self.d_lambda_mapping is not None or self.d_lambda_sequence_mapping is not None:
+                        pstruct_validate = Form.process_mapping(
+                            pstruct_validate, self.d_lambda_mapping, self.d_lambda_sequence_mapping
+                        )
                     pstruct = self.validate_(pstruct)
+                    _ = form.validate_pstruct(pstruct_validate)
 
                 # Deffered missing values
                 pstruct = self.deffered_missing_(pstruct)
@@ -143,3 +165,19 @@ class Form(object):
                     d_out.pop(k)
 
         return d_out
+
+    @staticmethod
+    def process_mapping(pstruct, d_lambda_mapping, d_lambda_sequence_mapping):
+
+        if d_lambda_sequence_mapping is not None:
+            for name, lmbd in d_lambda_sequence_mapping.items():
+                if name in pstruct:
+                    pstruct[name] = d_lambda_sequence_mapping[name](pstruct[name])
+
+        elif d_lambda_mapping is not None:
+            for name, lmbd in self.d_lambda_sequence_mapping.items():
+                if name in pstruct:
+                    pstruct[name] = d_lambda_mapping[name](pstruct[name])
+
+        return pstruct
+

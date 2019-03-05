@@ -4,13 +4,13 @@ import pandas as pd
 # Local import
 from facile.core.fields import StringFields, DateFields
 from facile.core.form_loader import FormLoader
-from facile.core.base_model import BaseModel, engine
+from facile.core.base_model import BaseModel
 from facile.core.table_loader import TableLoader
-from facile.utils.drivers.rdbms import RdbmsDriver
+
 
 class Employe(BaseModel):
 
-    name = 'employe'
+    table_name = 'employe'
     l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0, primary_key=True),
                StringFields(title='Nom', name='nom', table_reduce=True, rank=1, primary_key=True)]
     l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
@@ -49,7 +49,7 @@ class Employe(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Employe', name=Employe.name, dbcols=[f.dbcol() for f in Employe.l_index + Employe.l_fields()]
+            clsname='Employe', name=Employe.table_name, dbcols=[f.dbcol() for f in Employe.l_index + Employe.l_fields()]
         )
 
     @staticmethod
@@ -82,12 +82,12 @@ class Employe(BaseModel):
     @staticmethod
     def get_employes(sep=' ', **kwargs):
 
-        # TODO write the fucking sql request using kwargs mother fucker
-        df = pd.read_sql(sql='employe', con=engine, columns=['prenom', 'nom'])
-
-        return df[['prenom', 'nom']] \
+        # Get list of employ name and surname
+        l_employes = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs)\
             .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1) \
             .unique()
+
+        return l_employes
 
     @staticmethod
     def form_loading(step, index=None, data=None):

@@ -20,7 +20,8 @@ class FormLoader(object):
             'formatting': {}
         }
 
-    def load(self, step,  data_db=None, data_form=None, l_buttons=[]):
+    def load(self, step,  data_db=None, data_form=None, l_buttons=[], mapping_fields=None,
+             sequence_mapping_fields=None):
 
         # Create mask fields
         d_mask_fields = {i: (s.round <= step, s.round == step) for i, s in enumerate(self.l_fields)}
@@ -60,6 +61,14 @@ class FormLoader(object):
             self.d_form_data['data'].update({k: v for k, v in data_form.items() if k in l_names})
 
         self.d_form_data['formatting'] = {f.name: f.processing_form['form'] for f in l_index + l_fields}
+
+        if mapping_fields is not None:
+            self.d_form_data['mapping_fields'] = mapping_fields
+        elif sequence_mapping_fields is not None:
+            self.d_form_data['sequence_mapping_fields'] = sequence_mapping_fields
+
+
+
 
     def filter_index(self, d_mask_index):
 

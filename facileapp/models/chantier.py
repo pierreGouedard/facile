@@ -6,14 +6,14 @@ from deform.widget import HiddenWidget
 from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel, engine
+from facile.core.base_model import BaseModel
 from facileapp.models.client import Client
 from facileapp.models.contact import Contact
 
 
 class Chantier(BaseModel):
 
-    name = 'chantier'
+    table_name = 'chantier'
     l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0,
                             primary_key=True)]
     l_subindex = [0, 1]
@@ -47,7 +47,7 @@ class Chantier(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Chantier', name=Chantier.name, dbcols=[f.dbcol() for f in Chantier.l_index + Chantier.l_fields()]
+            clsname='Chantier', name=Chantier.table_name, dbcols=[f.dbcol() for f in Chantier.l_index + Chantier.l_fields()]
         )
 
     @staticmethod
@@ -85,22 +85,14 @@ class Chantier(BaseModel):
     @staticmethod
     def get_chantier(return_id=False, **kwargs):
 
-        # TODO write the fucking sql request using kwargs mother fucker
-        df = pd.read_sql(sql='chantier', con=engine)
-
+        # Get list of chantier
+        df = Chantier.driver.select(Chantier.table_name, **kwargs)
         if df.empty:
-            return []
-
-        if len(set(kwargs.keys()).intersection(df.columns)) > 0:
-            print 'todo'
-            # df = df.loc[
-            #     df[[c for c in df.columns if c in kwargs.keys()]]
-            #     .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
-            # ]
+            return [('', 'Pas de selection de chantier possible')]
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \
-            .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1) \
+            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1) \
             .to_dict()
 
         if return_id:
@@ -118,7 +110,7 @@ class Chantier(BaseModel):
         chantier_id_ = self.chantier_id
 
         if self.chantier_id is None or self.chantier_id == '':
-            self.chantier_id = 'CH{0:0=4d}'.format(max(l_chantiers, key=lambda t: int(t[0].replace('CH', ''))) + 1)
+            self.chantier_id = 'CH{0:0=4d}'.format(max(map(lambda t: int(t[0].replace('CH', '')), l_chantiers)) + 1)
 
         # Try to add and reset conatct id if failed
         try:
@@ -134,7 +126,7 @@ class Chantier(BaseModel):
 
         if index is not None:
             l_subindex = [Chantier.l_fields()[i].name for i in Contact.l_subindex]
-            d_index = {k: v for k, v in zip(l_subindex, index.split(' - '))}
+            d_index = {k: v for k, v in zip(l_subindex, index.split(' / '))}
         else:
             d_index = None
 

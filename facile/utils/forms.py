@@ -86,7 +86,7 @@ def process_form(table_key, d_data, action):
     script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
              '.done(function (response, status, request) {alert(%s %s);});'
 
-    if table_key in ['affaire', 'devis', 'facture', 'commande']:
+    if table_key in ['affaire', 'devis', 'facture', 'commande'] and 'Suprimer' not in action:
         script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
                  '.done(function (response, status, request) { alert(%s %s);' \
                  'var url = response["url"].concat(response["data"]);' \
@@ -198,6 +198,9 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
                     '{} avec succes"'.format(action))
 
             if d_files is not None:
+                import IPython
+                IPython.embed()
+                # TODO: save in tmpdir and upload to s3
                 for k, v in d_files.items():
                     v.save(k.format(index.replace('/', '_')))
 

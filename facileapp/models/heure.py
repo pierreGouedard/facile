@@ -6,7 +6,7 @@ from deform.widget import HiddenWidget
 from facile.core.fields import StringFields, IntegerFields, MappingFields, SequenceFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel, engine
+from facile.core.base_model import BaseModel
 from facileapp.models.affaire import Affaire
 from facileapp.models.employe import Employe
 from facile.utils import dates
@@ -14,7 +14,7 @@ from facile.utils import dates
 
 class Heure(BaseModel):
 
-    name = 'heure'
+    table_name = 'heure'
     l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                              rank=0, primary_key=True)]
     l_groupindex = [0]
@@ -59,7 +59,7 @@ class Heure(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Heure', name=Heure.name, dbcols=[f.dbcol() for f in Heure.l_index + Heure.l_fields()]
+            clsname='Heure', name=Heure.table_name, dbcols=[f.dbcol() for f in Heure.l_index + Heure.l_fields()]
         )
 
     @staticmethod
@@ -67,7 +67,7 @@ class Heure(BaseModel):
         if kw == 'employe':
             return zip(Employe.get_employes(), Employe.get_employes()) + [('interim', 'Interimaires')]
         elif kw == 'affaire':
-            return zip(Affaire.get_affaire(sep='-'), map(str, Affaire.get_affaire(sep=' - ')))
+            return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'week':
             current_monday = dates.get_current_start_date()
             l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=30),
@@ -103,7 +103,7 @@ class Heure(BaseModel):
 
     @staticmethod
     def get_heure():
-        return Heure.load_db(columns=['heure_id']).unique()
+        return Heure.load_db(columns=['heure_id'])['heure_id'].unique()
 
     @staticmethod
     def get_groupindex():
@@ -150,8 +150,12 @@ class Heure(BaseModel):
                 Heure.sequence_field().name:
                     [{k: v for k, v in h.__dict__.items() if k in l_names} for h in Heure.from_groupindex_(d_index)]
             }
+            mapping_fields = ['heure']
 
-            form_man.load(step % Heure.nb_step_form, data_db=data_db, data_form=data)
+            form_man.load(
+                step % Heure.nb_step_form, data_db=data_db, data_form=data, sequence_mapping_fields=mapping_fields
+            )
+
         return form_man.d_form_data
 
     @staticmethod

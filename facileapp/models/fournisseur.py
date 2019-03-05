@@ -10,7 +10,7 @@ from facile.core.base_model import BaseModel
 
 class Fournisseur(BaseModel):
 
-    name = 'fournisseur'
+    table_name = 'fournisseur'
 
     l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True,
                             primary_key=True)]
@@ -33,7 +33,7 @@ class Fournisseur(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Fournisseur', name=Fournisseur.name, dbcols=[f.dbcol() for f in Fournisseur.l_index + Fournisseur.l_fields()]
+            clsname='Fournisseur', name=Fournisseur.table_name, dbcols=[f.dbcol() for f in Fournisseur.l_index + Fournisseur.l_fields()]
         )
 
     @staticmethod
@@ -59,7 +59,7 @@ class Fournisseur(BaseModel):
 
     @staticmethod
     def get_fournisseurs():
-        return Fournisseur.load_db(columns=['raison_social']).unique()
+        return Fournisseur.load_db(columns=['raison_social'])['raison_social'].unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

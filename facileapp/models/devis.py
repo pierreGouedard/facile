@@ -16,7 +16,7 @@ from facileapp.models.employe import Employe
 
 class Devis(BaseModel):
 
-    name = 'devis'
+    table_name = 'devis'
 
     l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
@@ -67,7 +67,7 @@ class Devis(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Devis', name=Devis.name, dbcols=[f.dbcol() for f in Devis.l_index + Devis.l_fields()]
+            clsname='Devis', name=Devis.table_name, dbcols=[f.dbcol() for f in Devis.l_index + Devis.l_fields()]
         )
 
     @staticmethod
@@ -105,13 +105,13 @@ class Devis(BaseModel):
         l_fields = Devis.l_index + Devis.l_fields() + Devis.l_hfields
 
         # Load table
-        df = BaseModel.load_db(table_name='contact', l_fields=l_fields, columns=kwargs.get('columns', None))
+        df = BaseModel.load_db(table_name='devis', l_fields=l_fields, columns=kwargs.get('columns', None))
 
         return df
 
     @staticmethod
     def get_devis():
-        return Devis.load_db(columns=['devis_id']).unique()
+        return Devis.load_db(columns=['devis_id'])['devis_id'].unique()
 
     def add(self):
 
@@ -121,7 +121,7 @@ class Devis(BaseModel):
         devis_id_ = self.devis_id
 
         if self.devis_id == '' or self.devis_id is None:
-            self.devis_id = 'DV{0:0=4d}'.format(max(l_devis, key=lambda x: int(x.replace('DV', ''))) + 1)
+            self.devis_id = 'DV{0:0=4d}'.format(max(map(lambda x: int(x.replace('DV', '')), l_devis)) + 1)
 
         self.price = Devis.compute_price(
             {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
@@ -150,8 +150,9 @@ class Devis(BaseModel):
     @staticmethod
     def compute_price(d_heures, d_achats):
         # Compute price
-        price = d_achats['ma'] * d_achats['ca'] + d_heures['hp'] * d_heures['php'] + d_heures['ha'] * d_heures['pha']
-        return price
+        price = float(d_achats['ma']) * d_achats['ca'] + float(d_heures['hp']) * d_heures['php'] + \
+                float(d_heures['ha']) * d_heures['pha']
+        return float(int(price * 100)) / 100
 
     @staticmethod
     def form_loading(step, index=None, data=None):

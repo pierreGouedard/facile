@@ -6,14 +6,14 @@ from deform.widget import HiddenWidget
 from facile.core.fields import StringFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
-from facile.core.base_model import BaseModel, engine
+from facile.core.base_model import BaseModel
 from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.client import Client
 
 
 class Contact(BaseModel):
 
-    name = 'contact'
+    table_name = 'contact'
     l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                             rank=0, primary_key=True)]
     l_subindex = [1, 2]
@@ -58,7 +58,7 @@ class Contact(BaseModel):
     @staticmethod
     def declarative_base():
         return BaseModel.declarative_base(
-            clsname='Contact', name=Contact.name, dbcols=[f.dbcol() for f in Contact.l_index + Contact.l_fields()]
+            clsname='Contact', name=Contact.table_name, dbcols=[f.dbcol() for f in Contact.l_index + Contact.l_fields()]
         )
 
     @staticmethod
@@ -102,28 +102,21 @@ class Contact(BaseModel):
     @staticmethod
     def get_contact(type_='all', return_id=False, **kwargs):
 
-        # TODO write the fucking sql request using kwargs mother fucker
-        df = pd.read_sql(sql='contact', con=engine)
-
-        if len(set(kwargs.keys()).intersection(df.columns)) > 0:
-            print 'todo'
-            # df = df.loc[
-            #     df[[c for c in df.columns if c in kwargs.keys()]]
-            #     .apply(lambda r: all([str(r[i]) == str(kwargs[i]) for i in r.index]), axis=1)
-            # ]
+        # Get contact of interest
+        df = Contact.driver.select(Contact.table_name, **kwargs)
 
         if df.empty:
-            return []
+            return [('', 'Pas de selection de contact possible')]
 
         if type_ != 'all':
             df = df.loc[df.type.apply(lambda x: type_ in x)]
 
         if df.empty:
-            return []
+            return [('', 'Pas de selection de contact possible')]
 
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\
-            .apply(lambda r: '{} - {}'.format(*[r[c] for c in r.index]), axis=1)\
+            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1)\
             .to_dict()
 
         if return_id:
@@ -140,7 +133,7 @@ class Contact(BaseModel):
         contact_id_ = self.contact_id
 
         if self.contact_id == '' or self.contact_id is None:
-            self.contact_id = 'CT{0:0=4d}'.format(max(l_contacts, key=lambda x: int(x.replace('CT', ''))) + 1)
+            self.contact_id = 'CT{0:0=4d}'.format(max(map(lambda t: int(t[0].replace('CT', '')), l_contacts)) + 1)
 
         # Try to add and reset contact id if failed
         try:
@@ -157,7 +150,7 @@ class Contact(BaseModel):
 
         if index is not None:
             l_subindex = [Contact.l_fields()[i].name for i in Contact.l_subindex]
-            d_index = {k: v for k, v in zip(l_subindex, index.split(' - '))}
+            d_index = {k: v for k, v in zip(l_subindex, index.split(' / '))}
         else:
             d_index = None
 

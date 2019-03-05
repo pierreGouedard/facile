@@ -1,24 +1,24 @@
 # Global imports
 import pandas as pd
-from sqlalchemy import create_engine
 
 # Local import
 from config import SQL_DATABASE_URI as db_uri
 from facile.core.fields import StringFields
 from facileapp import facile_base
-engine = create_engine(db_uri)
+from facile.utils.drivers.rdbms import RdbmsDriver
 
 
 class BaseModel(object):
-    name = ''
+    table_name = ''
     l_index, l_subindex = [], []
     l_hfields = [StringFields(name='creation_date', title='creation_date', round=0),
                  StringFields(name='maj_date', title='maj_date', round=0)]
     l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
     l_documents = []
     l_apps = []
+    driver = RdbmsDriver(facile_base, db_uri, 'BaseModel driver')
 
-    def __init__(self, d_index, d_fields, d_hfields={}, name=None):
+    def __init__(self, d_index, d_fields, d_hfields={}, table_name=None):
         for f in self.l_index:
             self.__setattr__(f.name, d_index[f.name])
 
@@ -28,8 +28,8 @@ class BaseModel(object):
         for f in self.l_hfields:
             self.__setattr__(f.name, d_hfields.get(f.name, None))
 
-        if name is not None:
-            self.name = name
+        if table_name is not None:
+            self.table_name = table_name
 
     @staticmethod
     def l_fields():
@@ -61,8 +61,8 @@ class BaseModel(object):
     @staticmethod
     def from_index(table_name, d_index):
 
-        # TODO write the fucking sql request
-        df = pd.read_sql(sql=table_name, con=engine)
+        # Select element of interest
+        df = BaseModel.driver.select(table_name, **d_index)
 
         if not df.empty:
             return df.loc[df.index[0]]
@@ -72,10 +72,8 @@ class BaseModel(object):
     @staticmethod
     def from_subindex(table_name, d_subindex, l_index_names):
 
-        # TODO write the fucking sql request
-        # for k, v in d_subindex.items():
-        #     df = df.loc[df[k] == v]
-        df = pd.read_sql(sql=table_name, con=engine)
+        # Select element of interest
+        df = BaseModel.driver.select(table_name, **d_subindex)
 
         if not df.empty:
             return {name: df.loc[df.index[0], name] for name in l_index_names}
@@ -85,10 +83,8 @@ class BaseModel(object):
     @staticmethod
     def from_groupindex(table_name, d_groupindex, l_index_names):
 
-        # TODO write the fucking sql request
-        # for k, v in d_groupindex.items():
-        #     df = df.loc[df[k] == v]
-        df = pd.read_sql(sql=table_name, con=engine)
+        # Select group of interest
+        df = BaseModel.driver.select(table_name, **d_groupindex)
 
         if not df.empty:
             return [{name: r[name] for name in l_index_names} for _, r in df.iterrows()]
@@ -99,11 +95,14 @@ class BaseModel(object):
     def load_db(**kwargs):
 
         table_name, l_fields, columns = kwargs['table_name'], kwargs['l_fields'], kwargs['columns']
+        df = BaseModel.driver.read_table(table_name, columns=columns)
+
+        if columns is None:
+            columns = df.columns
 
         # Load db as df
-        df = pd.read_sql_table(table_name, engine, columns=columns) \
-            .astype({f.name: f.type for f in l_fields}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields})
+        df = df.astype({f.name: f.type for f in l_fields if f.name in columns}) \
+            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields if f.name in columns})
 
         return df
 
@@ -115,27 +114,37 @@ class BaseModel(object):
         # Add record and save dataframe as csv
         data = [f.type(self.__getattribute__(f.name)) for f in self.l_index + self.l_fields() + self.l_hfields]
         df_ = pd.DataFrame([data], columns=[f.name for f in self.l_index + self.l_fields() + self.l_hfields])
-        df_.to_sql(self.name, engine)
+
+        # Insert value
+        try:
+            self.driver.insert(df_, self.table_name)
+        except IndexError:
+            raise IndexError('Primary key already exists')
+
         return self
 
     def alter(self):
         # Update maj timestamp
         self.maj_date = str(pd.Timestamp.now())
 
-        # TODO make request that return elment of table of interest
-        df = pd.read_sql(sql=self.name, con=engine)
-
-        # Alter record and save csv
-        id_ = df_.index[0]
-        for f in self.l_index + self.l_fields() + self.l_hfields:
-            df.loc[id_, f.name] = f.type(self.__getattribute__(f.name))
-
-        df.to_sql(self.name, engine, if_exists='replace')
+        # Get new values
+        l_fields = self.l_index + self.l_fields() + self.l_hfields
+        d_value = {f.name: f.type(self.__getattribute__(f.name)) for f in l_fields}
+        d_value.pop('creation_date')
+        # Update value
+        self.driver.update_row(d_value, self.table_name)
 
         return self
 
     def delete(self):
-        # TODO: make request that remove element from index
+
+        # Get new values
+        l_fields = self.l_index + self.l_fields() + self.l_hfields
+        d_value = {f.name: f.type(self.__getattribute__(f.name)) for f in l_fields}
+
+        # Update value
+        self.driver.delete_row(d_value, self.table_name)
+
         return self
 
     @staticmethod
