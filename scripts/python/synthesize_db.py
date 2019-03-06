@@ -565,14 +565,18 @@ class Name:
 
 if __name__ == '__main__':
     synt = Synthesizer()
-    synt.Build_user_table_table()
-    synt.Build_employe_table()
-    synt.Build_client_table()
-    synt.Build_fournisseur_table()
-    synt.Build_contact_table()
-    synt.Build_chantier_table()
-    synt.Build_devis_table()
-    synt.Build_commande_table()
-    synt.Build_heure_table()
-    synt.Build_facture_table()
-    synt.Build_affaire_table()
+    answer = raw_input("This action may corrupt production database, if you are sure enter: 'yescorruptallthis'")
+    if answer == 'yescorruptallthis' or answer == "'yescorruptallthis'":
+        synt.Build_user_table_table()
+        synt.Build_employe_table()
+        synt.Build_client_table()
+        synt.Build_fournisseur_table()
+        synt.Build_contact_table()
+        synt.Build_chantier_table()
+        synt.Build_devis_table()
+        synt.Build_commande_table()
+        synt.Build_heure_table()
+        synt.Build_facture_table()
+        synt.Build_affaire_table()
+    else:
+        print 'cancelled'

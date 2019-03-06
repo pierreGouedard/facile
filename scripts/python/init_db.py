@@ -21,4 +21,8 @@ class Initializer():
 
 if __name__ == '__main__':
     init = Initializer(d_sconfig['mysql_uri'])
-    init.create_database()
+    answer = raw_input("This action will drop every table, if you are sure enter: 'yesremoveallthis'")
+    if answer == 'yesremoveallthis' or answer == "'yesremoveallthis'":
+        init.create_database()
+    else:
+        print 'cancelled'
