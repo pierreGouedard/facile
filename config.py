@@ -13,3 +13,7 @@ FACILE_HOME = os.path.dirname(os.path.realpath(__file__))
 DEFORM_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/deform/templates/')
 TABLE_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/table/templates/')
 FILE_DRIVER_TMP_DIR = '/tmp'
+
+import yaml
+with open('secret-setting.yaml', 'rb') as lcf:
+    d_sconfig = yaml.safe_load(lcf)

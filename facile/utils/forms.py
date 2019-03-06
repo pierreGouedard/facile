@@ -19,7 +19,7 @@ from facileapp.models.views.achat import Achat
 from facile.utils.drivers.files import FileDriver
 from facile.forms import mutlistep, document
 from config import FILE_DRIVER_TMP_DIR
-from awscredentials import aws_access_key_id, aws_secret_access_key
+from config import d_sconfig
 
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True,
@@ -137,7 +137,8 @@ def process_form(table_key, d_data, action):
 
         # Create s3 ressources
         ressource = boto3.resource(
-            's3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
+            's3', aws_access_key_id=d_sconfig['aws_access_key_id'],
+            aws_secret_access_key=d_sconfig['aws_secret_access_key']
         )
 
         filename = ''.join(['{}', mimetypes.guess_extension(d_data['details']['mimetype'])])
