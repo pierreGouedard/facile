@@ -1,5 +1,6 @@
 # Global import
 import mimetypes
+import boto3
 
 # Local import
 from facileapp.models.employe import Employe
@@ -17,11 +18,11 @@ from facileapp.models.views.facturation import Facturation
 from facileapp.models.views.achat import Achat
 from facile.utils.drivers.files import FileDriver
 from facile.forms import mutlistep, document
-from settings import facile_driver_tmpdir, facile_commande_path
-
+from config import FILE_DRIVER_TMP_DIR
+from awscredentials import aws_access_key_id, aws_secret_access_key
 
 def build_form(table_key, request, deform_template_path, step=0, force_get=True, data={}, validate=True,
-               script=None):
+               script=None, session=None):
 
     if 'index' in request.form.keys() and 'Ajouter' not in data.get('action', ''):
         index = request.form['index']
@@ -60,7 +61,13 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
         nb_step_form = Devis.nb_step_form
 
     elif table_key == 'facture':
-        d_form_data = Facture.form_loading(step, index, data)
+        # Accountant Admin restriction on this form
+        restricted = True
+        if session is not None:
+            if 'CADMIN' in session['rights'] or 'SADMIN' in session['rights']:
+                restricted = False
+
+        d_form_data = Facture.form_loading(step, index, data, restricted=restricted)
         nb_step_form = Facture.nb_step_form
 
     elif table_key == 'commande':
@@ -122,8 +129,23 @@ def process_form(table_key, d_data, action):
         statue = generic_process_form(l_index, l_fields, Devis, action, d_data, table_key=table_key)
 
     elif table_key == 'commande':
+
+        # Create tmp dir
+        driver = FileDriver('tmp_upload', '')
+        tmpdir = driver.TempDir(create=True, prefix='tmp_upload_')
+
+        # Create s3 ressources
+        ressource = boto3.resource(
+            's3', aws_access_key_id=aws_access_key_id, aws_secret_access_key=aws_secret_access_key
+        )
+
         filename = ''.join(['{}', mimetypes.guess_extension(d_data['details']['mimetype'])])
-        d_files = {FileDriver('', '').join(facile_commande_path, filename): d_data['details']['fp']}
+        d_files = {filename: {
+            'f': d_data['details']['fp'],
+            'bucket': ressource.Bucket('lstcmd'),
+            'tmpfile': FileDriver('', '').join(tmpdir.path, filename)
+            }
+        }
 
         l_index, l_fields = Commande.l_index, [f for f in Commande.l_fields()]
         d_data['montant_ttc'], d_data['montant_tva'] = 0, 0
@@ -198,11 +220,14 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
                     '{} avec succes"'.format(action))
 
             if d_files is not None:
-                import IPython
-                IPython.embed()
-                # TODO: save in tmpdir and upload to s3
                 for k, v in d_files.items():
-                    v.save(k.format(index.replace('/', '_')))
+                    # Save document
+                    v['f'].save(v['tmpfile'].format(index.replace('/', '_')))
+
+                    # Upload to s3
+                    v['bucket'].upload_file(
+                        v['tmpfile'].format(index.replace('/', '_')), k.format(index.replace('/', '_'))
+                    )
 
         except IndexError:
             error = {'error': 'index',
@@ -321,9 +346,9 @@ def process_document_form(table_key, d_request):
 
 def clean_tmp_dir():
     driver = FileDriver('tmp_doc', '')
-    for f in driver.listdir(facile_driver_tmpdir):
+    for f in driver.listdir(FILE_DRIVER_TMP_DIR):
         if 'tmp_doc_' in f:
             try:
-                driver.remove(driver.join(facile_driver_tmpdir, f), recursive=True)
+                driver.remove(driver.join(FILE_DRIVER_TMP_DIR, f), recursive=True)
             except OSError:
                 continue

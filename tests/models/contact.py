@@ -6,7 +6,6 @@ import os
 # Local import
 from facileapp.models.contact import Contact
 from facile.core.base_model import BaseModel
-from settings import facile_test_path
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -23,7 +22,6 @@ class TestContact(unittest.TestCase):
                            'code_postal': '94500', 'num_tel': '0606060606', 'mail': 'maurice.ravel@metalunion.com',
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
                        }
-        self.path = os.path.join(facile_test_path, 'contact.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {

@@ -7,7 +7,6 @@ import numpy as np
 # Local import
 from facileapp.models.facture import Facture
 from facile.core.base_model import BaseModel
-from settings import facile_test_path
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -21,7 +20,6 @@ class TestFacture(unittest.TestCase):
                            'is_mandated': 'non', 'is_payed': 'non', 'creation_date': str(pd.Timestamp.now()),
                            'maj_date': str(pd.Timestamp.now())}
                        }
-        self.path = os.path.join(facile_test_path, 'facture.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {

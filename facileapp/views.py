@@ -11,7 +11,7 @@ from facile.utils.forms import build_form, process_form, get_args_forms, get_tit
 from facile.utils.tables import build_table, process_table
 from facile.utils.controls import build_controls, process_controls
 from facile.layout import boostrap
-from settings import deform_template_path
+from config import DEFORM_TEMPLATE_PATH
 
 
 @application.route('/')
@@ -36,7 +36,7 @@ def log_in():
     custom_template = Template(render_template('login.html', custom_html=Markup(boostrap.get_login_layout())))
 
     # process request
-    web, data = login.LoginForm(request, deform_template_path).process_form()
+    web, data = login.LoginForm(request, DEFORM_TEMPLATE_PATH).process_form()
 
     if request.method == 'GET':
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
@@ -60,7 +60,7 @@ def test_example():
     custom_template = Template(render_template('example.html', form=Markup(boostrap.get_example_layout())))
 
     # process request
-    web, data = example.ExampleForm(request, deform_template_path).process_form()
+    web, data = example.ExampleForm(request, DEFORM_TEMPLATE_PATH).process_form()
 
     if request.method == 'GET':
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
@@ -96,7 +96,7 @@ def form():
             )
 
             # Get form
-            web, data = build_form(request.args['table'], request, deform_template_path)
+            web, data = build_form(request.args['table'], request, DEFORM_TEMPLATE_PATH)
 
             # Get Table
             table = {'table': build_table(request.args['table'])}
@@ -112,8 +112,8 @@ def form():
             html = render_template("form.html", **{'form': form})
     else:
         # Get data from form
-        web, data = build_form(request.args['table'], request, deform_template_path, step=int(request.form['step']),
-                               force_get=False, validate='Retour' not in request.form.keys(),
+        web, data = build_form(request.args['table'], request, DEFORM_TEMPLATE_PATH, step=int(request.form['step']),
+                               force_get=False, validate='Retour' not in request.form.keys(), session=session,
                                data={k: request.form.get(k, '') for k in ['step', 'action', 'index']})
 
         script = None
@@ -131,8 +131,8 @@ def form():
                 step, data['form_data'] = 0, {}
 
             # Generate new form
-            web, data = build_form(request.args['table'], request, deform_template_path, step=step, force_get=True,
-                                   data=data['form_data'], script=script)
+            web, data = build_form(request.args['table'], request, DEFORM_TEMPLATE_PATH, step=step, force_get=True,
+                                   data=data['form_data'], script=script, session=session)
 
         else:
             step = request.form['step']
@@ -169,7 +169,7 @@ def document():
             )
 
             # Get form
-            web = build_document_form(request.args['table'], request, deform_template_path)
+            web = build_document_form(request.args['table'], request, DEFORM_TEMPLATE_PATH)
 
             # Gather context and render template
             context = {k: Markup(v) for k, v in web.items()}
@@ -206,7 +206,7 @@ def export():
             )
 
             # Get form
-            web, data = download.DownloadForm(request, deform_template_path).process_form()
+            web, data = download.DownloadForm(request, DEFORM_TEMPLATE_PATH).process_form()
 
             # Get Table
             table = {'table': build_table(request.args['table'], reduced=False, load_jQuery=True,
@@ -232,13 +232,14 @@ def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))
 
-    elif session['rights'] != 'ALL':
+    elif session['rights'] == 'STANDARD':
         return redirect(url_for('restricted'))
+
     if request.method == 'GET':
         if request.args:
 
             # render controls
-            html = build_controls(request, deform_template_path)
+            html = build_controls(request, session, DEFORM_TEMPLATE_PATH)
 
         else:
             control = Markup('<div class="jumbotron">'
@@ -247,8 +248,8 @@ def control():
             html = render_template("control.html", **{'control': control})
 
     else:
-        script = process_controls(request, deform_template_path)
-        html = build_controls(request, deform_template_path, script=script, force_get=True)
+        script = process_controls(request, session, DEFORM_TEMPLATE_PATH)
+        html = build_controls(request, session, DEFORM_TEMPLATE_PATH, script=script, force_get=True)
 
     return html
 

@@ -21,8 +21,8 @@ class Achat(BaseView):
     def load_view():
         # Load affaire db
         df = Commande.load_db()
-        df['affaire_num'] = df.affaire_id.apply(lambda x: x.split('-')[0])
-        df['affaire_ind'] = df.affaire_id.apply(lambda x: x.split('-')[1])
+        df['affaire_num'] = df.affaire_id.apply(lambda x: x.split('/')[0])
+        df['affaire_ind'] = df.affaire_id.apply(lambda x: x.split('/')[1])
 
         # Join devis information
         df_devis = Devis.load_db()

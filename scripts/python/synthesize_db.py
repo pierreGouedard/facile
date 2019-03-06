@@ -37,9 +37,9 @@ class Synthesizer():
                         12: 'Decembre {}'}
 
         current_monday = (pd.Timestamp.now() - pd.Timedelta(days=pd.Timestamp.now().weekday())).date()
-        l_dates = pd.DatetimeIndex(start=current_monday - pd.Timedelta(days=100),
-                                   end=current_monday + pd.Timedelta(days=10),
-                                   freq='w')
+        l_dates = pd.DatetimeIndex(
+            start=current_monday - pd.Timedelta(days=100), end=current_monday + pd.Timedelta(days=10), freq='w'
+        )
         self.l_semaine = [str((t + pd.Timedelta(days=1)).date()) for t in l_dates]
 
         self.float = lambda x: float(int(x * 1000)) / 1000
@@ -56,10 +56,11 @@ class Synthesizer():
 
     def Build_user_table_table(self):
         df_users = pd.DataFrame.from_dict(
-            {0: {'username': 'admin', 'password': '12345678', 'rights': 'ALL'},
-             1: {'username': 'standarduser', 'password': '1234', 'rights': 'ALL'}}, orient='index'
+            {0: {'username': 'sadmin', 'password': 'sadminpassword', 'rights': 'SADMIN'},
+             1: {'username': 'fadmin', 'password': 'fadminpassword', 'rights': 'STANDARD;FADMIN'},
+             2: {'username': 'cadmin', 'password': 'cadminpassword', 'rights': 'STANDARD;CADMIN'},
+             3: {'username': 'standard', 'password': 'standardpassword', 'rights': 'STANDARD'}}, orient='index'
         )
-
         self.save_database(df_users, 'users')
 
     def Build_employe_table(self):

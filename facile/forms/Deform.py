@@ -77,12 +77,14 @@ class Form(object):
 
                 # Generate succeed form (with values posted)
                 if validate:
+                    pstruct = self.validate_(pstruct)
+
                     pstruct_validate = copy.deepcopy(pstruct)
                     if self.d_lambda_mapping is not None or self.d_lambda_sequence_mapping is not None:
                         pstruct_validate = Form.process_mapping(
                             pstruct_validate, self.d_lambda_mapping, self.d_lambda_sequence_mapping
                         )
-                    pstruct = self.validate_(pstruct)
+
                     _ = form.validate_pstruct(pstruct_validate)
 
                 # Deffered missing values

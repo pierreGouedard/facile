@@ -226,9 +226,17 @@ class DateFields(object):
         self.missing_msg = missing_msg
         self.missing = missing
         self.desc = desc
-        self.widget = widget
+
+        if widget is None:
+            self.widget = DateInputWidget(**{'key': '{}-date'.format(self.name)})
+            self.mapinit = {'date': None}
+            processing_form = lambda x: pd.Timestamp(x['date'])
+
+        else:
+            self.widget = widget
+            self.mapinit = mapinit
+
         self.round = round
-        self.mapinit = mapinit
 
         # Db column
         self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
@@ -249,8 +257,8 @@ class DateFields(object):
     def set_mode(self):
 
         return DateFields(self.title, self.name, self.round,
-                          widget=DateInputWidget(**{'key': '{}-date'.format(self.name)}), mapinit={'date': None},
-                          processing_form=lambda x: pd.Timestamp(x['date']), desc=self.desc, missing=self.missing,
+                          widget=self.widget, mapinit=self.mapinit,
+                          processing_form=self.processing_form['form'], desc=self.desc, missing=self.missing,
                           required=self.required, missing_msg=self.missing_msg)
 
     def hidden_mode(self):
@@ -272,9 +280,17 @@ class DateTimeFields(object):
         self.missing_msg = missing_msg
         self.type = str
         self.desc = desc
-        self.widget = widget
         self.round = round
-        self.mapinit = mapinit
+
+        if widget is None:
+            keyw = {'key_date': '{}-date'.format(self.name), 'key_time': '{}-time'.format(self.name)}
+            self.widget = DateTimeInputWidget(**keyw)
+            self.mapinit = {'date': None, 'time': None}
+            processing_form = lambda x: pd.Timestamp('{} {}'.format(x['date'], x['time']))
+
+        else:
+            self.widget = widget
+            self.mapinit = mapinit
 
         # Db column
         self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
@@ -292,12 +308,9 @@ class DateTimeFields(object):
             self.sn.missing = missing
 
     def set_mode(self):
-        keyw = {'key_date': '{}-date'.format(self.name),
-                'key_time': '{}-time'.format(self.name)}
-
         return DateTimeFields(
-            self.title, self.name, self.round, widget=DateTimeInputWidget(**keyw), mapinit={'date': None, 'time': None},
-            processing_form=lambda x: pd.Timestamp('{} {}'.format(x['date'], x['time']), desc=self.desc)
+            self.title, self.name, self.round, widget=self.widget, mapinit=self.mapinit,
+            processing_form=self.processing_form['form'], desc=self.desc
         )
 
     def hidden_mode(self):

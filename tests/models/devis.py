@@ -7,7 +7,6 @@ import numpy as np
 # Local import
 from facileapp.models.devis import Devis
 from facile.core.base_model import BaseModel
-from settings import facile_test_path
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -22,7 +21,6 @@ class TestDevis(unittest.TestCase):
                            'date_start': '2018-01-01', 'date_end': '2018-03-01', 'base_prix': 'Mai 2018', 'price': 0,
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
                        }
-        self.path = os.path.join(facile_test_path, 'devis.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {

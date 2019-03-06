@@ -6,7 +6,6 @@ import os
 # Local import
 from facileapp.models.employe import Employe
 from facile.core.base_model import BaseModel
-from settings import facile_test_path
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -20,7 +19,6 @@ class TestEmploye(unittest.TestCase):
                            'qualification': "gestion affaire", 'date_start': '2018-01-01', 'date_end': '',
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
                        }
-        self.path = os.path.join(facile_test_path, 'employe.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {

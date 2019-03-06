@@ -1,7 +1,7 @@
 from dominate.tags import table, col, thead, tr, th, tbody, td, tfoot
 import jinja2
 from flask import render_template_string, Markup
-import settings
+from config import TABLE_TEMPLATE_PATH
 
 
 class Table(object):
@@ -84,7 +84,7 @@ class Table(object):
 
     @staticmethod
     def render_template(filename, context):
-        return jinja2.Environment(loader=jinja2.FileSystemLoader(settings.table_template_path or './'))\
+        return jinja2.Environment(loader=jinja2.FileSystemLoader(TABLE_TEMPLATE_PATH or './'))\
             .get_template(filename)\
             .render(context)
 

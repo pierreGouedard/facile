@@ -20,7 +20,7 @@ class Facture(BaseModel):
     nb_step_form = 2
 
     @staticmethod
-    def l_fields(widget=False):
+    def l_fields(widget=False, restricted=True):
         if widget:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
@@ -34,6 +34,12 @@ class Facture(BaseModel):
                  DateFields(title='Visa', name='date_visa', missing='1970-01-01'),
                  DateFields(title='Encaissement', name='date_payed', missing='1970-01-01')
                  ]
+
+            if restricted:
+                l_fields[-2] = DateFields(title='Visa', name='date_visa', missing='1970-01-01', widget=HiddenWidget(),
+                                          processing_form=lambda x: pd.Timestamp(x))
+                l_fields[-1] = DateFields(title='Encaissement', name='date_payed', missing='1970-01-01',
+                                          widget=HiddenWidget(), processing_form=lambda x: pd.Timestamp(x))
         else:
             l_fields = \
                 [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
@@ -127,14 +133,14 @@ class Facture(BaseModel):
         return self
 
     @staticmethod
-    def form_loading(step, index=None, data=None):
+    def form_loading(step, index=None, data=None, restricted=True):
 
         if index is not None:
             d_index = {Facture.l_index[0].name: Facture.l_index[0].type(index)}
         else:
             d_index = None
 
-        form_man = FormLoader(Facture.l_index, Facture.l_fields(widget=True))
+        form_man = FormLoader(Facture.l_index, Facture.l_fields(widget=True, restricted=restricted))
 
         if step % Facture.nb_step_form == 0:
             index_node = StringFields(

@@ -14,7 +14,7 @@ from facileapp.models.fournisseur import Fournisseur
 from facileapp.models.heure import Heure
 from facileapp.models.views.feuille_travaux import FeuilleTravaux
 from facile.utils.drivers.files import FileDriver
-from settings import facile_driver_tmpdir
+from config import FILE_DRIVER_TMP_DIR
 
 
 def build_table(table_key, reduced=True, load_jQuery=False, head_class="table-active"):
@@ -121,9 +121,9 @@ def process_table(table_key):
 
 def clean_tmp_dir():
     driver = FileDriver('tmp_doc', '')
-    for f in driver.listdir(facile_driver_tmpdir):
+    for f in driver.listdir(FILE_DRIVER_TMP_DIR):
         if 'tmp_doc_' in f:
             try:
-                driver.remove(driver.join(facile_driver_tmpdir, f), recursive=True)
+                driver.remove(driver.join(FILE_DRIVER_TMP_DIR, f), recursive=True)
             except OSError:
                 continue

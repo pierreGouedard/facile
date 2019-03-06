@@ -21,7 +21,13 @@ class User(object):
 
     d_fields = {
         'index': [StringFields(title='Username', name='username')],
-        'fields': [StringFields(title='Password', name='password'), StringFields(title='Droits', name='rights')]
+        'fields': [
+            StringFields(title='Password', name='password'),
+            StringFields(
+                title='Droits', name='rights',
+                l_choices=[('SADMIN', 'SADMIN'), ('UADMIN', 'UADMIN'), ('CADMIN', 'CADMIN'), ('STANDARD', 'STANDARD')],
+                multiple=True
+            )]
     }
 
     driver = RdbmsDriver(facile_base, db_uri, 'UserDB driver')
@@ -95,10 +101,13 @@ class User(object):
         self.driver.delete_row(d_value, 'users')
 
     @staticmethod
-    def control_loading():
+    def control_loading(rights):
 
         d_control_data = {}
         df = User.driver.read_table('users')
+
+        if rights != 'SADMIN':
+            df.loc[df.rights == 'SADMIN', 'password'] = '******'
 
         # App 1 Table of user
         table_man = TableLoader(User.d_fields['index'], User.d_fields['fields'])
@@ -117,7 +126,7 @@ class User(object):
             l_choices=[('Ajouter', 'Ajouter'), ('Suprimer', 'Suprimer'), ('Modifier', 'modifier')]
         )
         l_nodes = [action.sn] + [f.sn for f in User.d_fields['index']] + [f.sn for f in User.d_fields['fields']]
-        mapping = {'action': None, 'username': None, 'password': None, 'rights': None}
+        mapping = {'action': None, 'username': None, 'password': None, 'rights': []}
 
         d_control_data['setusers'] = {
             'form': {'nodes': l_nodes, 'mapping': mapping},
@@ -129,9 +138,16 @@ class User(object):
         return d_control_data
 
     @staticmethod
-    def control_process(form_data):
+    def control_process(form_data, session):
 
         form_data['success'] = True
+
+        if session['rights'] != 'SADMIN' and 'SADMIN' in form_data['rights']:
+            script = 'alert("Problem ! {}");'.format(
+                "Vous ne pouvez pas faire d'action pour un super utilisateur"
+            )
+
+            return script
 
         if form_data['action'] == 'Ajouter':
             user = User(form_data['username'], form_data['password'], form_data['password'])

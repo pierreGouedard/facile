@@ -13,7 +13,7 @@ from facile.core.plot_renderer import PlotRerenderer
 from facile.tables.html_table import Table
 
 
-def build_controls(request, deform_template_path, script=None, force_get=False):
+def build_controls(request, session, deform_template_path, script=None, force_get=False):
 
     if request.args['table'] == 'affaire':
         d_control_data = FeuilleTravaux.control_loading()
@@ -22,10 +22,35 @@ def build_controls(request, deform_template_path, script=None, force_get=False):
         d_control_data = Devis.control_loading()
 
     elif request.args['table'] == 'facture':
-        d_control_data = Facture.control_loading()
+        if 'CADMIN' in session['rights'] or 'SADMIN' in session['rights']:
+            d_control_data = Facture.control_loading()
+        else:
+            d_control_data = {
+                'restricted':
+                    {
+                        'rows': [(
+                            'title',
+                            [{'content': 'title', 'value': "Ce controle est restreint !", 'cls': 'text-center'}])
+                        ],
+                        'rank': 0
+                    }
+            }
 
     elif request.args['table'] == 'users':
-        d_control_data = User.control_loading()
+        if 'FADMIN' in session['rights'] or 'SADMIN' in session['rights']:
+            d_control_data = User.control_loading(session['rights'])
+        else:
+            d_control_data = {
+                'restricted':
+                    {
+                        'rows': [(
+                            'title',
+                            [{'content': 'title', 'value': "Ce controle est restreint !", 'cls': 'text-center'}])
+                        ],
+                        'rank': 0
+                    }
+            }
+
     # elif table_key == 'employe':
     #     d_control_data = Employe.control_loading()
 
@@ -82,7 +107,7 @@ def generic_control_renderer(request, d_control_data, template_app_container, de
     return html
 
 
-def process_controls(request, deform_template_path):
+def process_controls(request, session, deform_template_path):
     script = ''
 
     if request.args['table'] == 'affaire':
@@ -97,13 +122,13 @@ def process_controls(request, deform_template_path):
 
     elif request.args['table'] == 'users':
         # Load control
-        d_control_data = User.control_loading()
+        d_control_data = User.control_loading(session['rights'])
 
         # Get form data
         _, form_data = ControlForm(request, deform_template_path, **d_control_data['setusers']['form']).process_form()
 
         # Process request and generate qcript response
-        script = User.control_process(form_data['form_data'])
+        script = User.control_process(form_data['form_data'], session)
 
     return script
 

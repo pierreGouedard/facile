@@ -12,3 +12,4 @@ XlsxWriter==1.1.4
 ipython==5.8.0
 python-docx==0.8.10
 SQLAlchemy==1.2.18
+boto3==1.9.108

@@ -6,7 +6,6 @@ import os
 # Local import
 from facileapp.models.chantier import Chantier
 from facile.core.base_model import BaseModel
-from settings import facile_test_path
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -19,7 +18,6 @@ class TestChantier(unittest.TestCase):
                            'ville': 'Clichy', 'code_postal': '92110', 'is_active': 'yes',
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}}
 
-        self.path = os.path.join(facile_test_path, 'chantier.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {

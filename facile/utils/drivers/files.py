@@ -4,13 +4,12 @@ import tempfile
 import shutil
 
 # Local import
-import settings
+from config import FILE_DRIVER_TMP_DIR
 
 
 class Driver(object):
 
     def __init__(self, name, desc, streamable=False):
-        self.settings = settings
         self.streamable = streamable
         self.name = name
         self.desc = desc
@@ -146,7 +145,7 @@ class FileDriver(Driver):
         return super(FileDriver, self).TempFile(
             prefix=prefix,
             suffix=suffix,
-            dir=dir if dir is not None else self.settings.facile_driver_tmpdir,
+            dir=dir if dir is not None else FILE_DRIVER_TMP_DIR,
             destination=destination,
             create=create
         )
@@ -155,7 +154,7 @@ class FileDriver(Driver):
         return super(FileDriver, self).TempDir(
             prefix=prefix,
             suffix=suffix,
-            dir=dir if dir is not None else self.settings.facile_driver_tmpdir,
+            dir=dir if dir is not None else FILE_DRIVER_TMP_DIR,
             destination=destination,
             create=create
         )

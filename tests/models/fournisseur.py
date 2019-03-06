@@ -7,8 +7,6 @@ import os
 from facileapp.models.fournisseur import Fournisseur
 from facile.core.base_model import BaseModel
 
-from settings import facile_test_path
-
 __maintainer__ = 'Pierre Gouedard'
 
 
@@ -19,7 +17,6 @@ class TestFournisseur(unittest.TestCase):
                            'num_tel': '0606060606', 'mail': 'comptabilite@metalunion.com',
                            'creation_date': str(pd.Timestamp.now()), 'maj_date': str(pd.Timestamp.now())}
                        }
-        self.path = os.path.join(facile_test_path, 'fournisseur.csv')
         pd.DataFrame.from_dict(self.d_init, orient='index').to_csv(self.path, index=None)
 
         self.d_index = {
