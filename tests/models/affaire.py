@@ -13,7 +13,6 @@ __maintainer__ = 'Pierre Gouedard'
 
 class TestAffaire(unittest.TestCase):
     def setUp(self):
-        print 'tes'
         self.affaire_id = 123456
         self.d_init = {0: {'affaire_id': self.affaire_id,
                            'devis_id': 0, 'responsable': 'Jean Dujardin', 'creation_date': str(pd.Timestamp.now()),
