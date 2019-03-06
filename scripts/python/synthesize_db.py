@@ -8,9 +8,9 @@ from facile.utils.drivers import rdbms
 
 # Local import
 from facileapp import facile_base
-from config import SQL_DATABASE_URI as db_uri
+from config import d_sconfig
 
-driver = rdbms.RdbmsDriver(facile_base, db_uri)
+driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'])
 
 __maintainer__ = 'Pierre Gouedard'
 

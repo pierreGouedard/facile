@@ -3,7 +3,7 @@ import sqlalchemy as db
 
 # Local import
 from facileapp import facile_base
-from config import SQL_DATABASE_URI as db_uri
+from config import d_sconfig
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -20,6 +20,5 @@ class Initializer():
 
 
 if __name__ == '__main__':
-    init = Initializer(db_uri)
+    init = Initializer(d_sconfig['mysql_uri'])
     init.create_database()
-

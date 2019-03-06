@@ -2,7 +2,7 @@
 import pandas as pd
 
 # Local import
-from config import SQL_DATABASE_URI as db_uri
+from config import d_sconfig
 from facile.core.fields import StringFields
 from facileapp import facile_base
 from facile.utils.drivers.rdbms import RdbmsDriver
@@ -16,7 +16,7 @@ class BaseModel(object):
     l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
     l_documents = []
     l_apps = []
-    driver = RdbmsDriver(facile_base, db_uri, 'BaseModel driver')
+    driver = RdbmsDriver(facile_base, d_sconfig['mysql_uri'], 'BaseModel driver')
 
     def __init__(self, d_index, d_fields, d_hfields={}, table_name=None):
         for f in self.l_index:

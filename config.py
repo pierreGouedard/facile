@@ -1,6 +1,5 @@
 DEBUG = True
 SECRET_KEY = 'changethismotherfuckingsecretkey'
-SQL_DATABASE_URI = 'sqlite:///facile-erp.db'
 MODEL_PATH = 'facileapp.models'
 LST_MODEL = [
     ('user', 'User'), ('affaire', 'Affaire'), ('chantier', 'Chantier'), ('client', 'Client'), ('commande', 'Commande'),
@@ -15,5 +14,5 @@ TABLE_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/table/template
 FILE_DRIVER_TMP_DIR = '/tmp'
 
 import yaml
-with open('secret-setting.yaml', 'rb') as lcf:
+with open('secret-config.yaml', 'rb') as lcf:
     d_sconfig = yaml.safe_load(lcf)

@@ -239,7 +239,7 @@ class DateFields(object):
         self.round = round
 
         # Db column
-        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
+        self.dbcol_ = (name, Colsql(Strsql(250), primary_key=primary_key))
 
         # table display
         self.table_reduce, self.rank, = table_reduce, rank
@@ -293,7 +293,7 @@ class DateTimeFields(object):
             self.mapinit = mapinit
 
         # Db column
-        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
+        self.dbcol_ = (name, Colsql(Strsql(250), primary_key=primary_key))
 
         # Table display
         self.table_reduce, self.rank, = table_reduce, rank

@@ -6,7 +6,7 @@ from sqlalchemy import Column, String
 from facileapp import facile_base
 from facile.core.table_loader import TableLoader
 from facile.core.fields import StringFields
-from config import SQL_DATABASE_URI as db_uri
+from config import d_sconfig
 from facile.utils.drivers.rdbms import RdbmsDriver
 
 
@@ -30,7 +30,7 @@ class User(object):
             )]
     }
 
-    driver = RdbmsDriver(facile_base, db_uri, 'UserDB driver')
+    driver = RdbmsDriver(facile_base, d_sconfig['mysql_uri'], 'UserDB driver')
 
     def __init__(self, username, password, rights=None):
         self.username = username
