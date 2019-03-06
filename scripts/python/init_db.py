@@ -21,4 +21,8 @@ class Initializer():
 
 if __name__ == '__main__':
     init = Initializer(d_sconfig['mysql_uri'])
-    init.create_database()
+    answer = raw_input("Cette action va supprimer tout le contenu de la base, pour confirmer entrer 'ouisuprimertoutca'")
+    if answer == 'ouisuprimertoutca' or answer == "'ouisuprimertoutca'":
+        init.create_database()
+    else:
+        print 'operation annulee'
