@@ -14,7 +14,7 @@ class Table(object):
     js_static = '<script type="text/javascript" src="%s"></script>'
     jquery = "<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.js'></script>"
     href = "{{url_for('static', filename='table/%s')}}"
-    print 'pute'
+
     def __init__(self, column_names, id_table, head_class='table-active', style='underscore', load_jQuery=False,
                  **kwargs):
 
