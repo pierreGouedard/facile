@@ -343,7 +343,7 @@ class FileFields(object):
         self.table_reduce, self.rank, = table_reduce, rank
 
         # Db column
-        self.dbcol_ = (name, Colsql(Strsql, primary_key=primary_key))
+        self.dbcol_ = (name, Colsql(Strsql(250), primary_key=primary_key))
 
         if mapinit is not None:
             self.mapinit.update(mapinit)

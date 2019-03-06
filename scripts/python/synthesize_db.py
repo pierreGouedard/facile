@@ -332,6 +332,7 @@ class Synthesizer():
             'designation_client': 'client {} - site {}'.format(len(self.l_affaires), len(self.l_affaires)),
             'contact_id': np.random.choice([id_ for id_ in self.d_contacts.get('commande', ['unknown'])]),
             'responsable': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
+            'object': 'Objet du devis correspond a un texte arbitraire',
             'heure_prod': np.random.randint(100, 1000),
             'heure_autre': np.random.randint(100, 1000),
             'prix_heure_prod': float(np.random.randint(40, 100)),
@@ -396,7 +397,7 @@ class Synthesizer():
         np.random.seed(1234)
 
         d_heure_ouvrier = {
-            i: {'heure_id': i,
+            i: {'heure_id': i + 1,
                 'affaire_id': affaire,
                 'semaine': np.random.choice(self.l_semaine),
                 'name': np.random.choice(['ouvrier num_{}'.format(j) for j in range(self.n_ouvrier)] + ['interimaire']),
@@ -409,7 +410,7 @@ class Synthesizer():
 
         d_heure_chargedaff = {
             i + len(d_heure_ouvrier): {
-                'heure_id': len(d_heure_ouvrier) + i,
+                'heure_id': len(d_heure_ouvrier) + i + 1,
                 'affaire_id': affaire,
                 'semaine': np.random.choice(self.l_semaine),
                 'name': np.random.choice(['chargedaff num_{}'.format(j) for j in range(self.n_charge)]),
