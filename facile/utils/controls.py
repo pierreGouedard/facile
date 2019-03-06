@@ -3,45 +3,47 @@ from flask import Markup, render_template
 from jinja2 import Template
 
 # Local import
-from facileapp.models.employe import Employe
+from facile.forms.control import ControlForm
 from facileapp.models.views.feuille_travaux import FeuilleTravaux
-from facileapp.models.affaire import Affaire
 from facileapp.models.devis import Devis
 from facileapp.models.facture import Facture
-from facileapp.models.commande import Commande
-from facileapp.models.heure import Heure
+from facileapp.models.user import User
 from facile.layout import boostrap
 from facile.core.plot_renderer import PlotRerenderer
 from facile.tables.html_table import Table
 
 
-def build_controls(table_key):
+def build_controls(request, deform_template_path, script=None, force_get=False):
 
-    if table_key == 'affaire':
+    if request.args['table'] == 'affaire':
         d_control_data = FeuilleTravaux.control_loading()
 
-    elif table_key == 'devis':
+    elif request.args['table'] == 'devis':
         d_control_data = Devis.control_loading()
 
-    elif table_key == 'facture':
+    elif request.args['table'] == 'facture':
         d_control_data = Facture.control_loading()
 
+    elif request.args['table'] == 'users':
+        d_control_data = User.control_loading()
     # elif table_key == 'employe':
     #     d_control_data = Employe.control_loading()
 
     else:
-        raise ValueError('key not understood {}'.format(table_key))
+        raise ValueError('key not understood {}'.format(request.args['table_key']))
 
     l_apps = map(lambda (k, v): k, sorted(d_control_data.items(), key=lambda (k, v): v['rank']))
     template_app_container = Template(
         render_template('control.html', control=Markup(boostrap.get_control_layout(l_apps)))
     )
-    html = generic_control_renderer(d_control_data, template_app_container)
+    html = generic_control_renderer(request, d_control_data, template_app_container, deform_template_path,
+                                    script=script, force_get=force_get)
 
     return html
 
 
-def generic_control_renderer(d_control_data, template_app_container):
+def generic_control_renderer(request, d_control_data, template_app_container, deform_template_path,
+                             script=None,force_get=False):
     d_app_context = {}
 
     for name, d_data in d_control_data.items():
@@ -59,7 +61,8 @@ def generic_control_renderer(d_control_data, template_app_container):
                     d_context['table'] = Markup(table.render_table_from_pandas(d_['df'], d_footer=d_['d_footer']))
 
                 elif d['content'] == 'form':
-                    print 'TODO'
+                    d_context, _ = ControlForm(request, deform_template_path, **d_data['form'])\
+                        .process_form(script=script, force_get=force_get)
 
         if plot_data is not None:
             # Build element of app
@@ -69,7 +72,6 @@ def generic_control_renderer(d_control_data, template_app_container):
             d_app_context['app_{}'.format(name)] = Markup(
                 plot_man.render_figure(plot_data['d'], **plot_data.get('o', {}))
             )
-
         else:
             context = {k: Markup(v) for k, v in d_context.items()}
             d_app_context['app_{}'.format(name)] = render_template(template, **context)
@@ -78,3 +80,30 @@ def generic_control_renderer(d_control_data, template_app_container):
     html = render_template(template_app_container, **d_app_context)
 
     return html
+
+
+def process_controls(request, deform_template_path):
+    script = ''
+
+    if request.args['table'] == 'affaire':
+        # Load control
+        d_control_data = FeuilleTravaux.control_loading()
+
+        # Get form data
+        _, form_data = ControlForm(request, deform_template_path, **d_control_data['mergeca']['form']).process_form()
+
+        # Process request and generate qcript response
+        script = FeuilleTravaux.control_process(form_data['form_data'])
+
+    elif request.args['table'] == 'users':
+        # Load control
+        d_control_data = User.control_loading()
+
+        # Get form data
+        _, form_data = ControlForm(request, deform_template_path, **d_control_data['setusers']['form']).process_form()
+
+        # Process request and generate qcript response
+        script = User.control_process(form_data['form_data'])
+
+    return script
+

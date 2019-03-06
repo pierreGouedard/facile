@@ -106,6 +106,20 @@ class Heure(BaseModel):
         return Heure.load_db(columns=['heure_id'])['heure_id'].unique()
 
     @staticmethod
+    def merge_affaire(l_af):
+
+        # Get main and sub affaire
+        main = '/'.join([l_af[0].affaire_num, l_af[0].affaire_ind])
+        sub = '/'.join([l_af[-1].affaire_num, l_af[-1].affaire_ind])
+
+        # Load commande and update affaire id
+        df = Heure.driver.select(Heure.table_name, **{"affaire_id": sub})
+        df['affaire_id'] = main
+
+        # Save changes
+        Heure.driver.update_rows(df, Heure.table_name)
+
+    @staticmethod
     def get_groupindex():
         return Heure.load_db(columns=['semaine']).unique()
 

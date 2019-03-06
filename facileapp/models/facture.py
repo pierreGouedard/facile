@@ -83,6 +83,20 @@ class Facture(BaseModel):
     def get_facture():
         return Facture.load_db(columns=['facture_id'])['facture_id'].unique()
 
+    @staticmethod
+    def merge_affaire(l_af):
+
+        # Get main and sub affaire
+        main = '/'.join([l_af[0].affaire_num, l_af[0].affaire_ind])
+        sub = '/'.join([l_af[-1].affaire_num, l_af[-1].affaire_ind])
+
+        # Load commande and update affaire id
+        df = Facture.driver.select(Facture.table_name, **{"affaire_id": sub})
+        df['affaire_id'] = main
+
+        # Save changes
+        Facture.driver.update_rows(df, Facture.table_name)
+
     def add(self):
         l_factures = list(Facture.load_db(columns=['facture_id', 'type']).values)
 

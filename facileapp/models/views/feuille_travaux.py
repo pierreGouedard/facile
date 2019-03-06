@@ -279,8 +279,10 @@ class FeuilleTravaux(BaseView):
         # App 1 repartition categorie among employes
         df['montant_facture'] = df[[c for c in df.columns if 'montant_situation_' in c]].sum(axis=1)
         df['state'] = df[['price_devis', 'montant_facture']]\
-            .apply(lambda row: 'cloturee' if abs(row['price_devis'] - row['montant_facture']) < 10 else 'En cours',
-                   axis=1)
+            .apply(
+            lambda row: 'cloturee' if abs(row['price_devis'] - row['montant_facture']) < max(5, 0.001 * row['price_devis'])
+            else 'En cours', axis=1
+        )
 
         df_ca = df[['price_devis', 'state']].groupby('state')\
             .sum()\
@@ -295,4 +297,66 @@ class FeuilleTravaux(BaseView):
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
                 }
+
+        # App 2: form of merge of affaire
+        l_affaires = [('-', '-')] + zip(Affaire.get_affaire(), Affaire.get_affaire())
+        l_nodes = [
+            StringFields(title="Affaire principal", name='af1', l_choices=l_affaires),
+            StringFields(title="Affaire a fusionner", name='af2', l_choices=l_affaires)
+        ]
+
+        d_control_data['mergeca'] = {
+            'form': {'nodes': [f.sn for f in l_nodes], 'mapping': {'af1': None, 'af2': None}},
+            'rows': [('title', [{'content': 'title', 'value': "Fusion des affaires", 'cls': 'text-center'}]),
+                     ('form', [{'content': 'form'}])],
+            'rank': 1
+                }
+
         return d_control_data
+
+    @staticmethod
+    def control_process(data):
+
+        data['success'] = True
+        if data['af1'] == '-' or data['af2'] == '-':
+            return 'alert("Veuillez selectionner des affaires");'
+
+        # Get affaire
+        lmdb = lambda x: {'affaire_num': x.split('/')[0], 'affaire_ind': x.split('/')[1]}
+        l_af = [Affaire.from_index_(lmdb(data['af1'])), Affaire.from_index_(lmdb(data['af2']))]
+        l_dv = [Devis.from_index_({'devis_id': l_af[0].devis_id}), Devis.from_index_({'devis_id': l_af[1].devis_id})]
+
+        # Merge and Update devis
+        try:
+            dv_merged = Devis.merge(l_dv[0], l_dv[1])
+
+        except AssertionError:
+            data['success'] = False
+            err_msg = 'Problem with price of resulting devis'
+            return 'alert("{} Voir avec DSI");'.format(err_msg)
+
+        # delete ref of sub affaire in commande, facture, heure tables
+        try:
+            Commande.merge_affaire(l_af), Facture.merge_affaire(l_af), Heure.merge_affaire(l_af)
+            dv_merged.alter(), l_dv[1].delete(), l_af[-1].delete()
+        except IndexError:
+            err_msg = 'Critical problem with data integrity during merge of {af1} and {af2}'.format(
+                af1='/'.join([l_af[0].affaire_num, l_af[0].affaire_ind]),
+                af2='/'.join([l_af[1].affaire_num, l_af[1].affaire_ind])
+            )
+            return 'alert("{}. Voir avec DSI de toute urgence");'.format(err_msg)
+
+        # Get script
+        success_msg = \
+            'alert("les affaires {af1} et {af2} ainsi que les devis {dv1} et {dv2} ont bien ete fusionner, ' \
+            'respectivement sous les indices {af1} et {dv1}");'.format(
+                af1='/'.join([l_af[0].affaire_num, l_af[0].affaire_ind]),
+                af2='/'.join([l_af[1].affaire_num, l_af[1].affaire_ind]),
+                dv1=l_af[0].devis_id, dv2=l_af[1].devis_id,
+            )
+        script = '$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": "affaire", "index": "%s"}})' \
+                 '.done(function (response, status, request) { %s ' \
+                 'var url = response["url"].concat(response["data"]);' \
+                 'window.location = url});'
+
+        return script % ('/'.join([l_af[0].affaire_num, l_af[0].affaire_ind]), success_msg)

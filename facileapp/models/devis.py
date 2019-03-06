@@ -95,7 +95,7 @@ class Devis(BaseModel):
     @staticmethod
     def from_index_(d_index):
         # Series
-        s = BaseModel.from_index('devis', d_index)
+        s = BaseModel.from_index(Devis.table_name, d_index)
 
         return Devis(d_index, s.loc[[f.name for f in Devis.l_fields()]].to_dict())
 
@@ -139,13 +139,57 @@ class Devis(BaseModel):
 
         return self
 
-    def alter(self):
-        self.price = Devis.compute_price(
-            {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
-             'php': self.__getattribute__('prix_heure_prod'), 'pha': self.__getattribute__('prix_heure_autre')},
-            {'ca': self.__getattribute__('coef_achat'), 'ma': self.__getattribute__('montant_achat')}
-        )
+    def alter(self, compute_price=True):
+        if compute_price:
+            self.price = Devis.compute_price(
+                {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
+                 'php': self.__getattribute__('prix_heure_prod'), 'pha': self.__getattribute__('prix_heure_autre')},
+                {'ca': self.__getattribute__('coef_achat'), 'ma': self.__getattribute__('montant_achat')}
+            )
+
         super(Devis, self).alter()
+
+    @staticmethod
+    def merge(dv_main, dv_sub):
+
+        l_dv = [dv_main, dv_sub]
+
+        # Get hours
+        ha, hp = sum([int(dv.heure_autre) for dv in l_dv]), sum([int(dv.heure_prod) for dv in l_dv])
+
+        # Get average price for hours
+        pha = sum([(float(dv.heure_autre) / ha) * float(dv.prix_heure_autre) for dv in l_dv])
+        php = sum([(float(dv.heure_prod) / hp) * float(dv.prix_heure_prod) for dv in l_dv])
+
+        # Get command
+        ma = sum([float(dv.montant_achat) for dv in l_dv])
+
+        # Get average coef command
+        ca = sum([(float(dv.montant_achat) / ma) * float(dv.coef_achat) for dv in l_dv])
+
+        # Get dates
+        ds, de = l_dv[0].date_start, max(l_dv[0].date_end, l_dv[1].date_end)
+
+        # Define lambda for decimal
+        lmbd = lambda x: float(int(x * 1000)) / 1000
+
+        p = Devis.compute_price(
+            {'ha': ha, 'hp': hp, 'pha': lmbd(pha), 'php': lmbd(php)}, {'ma': lmbd(ma), 'ca': lmbd(ca)}
+        )
+
+        # Assert precision is sufficient to maintain error low
+        assert (abs(sum([float(dv.price) for dv in l_dv]) - p) < 0.001 * sum([float(dv.price) for dv in l_dv]))
+
+        d_index = {'devis_id': l_dv[0].devis_id}
+        d_fields = {f.name: l_dv[0].__getattribute__(f.name) for f in l_dv[0].l_fields()}
+        d_fields.update(
+            {'heure_autre': ha, 'heure_prod': hp, 'prix_heure_autre': lmbd(pha), 'prix_heure_prod': lmbd(php),
+             'montant_achat': lmbd(ma), 'coef_achat': lmbd(ca), 'date_start': ds, 'date_end': de, 'price': lmbd(p)}
+        )
+
+        # Update devis
+        dv_merged = Devis(d_index=d_index, d_fields=d_fields)
+        return dv_merged
 
     @staticmethod
     def compute_price(d_heures, d_achats):

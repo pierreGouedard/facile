@@ -83,11 +83,11 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
 def process_form(table_key, d_data, action):
 
     # Code to download document at the completion of some form (Devis, Affaire, ...)
-    script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
+    script = '$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
              '.done(function (response, status, request) {alert(%s %s);});'
 
     if table_key in ['affaire', 'devis', 'facture', 'commande'] and 'Suprimer' not in action:
-        script = '$.ajax({method: "POST", url: "/url_download_form", data: {"table_key": %s, "index": %s}})' \
+        script = '$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
                  '.done(function (response, status, request) { alert(%s %s);' \
                  'var url = response["url"].concat(response["data"]);' \
                  'window.location = url});'

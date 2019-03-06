@@ -89,7 +89,7 @@ class Affaire(BaseModel):
     @staticmethod
     def from_index_(d_index):
         # Series
-        s = BaseModel.from_index('affaire', d_index)
+        s = BaseModel.from_index(Affaire.table_name, d_index)
 
         return Affaire(d_index, s.loc[[f.name for f in Affaire.l_fields()]].to_dict())
 

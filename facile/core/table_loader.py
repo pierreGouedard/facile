@@ -17,14 +17,14 @@ class TableLoader(object):
         if self.type == 'html':
             return self.load_reduce_table_html(df)
 
-    def load_full_table(self, df, l_extra_cols=None):
+    def load_full_table(self, df, l_extra_cols=None, sort=True):
         if self.type == 'html':
-            return self.load_full_table_html(df, l_extra_cols=l_extra_cols)
+            return self.load_full_table_html(df, l_extra_cols=l_extra_cols, sort=sort)
         else:
-            return self.load_table_excel(df, l_extra_cols=l_extra_cols)
+            return self.load_table_excel(df, l_extra_cols=l_extra_cols, sort=sort)
 
-    def load_table_excel(self, df, l_extra_cols=None):
-        if not df.empty:
+    def load_table_excel(self, df, l_extra_cols=None, sort=True):
+        if not df.empty and sort:
             # Sort database
             df = self.sort_df(df)
 
@@ -54,9 +54,9 @@ class TableLoader(object):
 
         return df,  {'paginate': 'true', 'record_cnt': 'true'}
 
-    def load_full_table_html(self, df, l_extra_cols=None):
+    def load_full_table_html(self, df, l_extra_cols=None, sort=True):
 
-        if not df.empty:
+        if not df.empty and sort:
             # Sort database
             df = self.sort_df(df)
 

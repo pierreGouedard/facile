@@ -9,7 +9,7 @@ from facile.forms import login, download, example
 from facile.utils.forms import build_form, process_form, get_args_forms, get_title_from_step, build_document_form, \
     process_document_form
 from facile.utils.tables import build_table, process_table
-from facile.utils.controls import build_controls
+from facile.utils.controls import build_controls, process_controls
 from facile.layout import boostrap
 from settings import deform_template_path
 
@@ -227,30 +227,34 @@ def export():
     return html
 
 
-@application.route('/controls', methods=['GET'])
+@application.route('/controls', methods=['GET', 'POST'])
 def control():
     if 'username' not in session:
         return redirect(url_for('log_in'))
 
     elif session['rights'] != 'ALL':
         return redirect(url_for('restricted'))
+    if request.method == 'GET':
+        if request.args:
 
-    if request.args:
+            # render controls
+            html = build_controls(request, deform_template_path)
 
-        # render controls
-        html = build_controls(table_key=request.args['table'])
+        else:
+            control = Markup('<div class="jumbotron">'
+                             '<h1>Page des controles</h1>'
+                             '<p class="lead"> Choisissez un onglet pour visualiser un controle</p></div>')
+            html = render_template("control.html", **{'control': control})
 
     else:
-        control = Markup('<div class="jumbotron">'
-                         '<h1>Page des controles</h1>'
-                         '<p class="lead"> Choisissez un onglet pour visualiser un controle</p></div>')
-        html = render_template("control.html", **{'control': control})
+        script = process_controls(request, deform_template_path)
+        html = build_controls(request, deform_template_path, script=script, force_get=True)
 
     return html
 
 
-@application.route('/url_download_form', methods=['POST'])
-def url_download_form():
+@application.route('/url_success_form', methods=['POST'])
+def url_success_form():
     return jsonify({'url': '/send_file_form', 'data': '?' + '&'.join(['='.join(t) for t in request.form.items()])})
 
 

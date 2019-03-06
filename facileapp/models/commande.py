@@ -83,6 +83,20 @@ class Commande(BaseModel):
     def get_commande():
         return Commande.load_db(columns=['commande_id'])['commande_id'].unique()
 
+    @staticmethod
+    def merge_affaire(l_af):
+
+        # Get main and sub affaire
+        main = '/'.join([l_af[0].affaire_num, l_af[0].affaire_ind])
+        sub = '/'.join([l_af[-1].affaire_num, l_af[-1].affaire_ind])
+
+        # Load commande and update affaire id
+        df = Commande.driver.select(Commande.table_name, **{"affaire_id": sub})
+        df['affaire_id'] = main
+
+        # Save changes
+        Commande.driver.update_rows(df, Commande.table_name)
+
     def add(self):
         l_commandes = Commande.get_commande()
 
