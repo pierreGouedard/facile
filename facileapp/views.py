@@ -191,7 +191,7 @@ def export():
     if 'username' not in session:
         return redirect(url_for('log_in'))
 
-    elif session['rights'] != 'ALL':
+    elif 'ADMIN' not in session['rights']:
         return redirect(url_for('restricted'))
 
     if request.method == 'GET':
