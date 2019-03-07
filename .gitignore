@@ -3,3 +3,8 @@
 *.sqlite3
 secret-config.yaml
 facile-erp.db
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml

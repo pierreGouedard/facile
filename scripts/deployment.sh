@@ -20,8 +20,8 @@ eb init -k erepie -p python-2.7 --region eu-west-3 facile-erp && echo "Beanstalk
 echo "Beanstalk environment init failed"
 
 # TODO last 2 days:
-Create account for casoe
-Create super user in AWS's casoe account
+Create account for casoe OK
+Create super user in AWS's casoe account OK
 Create a database instance
 Make the ElasticBeansTalk routine for deployment
 Create File that gather every core information of application (aws web, etc)
