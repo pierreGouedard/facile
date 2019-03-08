@@ -56,7 +56,12 @@ class Client(BaseModel):
 
     @staticmethod
     def get_clients():
-        return Client.load_db(columns=['designation'])['designation'].unique()
+        df_client = Client.load_db(columns=['designation'])
+
+        if df_client.empty:
+            return []
+
+        return df_client['designation'].unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

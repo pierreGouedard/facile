@@ -23,7 +23,8 @@ echo "Beanstalk environment init failed"
 Create account for casoe OK
 Create super user in AWS's casoe account OK
 Create a database instance
-Make the ElasticBeansTalk routine for deployment
+Make the ElasticBeansTalk routine for deployment (VERY EASY)
+Create secret-config on new machine
 Create File that gather every core information of application (aws web, etc)
 
 

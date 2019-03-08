@@ -83,11 +83,13 @@ class Employe(BaseModel):
     def get_employes(sep=' ', **kwargs):
 
         # Get list of employ name and surname
-        l_employes = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs)\
-            .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1) \
-            .unique()
+        df = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs)\
+            .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1)
 
-        return l_employes
+        if df.empty:
+            return []
+
+        return df.unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

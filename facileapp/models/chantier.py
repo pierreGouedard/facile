@@ -88,7 +88,7 @@ class Chantier(BaseModel):
         # Get list of chantier
         df = Chantier.driver.select(Chantier.table_name, **kwargs)
         if df.empty:
-            return [('', 'Pas de selection de chantier possible')]
+            return []
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \

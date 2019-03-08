@@ -111,7 +111,12 @@ class Devis(BaseModel):
 
     @staticmethod
     def get_devis():
-        return Devis.load_db(columns=['devis_id'])['devis_id'].unique()
+        df_devis = Devis.load_db(columns=['devis_id'])
+
+        if df_devis.empty:
+            return []
+
+        return df_devis['devis_id'].unique()
 
     def add(self):
 
