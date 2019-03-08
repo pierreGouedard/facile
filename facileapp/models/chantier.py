@@ -54,7 +54,7 @@ class Chantier(BaseModel):
     def list(kw):
         if kw == 'client':
             return zip(
-                Client.load_db(columns=['designation']).unique(), Client.load_db(columns=['designation']).unique()
+                Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique()
             )
 
         else:
