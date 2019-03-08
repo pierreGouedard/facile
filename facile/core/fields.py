@@ -34,7 +34,9 @@ class StringFields(object):
         if widget is not None:
             self.widget = widget
         else:
-            if l_choices:
+            if l_choices is not None:
+                if len(l_choices) < 1:
+                    l_choices = [('', '-')]
                 self.widget = Select2Widget(values=l_choices, multiple=multiple)
             else:
                 self.widget = TextInputWidget()
