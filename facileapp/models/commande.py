@@ -81,7 +81,12 @@ class Commande(BaseModel):
 
     @staticmethod
     def get_commande():
-        return Commande.load_db(columns=['commande_id'])['commande_id'].unique()
+        df_commande =  Commande.load_db(columns=['commande_id'])
+
+        if df_commande.empty:
+            return []
+
+        return df_commande['commande_id'].unique()
 
     @staticmethod
     def merge_affaire(l_af):

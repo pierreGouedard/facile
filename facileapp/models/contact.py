@@ -106,13 +106,13 @@ class Contact(BaseModel):
         df = Contact.driver.select(Contact.table_name, **kwargs)
 
         if df.empty:
-            return [('', 'Pas de selection de contact possible')]
+            return []
 
         if type_ != 'all':
             df = df.loc[df.type.apply(lambda x: type_ in x)]
 
         if df.empty:
-            return [('', 'Pas de selection de contact possible')]
+            return []
 
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\

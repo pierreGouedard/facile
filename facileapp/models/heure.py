@@ -103,7 +103,12 @@ class Heure(BaseModel):
 
     @staticmethod
     def get_heure():
-        return Heure.load_db(columns=['heure_id'])['heure_id'].unique()
+        df_heure = Heure.load_db(columns=['heure_id'])
+
+        if df_heure.empty:
+            return []
+
+        return df_heure['heure_id'].unique()
 
     @staticmethod
     def merge_affaire(l_af):
@@ -121,7 +126,12 @@ class Heure(BaseModel):
 
     @staticmethod
     def get_groupindex():
-        return Heure.load_db(columns=['semaine']).unique()
+        df_heure = Heure.load_db(columns=['semaine'])
+
+        if df_heure.empty:
+            return []
+
+        return df_heure.unique()
 
     def add(self):
 

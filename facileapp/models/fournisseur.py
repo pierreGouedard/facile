@@ -59,7 +59,12 @@ class Fournisseur(BaseModel):
 
     @staticmethod
     def get_fournisseurs():
-        return Fournisseur.load_db(columns=['raison_social'])['raison_social'].unique()
+        df_fournisseur = Fournisseur.load_db(columns=['raison_social'])
+
+        if df_fournisseur.empty:
+            return []
+
+        return df_fournisseur['raison_social'].unique()
 
     @staticmethod
     def form_loading(step, index=None, data=None):

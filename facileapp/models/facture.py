@@ -87,7 +87,12 @@ class Facture(BaseModel):
 
     @staticmethod
     def get_facture():
-        return Facture.load_db(columns=['facture_id'])['facture_id'].unique()
+        df_facture = Facture.load_db(columns=['facture_id'])
+
+        if df_facture.empty:
+            return []
+
+        return df_facture['facture_id'].unique()
 
     @staticmethod
     def merge_affaire(l_af):
