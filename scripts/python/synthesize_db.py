@@ -1,8 +1,5 @@
 # Global imports
 import pandas as pd
-import numpy as np
-import string
-import random
 from facile.utils.drivers import rdbms
 
 
@@ -41,14 +38,7 @@ class Synthesizer():
             start=current_monday - pd.Timedelta(days=100), end=current_monday + pd.Timedelta(days=10), freq='w'
         )
         self.l_semaine = [str((t + pd.Timedelta(days=1)).date()) for t in l_dates]
-
         self.float = lambda x: float(int(x * 1000)) / 1000
-        self.name = Name()
-        self.adresse = Adresse()
-        self.ville = Ville()
-        self.tel = Tel()
-        self.service = Service()
-        self.cs = CS()
         self.d_contacts = {}
 
     def save_database(self, df, name):

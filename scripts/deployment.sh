@@ -16,7 +16,7 @@ pip install -qr requirements.txt
 
 # Install and init Elastic Beanstalk Environment
 pip install -q awsebcli && echo "fvirt" > .ebignore &&
-eb init -k erepie -p python-2.7 --region eu-west-3 facile-demo && echo "Beanstalk environment initialized" ||
+eb init -k erepie -p python-2.7 --region eu-west-3 casoe-erp && echo "Beanstalk environment initialized" ||
 echo "Beanstalk environment init failed"
 
 # It does not work now. Still, using eb configuration and changin line
