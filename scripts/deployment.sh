@@ -19,13 +19,16 @@ pip install -q awsebcli && echo "fvirt" > .ebignore &&
 eb init -k erepie -p python-2.7 --region eu-west-3 casoe-erp && echo "Beanstalk environment initialized" ||
 echo "Beanstalk environment init failed"
 
-# It does not work now. Still, using eb configuration and changin line
-# static: facileapp/static
-# application_path: run.py
-# It works, yet we should manage to directly set a config file
+# It does not work now. Still, using eb configuration and changing line
+# static: facileapp/static/ (change using eb config)
+# application_path: run.py (change using eb config)
+# instance_type: t2.medium  option (eb create --instance_type t2.medium)
+
+# finally:
+# Connect to instance (ssh with username 'ubunutu' or 'ec2-user')
+# create secret-config file in /opt/python/current/app/secret-config-casoe.yaml
 
 # Create application
-
 
 
 

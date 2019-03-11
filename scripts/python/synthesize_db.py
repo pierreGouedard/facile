@@ -46,10 +46,10 @@ class Synthesizer():
 
     def Build_user_table(self):
         df_users = pd.DataFrame.from_dict(
-            {0: {'username': 'nicole', 'password': 'pro', 'rights': 'SADMIN'},
-             1: {'username': 'christophe', 'password': 'pro', 'rights': 'STANDARD;FADMIN'},
-             2: {'username': 'laurent', 'password': 'pro', 'rights': 'STANDARD;CADMIN'},
-             3: {'username': 'standard', 'password': 'pro', 'rights': 'STANDARD'}}, orient='index'
+            {0: {'username': 'sadmin', 'password': 'sadminpassword', 'rights': 'SADMIN'},
+             1: {'username': 'fadmin', 'password': 'fadminpassword', 'rights': 'STANDARD;FADMIN'},
+             2: {'username': 'cadmin', 'password': 'cadminpassword', 'rights': 'STANDARD;CADMIN'},
+             3: {'username': 'standard', 'password': 'standardpassword', 'rights': 'STANDARD'}}, orient='index'
         )
         self.save_database(df_users, 'users')
 
