@@ -144,7 +144,7 @@ def process_form(table_key, d_data, action):
         filename = ''.join(['{}', mimetypes.guess_extension(d_data['details']['mimetype'])])
         d_files = {filename: {
             'f': d_data['details']['fp'],
-            'bucket': ressource.Bucket('lstcmd'),
+            'bucket': ressource.Bucket(d_sconfig.get('bucket_name', 'lstcmd')),
             'tmpfile': FileDriver('', '').join(tmpdir.path, filename)
             }
         }
