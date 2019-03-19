@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -116,7 +119,7 @@ class Contact(BaseModel):
 
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\
-            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1)\
+            .apply(lambda r: '{} / {}'.format(*[r[c].encode('latin1') for c in r.index]).decode('latin1'), axis=1)\
             .to_dict()
 
         if return_id:
@@ -150,7 +153,7 @@ class Contact(BaseModel):
 
         if index is not None:
             l_subindex = [Contact.l_fields()[i].name for i in Contact.l_subindex]
-            d_index = {k: v for k, v in zip(l_subindex, index.split(' / '))}
+            d_index = {k: v.encode('latin1') for k, v in zip(l_subindex, index.split(' / '))}
         else:
             d_index = None
 
@@ -169,7 +172,6 @@ class Contact(BaseModel):
             data_db = None
             if d_index is not None:
                 data_db = Contact.from_subindex_(d_index).__dict__
-
             form_man.load(step % Contact.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data

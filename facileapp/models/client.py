@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -20,9 +23,10 @@ class Client(BaseModel):
     def l_fields(widget=False):
         l_fields = \
             [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=1, required=True),
-             StringFields(title='Adresse', name='adresse', rank=2, required=True),
+             StringFields(title='Division', name='division', table_reduce=True, rank=2),
+             StringFields(title='Adresse', name='adresse', rank=3, required=True),
              StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville', rank=3, required=True),
+             StringFields(title='Ville', name='ville', rank=4, required=True),
              StringFields(title='Code postal', name='code_postal', required=True),
              StringFields(title='tel', name='num_tel', table_reduce=True),
              StringFields(title='E-mail', name='mail', table_reduce=True)]

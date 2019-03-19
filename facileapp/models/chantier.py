@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -92,7 +95,7 @@ class Chantier(BaseModel):
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \
-            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1) \
+            .apply(lambda r: '{} / {}'.format(*[r[c].encode('latin1') for c in r.index]), axis=1) \
             .to_dict()
 
         if return_id:

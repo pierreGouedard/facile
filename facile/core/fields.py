@@ -18,7 +18,7 @@ class StringFields(object):
         self.title = title
         self.name = name
         self.round = round
-        self.type = str
+        self.type = unicode
         self.desc = desc
         self.required = required
         self.missing_msg = missing_msg
@@ -39,8 +39,14 @@ class StringFields(object):
             else:
                 self.widget = TextInputWidget()
 
-        self.processing_form = {'form': lambda x: str(x) if x else missing, 'db': lambda x: str(x)}
-        self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
+        self.processing_form = {
+            'form': lambda x: unicode.encode(x, 'latin1').decode('latin1') if x else missing,
+            'db': lambda x: unicode.encode(x, 'latin1').decode('latin1')
+        }
+        self.processing_db = {
+            'upload': lambda x: x,
+            'download': lambda x: unicode.encode(x, 'latin1')
+        }
 
         if not multiple:
             self.sn = sn(String(), title=self.title, name=name, widget=self.widget, missing=missing, description=desc,
@@ -96,7 +102,7 @@ class IntegerFields(object):
                 self.widget = None
 
         self.processing_form = {'form': lambda x: int(x) if x else missing, 'db': lambda x: int(x)}
-        self.processing_db = {'upload': lambda x: x, 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: int(x), 'download': lambda x: x}
 
         self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -246,7 +252,7 @@ class DateFields(object):
 
         # Processing
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x).date()}
-        self.processing_db = {'upload': lambda x: pd.Timestamp(x).date(), 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x).date()), 'download': lambda x: x}
 
         self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -299,7 +305,7 @@ class DateTimeFields(object):
         self.table_reduce, self.rank, = table_reduce, rank
 
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
-        self.processing_db = {'upload': lambda x: pd.Timestamp(x), 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x)), 'download': lambda x: x}
 
         self.sn = sn(DateTime(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)

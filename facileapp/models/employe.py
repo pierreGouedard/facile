@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -11,7 +14,7 @@ from facile.core.table_loader import TableLoader
 class Employe(BaseModel):
 
     table_name = 'employe'
-    l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0, primary_key=True),
+    l_index = [StringFields(title='Prénom'.decode('latin1'), name='prenom', table_reduce=True, rank=0, primary_key=True),
                StringFields(title='Nom', name='nom', table_reduce=True, rank=1, primary_key=True)]
     l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
     l_documents = [('convoc', 'Lettre de convocation'), ('miseap', 'Lettre de mise a pied')]
@@ -22,22 +25,22 @@ class Employe(BaseModel):
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='N securite social', name='securite_social', required=True),
-             StringFields(title='Carte de sejour', name='carte_sejoure', required=False),
+            [StringFields(title='N sécurité social'.decode('latin1'), name='securite_social', required=True),
+             StringFields(title='Carte de séjour'.decode('latin1'), name='carte_sejoure', required=False),
              StringFields(title='Emploi', name='emploi', table_reduce=True, rank=2, required=True),
-             StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3, required=True),
+             StringFields(title='Catégorie'.decode('latin1'), name='categorie', table_reduce=True, rank=3, required=True),
              StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4, required=True),
              StringFields(title='Adresse', name='adresse', required=True),
              StringFields(title='Ville', name='ville', required=True),
              StringFields(title='Code postal', name='code_postal', required=True),
              StringFields(title='tel', name='num_tel'),
              StringFields(title='E-mail', name='mail'),
-             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=5, required=True),
+             DateFields(title="date d'entré".decode('latin1'), name='date_start', table_reduce=True, rank=5, required=True),
              DateFields(title='date de sortie', name='date_end', missing='1970-01-01'),
              ]
         if widget:
             l_fields[3] = StringFields(
-                title='Categorie', name='categorie', l_choices=Employe.list('categorie'), table_reduce=True, rank=3
+                title='Catégorie'.decode('latin1'), name='categorie', l_choices=Employe.list('categorie'), table_reduce=True, rank=3
             )
             l_fields[4] = StringFields(
                 title='Type de contrat', name='type_contrat', l_choices=Employe.list('type_contrat'), table_reduce=True,
@@ -55,8 +58,8 @@ class Employe(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'categorie':
-            return [('administration', 'Administration'), ('charge affaire', "Charge d'affaire"),
-                    ('charge etude', "Charge d'etude"), ('chantier', 'Personel chantier')]
+            return [('administration', 'Administration'), ('charge affaire', "Chargé d'affaire".decode('latin1')),
+                    ('charge etude', "Chargé d'étude".decode('latin1')), ('chantier', 'Personel chantier')]
         elif kw == 'type_contrat':
             return [('cdi', 'CDI'), ('cdd', "CDD"), ('stagiaire', 'Stagiaire')]
         else:
@@ -66,7 +69,6 @@ class Employe(BaseModel):
     def from_index_(d_index):
         # Series
         s = BaseModel.from_index('employe', d_index)
-
         return Employe(d_index, s.loc[[f.name for f in Employe.l_fields()]].to_dict())
 
     @staticmethod
@@ -102,9 +104,9 @@ class Employe(BaseModel):
 
         if step % Employe.nb_step_form == 0:
             index_node = StringFields(
-                title='Nom complet', name='index', missing=unicode(''),
-                l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un employe"
+                title='Nom complet', name='index', missing=u'',
+                l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()) + [(u'new', u'Nouveau')],
+                desc="En cas de modification choisir un employé".decode('latin1')
             )
             form_man.load_init_form(Employe.action_field, index_node)
 

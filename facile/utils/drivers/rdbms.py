@@ -8,9 +8,10 @@ from sqlalchemy.exc import IntegrityError
 
 class RdbmsDriver(object):
 
-    def __init__(self, base, uri, desc=''):
+    def __init__(self, base, uri, desc='', codec='latin1'):
         self.base = base
         self.desc = desc if desc else 'rdbms driver'
+        self.codec = codec
         self.base.metadata.bind = create_engine(uri)
 
     def __str__(self):
@@ -39,7 +40,8 @@ class RdbmsDriver(object):
             else:
                 l_where_clause += ["{}.{} = {}".format(table_name, col.name, row[col.name])]
 
-        query = delete(self.base.metadata.tables[table_name], whereclause=' AND '.join(l_where_clause))
+        where_clause = ' AND '.join(l_where_clause).decode(self.codec)
+        query = delete(self.base.metadata.tables[table_name], whereclause=where_clause)
         self.base.metadata.bind.execute(query)
 
     def update_rows(self, df, table_name):
@@ -54,7 +56,8 @@ class RdbmsDriver(object):
             else:
                 l_where_clause += ["{}.{} = {}".format(table_name, col.name, value[col.name])]
 
-        query = update(self.base.metadata.tables[table_name], whereclause=' AND '.join(l_where_clause), values=value)
+        where_clause = ' AND '.join(l_where_clause).decode(self.codec)
+        query = update(self.base.metadata.tables[table_name], whereclause=where_clause, values=value)
 
         try:
             self.base.metadata.bind.execute(query)
@@ -75,8 +78,9 @@ class RdbmsDriver(object):
                 l_where_clause += ["{}.{} = {}".format(table_name, col.name, v)]
 
         if len(l_where_clause) > 0:
+            where_clause = ' AND '.join(l_where_clause).decode(self.codec)
             query = select(
-                from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=' AND '.join(l_where_clause)
+                from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=where_clause
             )
         else:
             query = select(from_obj=self.base.metadata.tables[table_name], columns=columns)

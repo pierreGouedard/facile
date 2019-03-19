@@ -78,7 +78,6 @@ body {
     color: #888888;
     display: block;
     transition: 0.3s;
-
 }
 
 #mainnav a:hover {
@@ -88,4 +87,11 @@ body {
 
 #appcontainer {
     padding-top: 100px;
+}
+
+.jumbotron {
+  margin-left: 200px!important;
+  margin-right: -200px!important;
+  float: right;
+  width: 100%;
 }

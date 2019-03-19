@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global import
 from facileapp import application
 from flask import render_template
@@ -66,8 +69,6 @@ def test_example():
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
 
     else:
-        import IPython
-        IPython.embed()
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
 
     return html
@@ -108,7 +109,7 @@ def form():
         else:
             form = Markup('<h1>Page des Formulaires</h1>'
                           '<p class="lead"> Choisissez un onglet puis ajoutez, modifiez '
-                          "ou suprimez un element d'une table</p>")
+                          "ou suprimez un élément d'une table</p>".decode('latin1'))
             html = render_template("form.html", **{'form': form})
     else:
         # Get data from form
@@ -177,7 +178,7 @@ def document():
 
         else:
             document = Markup('<h1>Page des documents</h1>'
-                              '<p class="lead"> Choisissez un onglet pour editer un document</p>')
+                              '<p class="lead"> Choisissez un onglet pour éditer un document</p>'.decode('latin1'))
             html = render_template("document.html", **{'document': document})
     else:
         path, tmpdir = process_document_form(request.args['table'], request.form)

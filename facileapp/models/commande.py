@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -139,7 +142,7 @@ class Commande(BaseModel):
     def form_loading(step, index=None, data=None):
 
         if index is not None:
-            d_index = {Commande.l_index[0].name: Commande.l_index[0].type(index)}
+            d_index = {Commande.l_index[0].name: Commande.l_index[0].processing_db['upload'](index)}
         else:
             d_index = None
 

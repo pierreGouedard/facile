@@ -12,7 +12,7 @@ class Form(object):
     mapping_name = {'__formid__': None, '_charset_': None}
     css_static = '<link rel="stylesheet" type="text/css" href="%s"></link>'
     js_static = '<script type="text/javascript" src="%s"></script>'
-    script = '<script type="text/javascript">{}</script>'
+    script = '<script type="text/javascript">%s</script>'
     href = "{{url_for('static', filename='deform/%s')}}"
 
     def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',), use_ajax=False,
@@ -115,13 +115,13 @@ class Form(object):
         l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
 
         if script is not None:
-            l_js_links += [self.script.format(script)]
+            l_js_links += [self.script % script]
 
         # values passed to template for rendering
         d_web = {
             'form': html,
             'form_css': render_template_string('\n'.join(l_css_links)),
-            'form_js': render_template_string('\n'.join(l_js_links)),
+            'form_js': render_template_string('\n'.join(l_js_links).decode('latin1')),
             }
 
         # Add form data if Post AND success

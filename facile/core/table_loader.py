@@ -72,7 +72,8 @@ class TableLoader(object):
         d_footer = {}
         for col, s in df.iteritems():
             if not s.empty:
-                d_footer[col] = '_' * (2 + s.apply(lambda x: len(str(x))).max())
+                d_footer[col] = '_' * \
+                                (2 + s.apply(lambda x: len(x) if isinstance(x, (str, unicode)) else len(str(x))).max())
             else:
                 d_footer[col] = '_' * len(col)
 

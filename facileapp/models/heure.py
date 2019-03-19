@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -147,7 +150,8 @@ class Heure(BaseModel):
     def form_loading(step, index=None, data=None):
 
         d_index = {
-            Heure.l_fields()[Heure.l_groupindex[0]].name: Heure.l_fields()[Heure.l_groupindex[0]].type(index)
+            Heure.l_fields()[Heure.l_groupindex[0]].name:
+                Heure.l_fields()[Heure.l_groupindex[0]].processing_db['upload'](index)
         }
 
         form_man = FormLoader([], [Heure.sequence_field()], use_groupindex=True)

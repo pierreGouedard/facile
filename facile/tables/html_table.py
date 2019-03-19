@@ -94,7 +94,7 @@ class Table(object):
         with html_head:
             with tr():
                 for c in l_cols:
-                    th(c)
+                    th(c.decode('latin1'))
 
         return html_head
 
@@ -106,7 +106,7 @@ class Table(object):
             for index, row in df.iterrows():
                 with tr():
                     for name in l_cols:
-                        td(str(row[name]), cls="table-primary")
+                        td(str(row[name]).decode('latin1'), cls="table-primary")
 
         return html_body
 

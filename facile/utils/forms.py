@@ -206,17 +206,20 @@ def process_form(table_key, d_data, action):
 def generic_process_form(l_index, l_fields, model, action, d_data=None, table_key=None, d_files=None):
 
     # Get data to alert successful
-    data = ('"{}"'.format(table_key), '"{}"'.format(d_data['index']),
-            '"{}: {}'.format(table_key, d_data['index']),
+    data = ('"{}"'.format(table_key), '"{}"'.format(d_data['index'].encode('latin1')),
+            '"{}: {}'.format(table_key, d_data['index'].encode('latin1')),
             '{} avec succes"'.format(action))
 
     if 'Ajouter' in action:
         try:
-            m = model({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index},
-                      {f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_fields}) \
+            m = model({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index},
+                      {f.name: f.processing_db["upload"](d_data[f.name]) for f in l_fields}) \
                 .add()
 
-            index = '/'.join(map(str, [m.__getattribute__(f.name) for f in l_index]))
+            l_index = map(lambda x: x.encode('latin1') if isinstance(x, unicode) else str(x),
+                          [m.__getattribute__(f.name) for f in l_index])
+
+            index = '/'.join(map(str, l_index))
             data = ('"{}"'.format(table_key), '"{}"'.format(index),
                     '"{}: {}'.format(table_key, index.replace('/', ' ')),
                     '{} avec succes"'.format(action))
@@ -238,12 +241,12 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
             return error
 
     elif 'Suprimer' in action:
-        model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index}).delete()
+        model.from_index_({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index}).delete()
 
     else:
-        model_ = model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index})
+        model_ = model.from_index_({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index})
         for f in l_fields:
-            model_.__setattr__(f.name, f.type(f.processing_db["upload"](d_data[f.name])))
+            model_.__setattr__(f.name, f.processing_db["upload"](d_data[f.name]))
         model_.alter()
 
     return {'success': True, 'data': data}
@@ -285,9 +288,9 @@ def get_title_from_step(step, data):
             title = action
 
         else:
-            title = '{}: {}'.format(action, data.get('index', ''))
+            title = '{}: {}'.format(action, data.get('index', '').encode('latin1'))
 
-    return title
+    return title.decode('latin1')
 
 
 def build_document_form(table_key, request, deform_template_path):

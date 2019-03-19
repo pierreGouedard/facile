@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -23,8 +26,8 @@ class Fournisseur(BaseModel):
         l_fields = \
             [StringFields(title='Adresse', name='adresse', required=True),
              StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville', required=True),
-             StringFields(title='Code postal', name='code_postal', required=True),
+             StringFields(title='Ville', name='ville', ),
+             StringFields(title='Code postal', name='code_postal'),
              StringFields(title='tel', name='num_tel', table_reduce=True, rank=2),
              StringFields(title='E-mail', name='mail', table_reduce=True, rank=3)]
 

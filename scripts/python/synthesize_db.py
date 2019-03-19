@@ -141,6 +141,7 @@ class Synthesizer():
         d_client = {
             i: {'designation': 'client {} - site {}'.format(i, i),
                 'raison_social': 'client {}'.format(i),
+                'division': '',
                 'adresse': self.adresse(),
                 'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
