@@ -21,49 +21,49 @@ class Devis(BaseModel):
 
     table_name = 'devis'
 
-    l_index = [StringFields(title='Numero de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title=u'Numéro de devis', name='devis_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
     l_documents = [('devis', 'Devis')]
-    l_actions = map(lambda x: (x.format('un devis'), x.format('un devis')), BaseModel.l_actions)
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    l_actions = map(lambda x: (x.format(u'un devis'), x.format(u'un devis')), BaseModel.l_actions)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 3
 
     @staticmethod
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Designation client', name='designation_client', l_choices=Devis.list('client'),
+                [StringFields(title=u'Désignation client', name='designation_client', l_choices=Devis.list('client'),
                               table_reduce=True, rank=1, required=True),
-                 StringFields(title='Contact client', name='contact_id', l_choices=Devis.list('contact'), required=True),
-                 StringFields(title='Responsable devis', name='responsable', l_choices=Devis.list('responsable'),
+                 StringFields(title=u'Contact client', name='contact_id', l_choices=Devis.list('contact'), required=True),
+                 StringFields(title=u'Responsable devis', name='responsable', l_choices=Devis.list('responsable'),
                               table_reduce=True, rank=2, required=True),
-                 StringFields(title='Designation devis', name='object', required=True),
-                 IntegerFields(title="Heure autre", name='heure_autre', l_choices=zip(range(9000), range(9000))),
-                 IntegerFields(title="Heure Production", name='heure_prod', l_choices=zip(range(1000), range(1000))),
-                 MoneyFields(title="Prix heure autre", name='prix_heure_autre', required=True),
-                 MoneyFields(title="Prix heure Production", name='prix_heure_prod', required=True),
-                 MoneyFields(title='Montant achat', name='montant_achat', required=True),
-                 FloatFields(title='Coefficient achat', name='coef_achat', required=True),
-                 StringFields(title='Base de prix', name='base_prix', l_choices=Devis.list('base_prix'), required=True),
-                 DateFields(title='Date de debut', name='date_start', required=True),
-                 DateFields(title='Date de fin', name='date_end', required=True),
-                 MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
+                 StringFields(title=u'Désignation devis', name='object', required=True),
+                 IntegerFields(title=u"Heure autre", name='heure_autre', l_choices=zip(range(9000), range(9000))),
+                 IntegerFields(title=u"Heure Production", name='heure_prod', l_choices=zip(range(1000), range(1000))),
+                 MoneyFields(title=u"Prix heure autre", name='prix_heure_autre', required=True),
+                 MoneyFields(title=u"Prix heure Production", name='prix_heure_prod', required=True),
+                 MoneyFields(title=u'Montant achat', name='montant_achat', required=True),
+                 FloatFields(title=u'Coefficient achat', name='coef_achat', required=True),
+                 StringFields(title=u'Base de prix', name='base_prix', l_choices=Devis.list('base_prix'), required=True),
+                 DateFields(title=u'Date de début', name='date_start', required=True),
+                 DateFields(title=u'Date de fin', name='date_end', required=True),
+                 MoneyFields(title=u'Prix', name='price', round=2, table_reduce=True, rank=3)]
         else:
             l_fields = \
-                [StringFields(title='Designation client', name='designation_client', table_reduce=True, rank=1),
-                 StringFields(title='Contact client', name='contact_id'),
-                 StringFields(title='Responsable devis', name='responsable', table_reduce=True, rank=2),
-                 StringFields(title='Designation devis', name='object'),
-                 IntegerFields(title="Heure autre", name='heure_autre'),
-                 IntegerFields(title="Heure Production", name='heure_prod'),
-                 MoneyFields(title="Prix heure autre", name='prix_heure_autre'),
-                 MoneyFields(title="Prix heure Production", name='prix_heure_prod'),
-                 MoneyFields(title='Montant achat', name='montant_achat'),
-                 FloatFields(title='Coefficient achat', name='coef_achat'),
-                 StringFields(title='Base de prix', name='base_prix'),
-                 DateFields(title='Date de debut', name='date_start'),
-                 DateFields(title='Date de fin', name='date_end'),
-                 MoneyFields(title='Prix', name='price', round=2, table_reduce=True, rank=3)]
+                [StringFields(title=u'Désignation client', name='designation_client', table_reduce=True, rank=1),
+                 StringFields(title=u'Contact client', name='contact_id'),
+                 StringFields(title=u'Responsable devis', name='responsable', table_reduce=True, rank=2),
+                 StringFields(title=u'Désignation devis', name='object'),
+                 IntegerFields(title=u"Heure autre", name='heure_autre'),
+                 IntegerFields(title=u"Heure Production", name='heure_prod'),
+                 MoneyFields(title=u"Prix heure autre", name='prix_heure_autre'),
+                 MoneyFields(title=u"Prix heure Production", name='prix_heure_prod'),
+                 MoneyFields(title=u'Montant achat', name='montant_achat'),
+                 FloatFields(title=u'Coefficient achat', name='coef_achat'),
+                 StringFields(title=u'Base de prix', name='base_prix'),
+                 DateFields(title=u'Date de début', name='date_start'),
+                 DateFields(title=u'Date de fin', name='date_end'),
+                 MoneyFields(title=u'Prix', name='price', round=2, table_reduce=True, rank=3)]
 
         return l_fields
 
@@ -222,9 +222,9 @@ class Devis(BaseModel):
 
         if step % Devis.nb_step_form == 0:
             index_node = StringFields(
-                title='Numero de devis', name='index', missing=-1,
-                l_choices=zip(Devis.get_devis(), Devis.get_devis()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un numero de devis"
+                title=u'Numéro de devis', name='index', missing=-1,
+                l_choices=zip(Devis.get_devis(), Devis.get_devis()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un numéro de devis"
             )
             form_man.load_init_form(Devis.action_field, index_node)
 
@@ -268,10 +268,10 @@ class Devis(BaseModel):
     def form_document_loading():
 
         index_node = StringFields(
-            title='Numero de devis', name='index', l_choices=zip(Devis.get_devis(), Devis.get_devis())
+            title=u'Numéro de devis', name='index', l_choices=zip(Devis.get_devis(), Devis.get_devis())
         )
         document_node = StringFields(
-            title='Nom document', name='document', l_choices=Devis.l_documents
+            title=u'Nom document', name='document', l_choices=Devis.l_documents
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
@@ -292,22 +292,22 @@ class Devis(BaseModel):
         word_document = WordDocument(path, driver, {})
 
         # Document title
-        title = 'DEVIS {}'.format(index[Devis.l_index[0].name])
+        title = u'DEVIS {}'.format(index[Devis.l_index[0].name])
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
-        word_document.add_field('Designation client', s_client['designation'], left_indent=0.15, space_before=1.)
+        word_document.add_field(u'Désignation client', s_client['designation'], left_indent=0.15, space_before=1.)
         word_document.add_field(
-            'Contact client',
-            '{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
+            u'Contact client',
+            u'{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
             left_indent=0.15, space_before=0.1
         )
-        word_document.add_field('Responsable devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de debut', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de fin', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Prix total de fin', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Responsable devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Objet', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Date de début', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Date de fin', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Prix total', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_simple_paragraph(
-            ['Details'], space_before=0.3, space_after=0.2, left_indent=0.15, bold=True
+            [u'Détails'], space_before=0.3, space_after=0.2, left_indent=0.15, bold=True
         )
 
         l_values = [[df['heure_prod'].iloc[0], df['prix_heure_prod'].iloc[0],
@@ -315,8 +315,8 @@ class Devis(BaseModel):
                      df['montant_achat'].iloc[0], df['coef_achat'].iloc[0]]]
 
         df_table = pd.DataFrame(
-            l_values, columns=['Heures Prod', 'Prix Heures Prod', 'Heures Autres', 'Prix Heures Autres',
-                               'Montant achat', 'Coef achat']
+            l_values, columns=[u'Heures Prod', u'Prix Heures Prod', u'Heures Autres', u'Prix Heures Autres',
+                               u'Montant achat', u'Coef achat']
         )
 
         word_document.add_table(df_table, index_column=-1, left_indent=0.15)
@@ -339,7 +339,7 @@ class Devis(BaseModel):
 
         d_control_data['devisresp'] = {
             'plot': {'k': 'bar', 'd': df_chardaff, 'o': {'val_col': 'montant', 'hover_col': 'hover'}},
-            'rows': [('title', [{'content': 'title', 'value': "Devis envoye par charge d'affaire", 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u"Devis envoyé par chargé d'affaire", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
         }

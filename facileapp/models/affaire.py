@@ -19,14 +19,14 @@ from facileapp.models.contact import Contact
 class Affaire(BaseModel):
 
     table_name = 'affaire'
-    l_index = [StringFields(title="Numero d'affaire", name='affaire_num', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title=u"Numero d'affaire", name='affaire_num', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True),
-               StringFields(title="Indice de l'affaire", name='affaire_ind', widget=HiddenWidget(), table_reduce=True,
+               StringFields(title=u"Indice de l'affaire", name='affaire_ind', widget=HiddenWidget(), table_reduce=True,
                             rank=1, primary_key=True)
                ]
-    l_documents = [('ftravaux', 'Feuille de travaux')]
-    l_actions = map(lambda x: (x.format('une affaire'), x.format('une affaire')), BaseModel.l_actions) + \
-        [('Ajouter une affaire secondaire', 'Ajouter une affaire secondaire')]
+    l_documents = [(u'ftravaux', u'Feuille de travaux')]
+    l_actions = map(lambda x: (x.format(u'une affaire'), x.format(u'une affaire')), BaseModel.l_actions) + \
+        [(u'Ajouter une affaire secondaire', u'Ajouter une affaire secondaire')]
 
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 3
@@ -35,31 +35,31 @@ class Affaire(BaseModel):
     def l_fields(widget=False, **kwlist):
         if widget:
             l_fields = \
-                [StringFields(title="Numero de devis", name='devis_id', l_choices=Affaire.list('devis'),
+                [StringFields(title=u"Numéro de devis", name='devis_id', l_choices=Affaire.list('devis'),
                               table_reduce=True, rank=2, required=True),
-                 StringFields(title='Responsable affaire', name='responsable', l_choices=Affaire.list('responsable'),
+                 StringFields(title=u'Responsable affaire', name='responsable', l_choices=Affaire.list('responsable'),
                               table_reduce=True, rank=3, required=True),
-                 StringFields(title='Chantier', name='chantier_id', l_choices=Affaire.list('chantier', **kwlist),
+                 StringFields(title=u'Chantier', name='chantier_id', l_choices=Affaire.list('chantier', **kwlist),
                               round=2, required=True),
-                 StringFields(title='Contact client - chantier', name='contact_chantier_client',
+                 StringFields(title=u'Contact client - chantier', name='contact_chantier_client',
                               l_choices=Affaire.list('contact_chantier_client', **kwlist), round=2, required=True),
-                 StringFields(title='Contact client - facturation', name='contact_facturation_client',
+                 StringFields(title=u'Contact client - facturation', name='contact_facturation_client',
                               l_choices=Affaire.list('contact_facturation_client', **kwlist), round=2, required=True),
-                 StringFields(title='Contact interne - chantier', name='contact_chantier_interne',
+                 StringFields(title=u'Contact interne - chantier', name='contact_chantier_interne',
                               l_choices=Affaire.list('contact_chantier_interne', **kwlist), round=2, required=True),
-                 MoneyFields(title='FAE', name='fae', missing=0.0, widget=HiddenWidget())]
+                 MoneyFields(title=u'FAE', name='fae', missing=0.0, widget=HiddenWidget())]
 
         else:
             l_fields = \
-                [StringFields(title="Numero de devis", name='devis_id', table_reduce=True, rank=2, required=True),
-                 StringFields(title='Responsable Affaire', name='responsable', table_reduce=True, rank=3, required=True),
-                 StringFields(title='Chantier', name='chantier_id', round=2, required=True),
-                 StringFields(title='Contact client - chantier', name='contact_chantier_client', round=2, required=True),
-                 StringFields(title='Contact client - facturation', name='contact_facturation_client', round=2,
+                [StringFields(title=u"Numéro de devis", name='devis_id', table_reduce=True, rank=2, required=True),
+                 StringFields(title=u'Responsable Affaire', name='responsable', table_reduce=True, rank=3, required=True),
+                 StringFields(title=u'Chantier', name='chantier_id', round=2, required=True),
+                 StringFields(title=u'Contact client - chantier', name='contact_chantier_client', round=2, required=True),
+                 StringFields(title=u'Contact client - facturation', name='contact_facturation_client', round=2,
                               required=True),
-                 StringFields(title='Contact interne - chantier', name='contact_chantier_interne', round=2,
+                 StringFields(title=u'Contact interne - chantier', name='contact_chantier_interne', round=2,
                               required=True),
-                 MoneyFields(title='FAE', name='fae', missing=0.0, widget=HiddenWidget())]
+                 MoneyFields(title=u'FAE', name='fae', missing=0.0, widget=HiddenWidget())]
 
         return l_fields
 
@@ -125,7 +125,7 @@ class Affaire(BaseModel):
         # Save current contact id
         affaire_num_, affaire_ind_, code_year = self.affaire_num, self.affaire_ind, str(pd.Timestamp.now().year)[-2:]
 
-        if self.affaire_num == '' or self.affaire_num is None:
+        if self.affaire_num == u'' or self.affaire_num is None:
             if 'AF{}0000'.format(code_year) in [t[0] for t in l_affaires]:
                 self.affaire_num = 'AF{}'.format(code_year) + '{0:0=4d}'.format(
                     max(map(lambda t: int(t[0].replace('AF{}'.format(code_year), '')), l_affaires)) + 1
@@ -172,16 +172,15 @@ class Affaire(BaseModel):
 
         if step % Affaire.nb_step_form == 0:
             index_node = StringFields(
-                title="Numero d'affaire", name='index', missing=-1,
+                title=u"Numéro d'affaire", name='index', missing=-1,
                 l_choices=zip(Affaire.get_affaire(sep='/'), Affaire.get_affaire(sep='/')) + [('new', 'Nouveau')],
-                desc="En cas de modification: choisir un numero d'affaire.\n"
-                     "En cas d'affaire secondaire: choisir le numero assortie de l'indice "
-                     "le plus eleve")
+                desc=u"En cas de modification: choisir un numéro d'affaire et un numéro d'indice.\n"
+                     u"En cas d'affaire secondaire: choisir le numéro d'affaire (peu import l'indice)")
 
             form_man.load_init_form(Affaire.action_field, index_node)
 
         else:
-            if 'Ajouter une affaire secondaire' == data['action'] and 'affaire_num' not in data:
+            if u'Ajouter une affaire secondaire' == data['action'] and 'affaire_num' not in data:
                 data['affaire_num'] = d_index['affaire_num']
 
             data_db = None
@@ -197,11 +196,6 @@ class Affaire(BaseModel):
 
         # Load database
         df = Affaire.load_db()
-
-        if type == 'excel':
-            print 'todo'
-
-            return
 
         table_man = TableLoader(Affaire.l_index, Affaire.l_fields(), limit=10, type=type)
         df, kwargs = table_man.load_reduce_table(df)

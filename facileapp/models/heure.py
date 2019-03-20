@@ -18,13 +18,13 @@ from facile.utils import dates
 class Heure(BaseModel):
 
     table_name = 'heure'
-    l_index = [IntegerFields(title='ID', name='heure_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
+    l_index = [IntegerFields(title=u'ID', name='heure_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                              rank=0, primary_key=True)]
     l_groupindex = [0]
 
-    l_actions = [('Editer les heures', 'Editer les heures')]
+    l_actions = [(u'Editer les heures', u'Editer les heures')]
 
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
 
     nb_step_form = 2
 
@@ -32,24 +32,24 @@ class Heure(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title="Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
+                [StringFields(title=u"Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
                               rank=1),
-                 StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
+                 StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
                               table_reduce=True,  rank=2, required=True),
-                 StringFields(title="Designation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
-                              rank=3, desc="Choisir 'Interimaires' pour ajouter le cumul des heures des interimaires",
+                 StringFields(title=u"Désignation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
+                              rank=3, desc=u"Choisir 'Intérimaires' pour ajouter le cumul des heures des intérimaires",
                               required=True),
-                 IntegerFields(title="Cumul heure prod", name='heure_prod', l_choices=Heure.list('heures'),
+                 IntegerFields(title=u"Cumul heure prod", name='heure_prod', l_choices=Heure.list('heures'),
                                missing=0, table_reduce=True, rank=4, required=True),
-                 IntegerFields(title="Cumul heure autre", name='heure_autre', l_choices=Heure.list('heures'),
+                 IntegerFields(title=u"Cumul heure autre", name='heure_autre', l_choices=Heure.list('heures'),
                                missing=0, table_reduce=True, rank=5, required=True)]
         else:
             l_fields = \
-                [StringFields(title="Semaine", name='semaine', table_reduce=True, rank=1),
-                 StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True,  rank=2),
-                 StringFields(title="designation", name='name', table_reduce=True, rank=3),
-                 IntegerFields(title="Cumul heure prod", name='heure_prod', missing=0, table_reduce=True, rank=4),
-                 IntegerFields(title="Cumul heure autre", name='heure_autre', missing=0, table_reduce=True, rank=5)]
+                [StringFields(title=u"Semaine", name='semaine', table_reduce=True, rank=1),
+                 StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True,  rank=2),
+                 StringFields(title=u"Désignation", name='name', table_reduce=True, rank=3),
+                 IntegerFields(title=u"Cumul heure prod", name='heure_prod', missing=0, table_reduce=True, rank=4),
+                 IntegerFields(title=u"Cumul heure autre", name='heure_autre', missing=0, table_reduce=True, rank=5)]
 
         return l_fields
 
@@ -68,7 +68,7 @@ class Heure(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'employe':
-            return zip(Employe.get_employes(), Employe.get_employes()) + [('interim', 'Interimaires')]
+            return zip(Employe.get_employes(), Employe.get_employes()) + [(u'interim', u'Intérimaires')]
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'week':

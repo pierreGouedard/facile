@@ -44,8 +44,8 @@ class StringFields(object):
             'db': lambda x: unicode.encode(x, 'latin1').decode('latin1')
         }
         self.processing_db = {
-            'upload': lambda x: x,
-            'download': lambda x: unicode.encode(x, 'latin1')
+            'upload': lambda x: x.decode('latin1') if isinstance(x, str) else x,
+            'download': lambda x: unicode.encode(x, 'latin1').decode('latin1')
         }
 
         if not multiple:

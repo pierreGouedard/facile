@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global import
 import pandas as pd
 
@@ -139,10 +142,10 @@ class FeuilleTravaux(BaseView):
     def form_document_loading():
 
         index_node = StringFields(
-            title="Numero d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
+            title=u"Numéro d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
         )
         document_node = StringFields(
-            title='Nom document', name='document', l_choices=FeuilleTravaux.l_documents
+            title=u'Nom document', name='document', l_choices=FeuilleTravaux.l_documents
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
@@ -166,36 +169,38 @@ class FeuilleTravaux(BaseView):
         word_document = WordDocument(path, driver, {'top_margin': 0.5})
 
         # Document title
-        title = 'Feuille de travaux {}'.format('/'.join(df[FeuilleTravaux.l_main_index].values[0]))
+        title = u'Feuille de travaux {}'.format('/'.join(df[FeuilleTravaux.l_main_index].values[0]))
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # CLIENT
         s_client = df_client.loc[df_client.designation == df['designation_client_devis'].iloc[0]].iloc[0]
 
-        word_document.add_title('Client', font_size=12, text_align='left', color='000000')
-        word_document.add_field('Designation', s_client['designation'], left_indent=0.15)
-        word_document.add_field('Raison sociale', s_client['raison_social'], left_indent=0.15)
+        word_document.add_title(u'Client', font_size=12, text_align='left', color='000000')
+        word_document.add_field(u'Désignation', s_client['designation'], left_indent=0.15)
+        word_document.add_field(u'Raison sociale', s_client['raison_social'], left_indent=0.15)
+        word_document.add_field(u'Division', s_client['division'], left_indent=0.15)
+
         word_document.add_field(
-            'Adresse', value='{}, {} - {} {}'.format(
+            u'Adresse', value=u'{}, {} - {} {}'.format(
                 s_client['adresse'], s_client['cs_bp'], s_client['code_postal'], s_client['ville']
             ),
             left_indent=0.15
         )
         s_contact = df_contact.loc[df_contact.contact_id == df['contact_id_devis'].iloc[0]].iloc[0]
         word_document.add_field(
-            'Responsable commande',
-            '{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
+            u'Responsable commande',
+            u'{} ({})'.format(s_contact['contact_id'], s_contact['contact']),
             left_indent=0.15, space_before=0.1
         )
         # DEVIS
-        word_document.add_title('Devis', font_size=12, text_align='left', color='000000')
+        word_document.add_title(u'Devis', font_size=12, text_align='left', color='000000')
 
-        word_document.add_field('Numero', df['devis_id'].iloc[0], left_indent=0.15)
-        word_document.add_field('Objet', df['object_devis'].iloc[0], left_indent=0.15)
-        word_document.add_field('Responsable devis', df['responsable_devis'].iloc[0], left_indent=0.15)
-        word_document.add_field('Date de debut', df['date_start_devis'].iloc[0], left_indent=0.15)
-        word_document.add_field('Date de fin', df['date_end_devis'].iloc[0], left_indent=0.15)
-        word_document.add_field('Montant total du devis', '{} euros'.format(df['price_devis'].iloc[0]), left_indent=0.15)
+        word_document.add_field(u'Numéro', df['devis_id'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Objet', df['object_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Responsable devis', df['responsable_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Date de début', df['date_start_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Date de fin', df['date_end_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Montant total du devis', u'{} euros'.format(df['price_devis'].iloc[0]), left_indent=0.15)
         word_document.add_simple_paragraph(
             ['Details'], space_before=0.06, space_after=0.06, left_indent=0.15, bold=True
         )
@@ -205,8 +210,8 @@ class FeuilleTravaux(BaseView):
                      df['montant_achat_devis'].iloc[0], df['coef_achat_devis'].iloc[0]]]
 
         df_table = pd.DataFrame(
-            l_values, columns=['Heures Prod', 'Prix Heures Prod', 'Heures Autres', 'Prix Heures Autres',
-                               'Montant achat', 'Coef achat']
+            l_values, columns=[u'Heures Prod', u'Prix Heures Prod', u'Heures Autres', u'Prix Heures Autres',
+                               u'Montant achat', u'Coef achat']
         )
 
         word_document.add_table(df_table, index_column=-1, left_indent=0.15)
@@ -216,15 +221,15 @@ class FeuilleTravaux(BaseView):
         contact_client_ch = df['contact_chantier_client'].iloc[0]
         designation = df_contact.loc[df_contact.contact_id == contact_client_ch, 'contact'].iloc[0]
 
-        word_document.add_title('Chantier', font_size=12, text_align='left', color='000000')
+        word_document.add_title(u'Chantier', font_size=12, text_align='left', color='000000')
         word_document.add_field(
-            'Adresse', '{}, {} {}'.format(
+            u'Adresse', u'{}, {} {}'.format(
             s_chantier['adresse'], s_chantier['code_postal'], s_chantier['ville']
             ), left_indent=0.15
         )
-        word_document.add_field('Responsable interne', df['contact_chantier_interne'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Responsable interne', df['contact_chantier_interne'].iloc[0], left_indent=0.15)
         word_document.add_field(
-            'Responsable client', '{} ({})'.format(contact_client_ch, designation), left_indent=0.15
+            u'Responsable client', u'{} ({})'.format(contact_client_ch, designation), left_indent=0.15
         )
 
         # SUIVI
@@ -234,8 +239,8 @@ class FeuilleTravaux(BaseView):
 
         word_document.add_title('Suivi', font_size=12, text_align='left', color='000000')
 
-        l_values = [["REALISE", heure_prod, heure_autre, montant_achat],
-                    ["ECART DEVIS", heure_prod - df['heure_prod_devis'].sum(),
+        l_values = [[u"REALISE", heure_prod, heure_autre, montant_achat],
+                    [u"ECART DEVIS", heure_prod - df['heure_prod_devis'].sum(),
                      heure_autre - df['heure_autre_devis'].sum(),
                      montant_achat - df['montant_achat_devis'].sum()]]
 
@@ -245,12 +250,17 @@ class FeuilleTravaux(BaseView):
 
         # FACTURATION
         s_contact = df_contact.loc[df_contact.contact_id == df['contact_facturation_client'].iloc[0]].iloc[0]
-        coord = '{}, {} - {} {}'.format(
+        coord = u'{}, {} {} {}'.format(
             s_contact['adresse'], s_contact['cs_bp'], s_contact['code_postal'], s_contact['ville']
         )
-        word_document.add_title('Facturation', font_size=12, text_align='left', color='000000')
+
+        client = s_client['raison_social']
+        if s_client['division']:
+            client = ' - '.join([client, s_client['division']])
+
+        word_document.add_title(u'Facturation', font_size=12, text_align='left', color='000000')
         word_document.add_simple_paragraph(
-            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.06,
+            [client, s_contact['contact'], coord], break_run=True, space_before=0.06,
             alignment='center'
         )
 
@@ -280,8 +290,8 @@ class FeuilleTravaux(BaseView):
         df['montant_facture'] = df[[c for c in df.columns if 'montant_situation_' in c]].sum(axis=1)
         df['state'] = df[['price_devis', 'montant_facture']]\
             .apply(
-            lambda row: 'cloturee' if abs(row['price_devis'] - row['montant_facture']) < max(5, 0.001 * row['price_devis'])
-            else 'En cours', axis=1
+            lambda row: u'Cloturé' if abs(row['price_devis'] - row['montant_facture']) < max(5, 0.001 * row['price_devis'])
+            else u'En cours', axis=1
         )
 
         df_ca = df[['price_devis', 'state']].groupby('state')\
@@ -293,7 +303,7 @@ class FeuilleTravaux(BaseView):
 
         d_control_data['repca'] = {
             'plot': {'k': 'pie', 'd': df_ca, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': "Chiffre d'affaire cloture et en cours", 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u"Chiffre d'affaire cloturé et en cours", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
                 }

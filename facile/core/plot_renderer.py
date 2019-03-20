@@ -34,7 +34,7 @@ class PlotRerenderer(object):
         # Render bokeh plot
         html = file_html(bokeh_plot, resources=resources.CDN, template=self.template, template_variables=self.d_context)
 
-        return html
+        return html.decode('latin1')
 
     @staticmethod
     def validate_data(key, data):

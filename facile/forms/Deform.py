@@ -12,7 +12,7 @@ class Form(object):
     mapping_name = {'__formid__': None, '_charset_': None}
     css_static = '<link rel="stylesheet" type="text/css" href="%s"></link>'
     js_static = '<script type="text/javascript" src="%s"></script>'
-    script = '<script type="text/javascript">%s</script>'
+    script = u'<script type="text/javascript">{}</script>'
     href = "{{url_for('static', filename='deform/%s')}}"
 
     def __init__(self, request, search_path, schema, appstruct=colander.null, buttons=('submit',), use_ajax=False,
@@ -40,7 +40,7 @@ class Form(object):
             self.d_lambda_mapping = None
             self.d_lambda_sequence_mapping = None
 
-    def validate_(self, pstruct):
+    def validate_(self, pstruct, pstructfiles=None):
         return pstruct
 
     def format_(self, pstruct):
@@ -71,9 +71,10 @@ class Form(object):
                 # parse form
                 pstruct = dict([(k, v) for k, v in self.mapping_name.items() + Form.mapping_name.items()])
                 pstruct = Form.recursive_parser(pstruct, self.request.form.items(multi=True))
+                pstruct_files = {}
 
                 for i, (k, v) in enumerate(self.request.files.items()):
-                    pstruct[k] = {'filename': v.filename, 'uid': i, 'mimetype': v.mimetype, 'fp': v}
+                    pstruct_files[k] = {'filename': v.filename, 'uid': i, 'mimetype': v.mimetype, 'fp': v}
 
                 # Generate succeed form (with values posted)
                 if validate:
@@ -85,6 +86,8 @@ class Form(object):
                             pstruct_validate, self.d_lambda_mapping, self.d_lambda_sequence_mapping
                         )
 
+                    # Update with files and validate
+                    pstruct.update(pstruct_files)
                     _ = form.validate_pstruct(pstruct_validate)
 
                 # Deffered missing values
@@ -115,13 +118,13 @@ class Form(object):
         l_css_links = [self.css_static % self.href % r.split('deform:static/')[-1] for r in d_reqts['css']]
 
         if script is not None:
-            l_js_links += [self.script % script]
+            l_js_links += [self.script.format(script)]
 
         # values passed to template for rendering
         d_web = {
             'form': html,
             'form_css': render_template_string('\n'.join(l_css_links)),
-            'form_js': render_template_string('\n'.join(l_js_links).decode('latin1')),
+            'form_js': render_template_string('\n'.join(l_js_links)),
             }
 
         # Add form data if Post AND success

@@ -16,7 +16,7 @@ class BaseModel(object):
     l_index, l_subindex = [], []
     l_hfields = [StringFields(name='creation_date', title='creation_date', round=0),
                  StringFields(name='maj_date', title='maj_date', round=0)]
-    l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
+    l_actions = [u'Ajouter {}', u'Modifier {}', u'Suprimer {}']
     l_documents = []
     l_apps = []
     driver = RdbmsDriver(facile_base, d_sconfig['mysql_uri'], 'BaseModel driver')
@@ -111,7 +111,7 @@ class BaseModel(object):
             {f.name: f.processing_db['download'] for f in l_fields if f.name in columns and f.processing_db is not None}
         )
 
-        return df
+        return df[columns]
 
     def add(self):
         # Update creation and maj timestamp

@@ -36,11 +36,11 @@ class RdbmsDriver(object):
         l_where_clause = []
         for col in self.base.metadata.tables[table_name].primary_key.columns:
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, row[col.name])]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, row[col.name])]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, row[col.name])]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, row[col.name])]
 
-        where_clause = ' AND '.join(l_where_clause).decode(self.codec)
+        where_clause = u' AND '.join(l_where_clause)
         query = delete(self.base.metadata.tables[table_name], whereclause=where_clause)
         self.base.metadata.bind.execute(query)
 
@@ -52,11 +52,11 @@ class RdbmsDriver(object):
         l_where_clause = []
         for col in self.base.metadata.tables[table_name].primary_key.columns:
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, value[col.name])]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, value[col.name])]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, value[col.name])]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, value[col.name])]
 
-        where_clause = ' AND '.join(l_where_clause).decode(self.codec)
+        where_clause = u' AND '.join(l_where_clause)
         query = update(self.base.metadata.tables[table_name], whereclause=where_clause, values=value)
 
         try:
@@ -73,12 +73,12 @@ class RdbmsDriver(object):
         for k, v in kwargs.items():
             col = self.base.metadata.tables[table_name].columns[k]
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, v)]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, v)]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, v)]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, v)]
 
         if len(l_where_clause) > 0:
-            where_clause = ' AND '.join(l_where_clause).decode(self.codec)
+            where_clause = u' AND '.join(l_where_clause)
             query = select(
                 from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=where_clause
             )
