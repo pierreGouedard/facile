@@ -1,9 +1,13 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-from facile.core.fields import StringFields, IntegerFields, MoneyFields, DateFields
+from facile.core.fields import StringFields, IntegerFields, MoneyFields, DateFields, FloatFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -13,42 +17,48 @@ from facileapp.models.affaire import Affaire
 class Facture(BaseModel):
 
     table_name = 'facture'
-    l_index = [StringFields(title='Numero de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title=u'Numéro de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
-    l_actions = map(lambda x: (x.format('une facture'), x.format('une facture')), BaseModel.l_actions)
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    l_actions = map(lambda x: (x.format(u'une facture'), x.format(u'une facture')), BaseModel.l_actions)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False, restricted=True):
         if widget:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
+                [StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
                               table_reduce=True, rank=1, required=True),
-                 StringFields(title='Type', name='type', l_choices=Facture.list('type'), table_reduce=True,
+                 StringFields(title=u'Type', name='type', l_choices=Facture.list('type'), table_reduce=True,
                               required=True),
-                 StringFields(title='Objet', name='objet'),
-                 MoneyFields(title='Montant facture HT', name='montant_ht', required=True),
-                 IntegerFields(title='Numero de situation', name='situation', l_choices=Facture.list('situation'),
+                 StringFields(title=u'Objet', name='objet'),
+                 MoneyFields(title=u'Montant facture HT', name='montant_ht', required=True),
+                 FloatFields(title=u'Taux TVA', name='taux_tva', l_choices=Facture.list('tva'), required=True),
+                 MoneyFields(title=u'Montant TVA', name='montant_tva', widget=HiddenWidget()),
+                 MoneyFields(title=u'Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
+                 IntegerFields(title=u'Numéro de situation', name='situation', l_choices=Facture.list('situation'),
                                required=True),
-                 DateFields(title='Visa', name='date_visa', missing='1970-01-01'),
-                 DateFields(title='Encaissement', name='date_payed', missing='1970-01-01')
+                 DateFields(title=u'Visa', name='date_visa', missing='1970-01-01'),
+                 DateFields(title=u'Encaissement', name='date_payed', missing='1970-01-01')
                  ]
 
             if restricted:
-                l_fields[-2] = DateFields(title='Visa', name='date_visa', missing='1970-01-01', widget=HiddenWidget(),
+                l_fields[-2] = DateFields(title=u'Visa', name='date_visa', missing='1970-01-01', widget=HiddenWidget(),
                                           processing_form=lambda x: pd.Timestamp(x))
-                l_fields[-1] = DateFields(title='Encaissement', name='date_payed', missing='1970-01-01',
+                l_fields[-1] = DateFields(title=u'Encaissement', name='date_payed', missing='1970-01-01',
                                           widget=HiddenWidget(), processing_form=lambda x: pd.Timestamp(x))
         else:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
-                 StringFields(title='Type', name='type', table_reduce=True, required=True),
-                 StringFields(title='Objet', name='objet', required=True),
-                 MoneyFields(title='Montant facture HT', name='montant_ht', required=True),
-                 IntegerFields(title='Numero de situation', name='situation', required=True),
-                 DateFields(title='Visa', name='date_visa', required=True),
-                 DateFields(title='Encaissement', name='date_payed', required=True)]
+                [StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                 StringFields(title=u'Type', name='type', table_reduce=True, required=True),
+                 StringFields(title=u'Objet', name='objet', required=True),
+                 MoneyFields(title=u'Montant facture HT', name='montant_ht', required=True),
+                 FloatFields(title=u'Taux TVA', name='taux_tva', required=True),
+                 MoneyFields(title=u'Montant TVA', name='montant_tva'),
+                 MoneyFields(title=u'Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
+                 IntegerFields(title=u'Numero de situation', name='situation', required=True),
+                 DateFields(title=u'Visa', name='date_visa', required=True),
+                 DateFields(title=u'Encaissement', name='date_payed', required=True)]
 
         return l_fields
 
@@ -63,9 +73,11 @@ class Facture(BaseModel):
         if kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'situation':
-            return [(i, 'Situation numero {}'.format(i)) for i in range(1, 13)]
+            return [(i, u'Situation numero {}'.format(i)) for i in range(1, 13)]
         elif kw == 'type':
-            return [('facture', 'Facture'), ('avoir', 'Avoir')]
+            return [(u'facture', u'Facture'), (u'avoir', u'Avoir')]
+        elif kw == 'tva':
+            return [(0.2, u'20%'), (0.1, u'10%'), (0.055, u'5,5%'), (0.021, u'2,1%')]
         else:
             return []
 
@@ -115,7 +127,8 @@ class Facture(BaseModel):
         facture_id_ = self.facture_id
 
         if self.facture_id == '' or self.facture_id is None:
-
+            import IPython
+            IPython.embed()
             if self.type == 'facture':
                 l_factures_sub = [t[0] for t in l_factures if t[1] == 'facture']
                 self.facture_id = 'FC{0:0=4d}'.format(max(map(lambda x: int(x.replace('FC', '')), l_factures_sub)) + 1)
@@ -127,6 +140,11 @@ class Facture(BaseModel):
                 if self.montant_ht > 0:
                     self.montant_ht *= -1
 
+        # Get taxes additionnal informations
+        self.montant_ttc, self.montant_tva = Facture.get_montant(
+            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
+        )
+
         # Try to add and reset conatct id if failed
         try:
             super(Facture, self).add()
@@ -137,11 +155,26 @@ class Facture(BaseModel):
 
         return self
 
+    def alter(self):
+
+        self.montant_ttc, self.montant_tva = Commande.get_montant(
+            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
+        )
+
+        super(Facture, self).alter()
+
+        return self
+
+    @staticmethod
+    def get_montant(montant_ht, taux_tva):
+        montant_tva = taux_tva * montant_ht
+        return montant_tva + montant_ht, montant_tva
+
     @staticmethod
     def form_loading(step, index=None, data=None, restricted=True):
 
         if index is not None:
-            d_index = {Facture.l_index[0].name: Facture.l_index[0].type(index)}
+            d_index = {Facture.l_index[0].name: Facture.l_index[0].processing_db['upload'](index)}
         else:
             d_index = None
 
@@ -149,9 +182,9 @@ class Facture(BaseModel):
 
         if step % Facture.nb_step_form == 0:
             index_node = StringFields(
-                title='Numero de facture', name='index', missing=-1,
-                l_choices=zip(Facture.get_facture(), Facture.get_facture()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un numero de facture"
+                title=u'Numero de facture', name='index', missing=-1,
+                l_choices=zip(Facture.get_facture(), Facture.get_facture()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un numero de facture"
             )
             form_man.load_init_form(Facture.action_field, index_node)
 
@@ -203,19 +236,24 @@ class Facture(BaseModel):
         ref_date = pd.Timestamp('1970-01-01')
         df['date_visa'] = df.date_visa.apply(lambda x: pd.Timestamp(x))
         df['date_payed'] = df.date_payed.apply(lambda x: pd.Timestamp(x))
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.date_visa == ref_date])
+
+        df_, d_footer, kwargs = table_man.load_full_table(
+            df.loc[df.date_visa.apply(lambda x: pd.isna(x) or x == '' or x == ref_date)]
+        )
 
         d_control_data['tablenovisa'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'nothing'},
-            'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de visa', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u'Factures en attente de visa', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 0
                 }
         # App 2 table of bill waiting for payment
-        df_, d_footer, kwargs = table_man.load_full_table(df.loc[(df.date_visa > ref_date) & (df.date_payed == ref_date)])
+        df_, d_footer, kwargs = table_man.load_full_table(
+            df.loc[~df.date_visa.apply(lambda x: pd.isna(x) or x == '' or x == ref_date) &
+                   df.date_payed.apply(lambda x: pd.isna(x) or x == '' or x == ref_date)])
         d_control_data['tablenopayement'] = {
             'table': {'df': df_.copy(), 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'visa'},
-            'rows': [('title', [{'content': 'title', 'value': 'Facture en attente de paiement', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u'Factures en attente de paiement', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 1
                 }
@@ -224,7 +262,7 @@ class Facture(BaseModel):
         df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.date_payed > ref_date])
         d_control_data['tablepayment'] = {
             'table': {'df': df_, 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'payement'},
-            'rows': [('title', [{'content': 'title', 'value': 'Facture encaisse', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u'Factures encaissées', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 2
                 }

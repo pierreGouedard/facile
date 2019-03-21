@@ -95,7 +95,7 @@ def generic_control_renderer(request, d_control_data, template_app_container, de
 
             # Render app element into app template
             d_app_context['app_{}'.format(name)] = Markup(
-                plot_man.render_figure(plot_data['d'], **plot_data.get('o', {}))
+                plot_man.render_figure(plot_data['d'], **plot_data.get('o', {})).decode('utf8')
             )
         else:
             context = {k: Markup(v) for k, v in d_context.items()}

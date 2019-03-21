@@ -3,7 +3,7 @@ import sqlalchemy as db
 
 # Local import
 from facileapp import facile_base
-from config import d_sconfig
+from config import d_sconfig, CODEC
 
 __maintainer__ = 'Pierre Gouedard'
 
@@ -11,7 +11,7 @@ __maintainer__ = 'Pierre Gouedard'
 class Initializer():
 
     def __init__(self, uri):
-        self.engine = db.create_engine(uri)
+        self.engine = db.create_engine(uri, encoding=CODEC)
 
     def create_database(self):
         # Remove old db an create new
@@ -20,7 +20,7 @@ class Initializer():
 
 
 if __name__ == '__main__':
-    init = Initializer(d_sconfig['mysql_uri'])
+    init = Initializer('?'.join([d_sconfig['mysql_uri'], 'charset={}'.format(CODEC.replace('-', ''))]))
     answer = raw_input("Cette action va supprimer tout le contenu de la base, pour confirmer entrer 'ouisuprimertoutca'")
     if answer == 'ouisuprimertoutca' or answer == "'ouisuprimertoutca'":
         init.create_database()

@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Global imports
 import pandas as pd
 from sqlalchemy import Column, String

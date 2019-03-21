@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -14,7 +17,7 @@ from facileapp.models.client import Client
 class Contact(BaseModel):
 
     table_name = 'contact'
-    l_index = [StringFields(title='ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
+    l_index = [StringFields(title=u'ID', name='contact_id', widget=HiddenWidget(), missing=-1, table_reduce=True,
                             rank=0, primary_key=True)]
     l_subindex = [1, 2]
     l_actions = map(lambda x: (x.format('un contact'), x.format('un contact')), BaseModel.l_actions)
@@ -25,33 +28,33 @@ class Contact(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
+                [StringFields(title=u'Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
                               rank=1, multiple=True, required=True),
-                 StringFields(title='Designation client / fournisseur', name='designation',
+                 StringFields(title=u'Désignation client / fournisseur', name='designation',
                               l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2,
                               required=True),
-                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3, required=True),
-                 StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
-                 StringFields(title='Adresse', name='adresse'),
-                 StringFields(title='CS/BP', name='cs_bp'),
-                 StringFields(title='Ville', name='ville'),
-                 StringFields(title='Code postal', name='code_postal'),
-                 StringFields(title='tel', name='num_tel'),
-                 StringFields(title='E-mail', name='mail')]
+                 StringFields(title=u'Désignation du contact', name='contact', table_reduce=True, rank=3, required=True),
+                 StringFields(title=u'Description du contact', name='desc', table_reduce=True, rank=4),
+                 StringFields(title=u'Adresse', name='adresse'),
+                 StringFields(title=u'CS/BP', name='cs_bp'),
+                 StringFields(title=u'Ville', name='ville'),
+                 StringFields(title=u'Code postal', name='code_postal'),
+                 StringFields(title=u'tel', name='num_tel'),
+                 StringFields(title=u'E-mail', name='mail')]
         else:
             l_fields = \
-                [StringFields(title='Type de contact', name='type', table_reduce=True, rank=1, multiple=True,
+                [StringFields(title=u'Type de contact', name='type', table_reduce=True, rank=1, multiple=True,
                               required=True),
-                 StringFields(title='Designation client / fournisseur', name='designation', table_reduce=True, rank=2,
+                 StringFields(title=u'Désignation client / fournisseur', name='designation', table_reduce=True, rank=2,
                               required=True),
-                 StringFields(title='Designation du contact', name='contact', table_reduce=True, rank=3, required=True),
-                 StringFields(title='Description du contact', name='desc', table_reduce=True, rank=4),
-                 StringFields(title='Adresse', name='adresse'),
-                 StringFields(title='CS/BP', name='cs_bp'),
-                 StringFields(title='Ville', name='ville'),
-                 StringFields(title='Code postal', name='code_postal'),
-                 StringFields(title='tel', name='num_tel'),
-                 StringFields(title='E-mail', name='mail')]
+                 StringFields(title=u'Désignation du contact', name='contact', table_reduce=True, rank=3, required=True),
+                 StringFields(title=u'Description du contact', name='desc', table_reduce=True, rank=4),
+                 StringFields(title=u'Adresse', name='adresse'),
+                 StringFields(title=u'CS/BP', name='cs_bp'),
+                 StringFields(title=u'Ville', name='ville'),
+                 StringFields(title=u'Code postal', name='code_postal'),
+                 StringFields(title=u'tel', name='num_tel'),
+                 StringFields(title=u'E-mail', name='mail')]
 
         return l_fields
 
@@ -70,10 +73,10 @@ class Contact(BaseModel):
             return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
 
         elif kw == 'type':
-            return [('client_chantier', 'Contact chantier client'),
-                    ('client_administration', 'Contact administratif client'),
-                    ('client_commande', 'Contact commande client'),
-                    ('fournisseur', 'fournisseur')]
+            return [(u'client_chantier', u'Contact chantier client'),
+                    (u'client_administration', u'Contact administratif client'),
+                    (u'client_commande', u'Contact commande client'),
+                    (u'fournisseur', u'fournisseur')]
 
         else:
             return []
@@ -116,7 +119,7 @@ class Contact(BaseModel):
 
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\
-            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1)\
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in ['designation', 'contact']]), axis=1)\
             .to_dict()
 
         if return_id:
@@ -159,9 +162,9 @@ class Contact(BaseModel):
 
         if step % Contact.nb_step_form == 0:
             index_node = StringFields(
-                title='Nom du contact', name='index', missing=unicode(''),
+                title=u'Nom du contact', name='index', missing=unicode(''),
                 l_choices=zip(Contact.get_contact(), Contact.get_contact()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un contact"
+                desc=u"En cas de modification choisir un contact"
             )
             form_man.load_init_form(Contact.action_field, index_node)
 
@@ -169,7 +172,6 @@ class Contact(BaseModel):
             data_db = None
             if d_index is not None:
                 data_db = Contact.from_subindex_(d_index).__dict__
-
             form_man.load(step % Contact.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data

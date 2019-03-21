@@ -8,7 +8,7 @@ class BoostrapLayout(object):
     form_template_variable = '{{ form_css }} {{ form_js }} {{ form }}'
     plot_template_variable = '{{ plot_div }} {{ bokeh_js }} {{ bokeh_css }} {{ plot_script }}'
     table_template_variable = '{{ table }}'
-    app_template_variable = Markup('<div class="jumbotron">{{ app_%s }}</div>')
+    app_template_variable = Markup(u'<div class="jumbotron">{{ app_%s }}</div>')
 
     def __init__(self, l_rows, init='doc', title='', cls=''):
 

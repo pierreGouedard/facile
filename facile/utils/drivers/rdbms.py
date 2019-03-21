@@ -8,10 +8,11 @@ from sqlalchemy.exc import IntegrityError
 
 class RdbmsDriver(object):
 
-    def __init__(self, base, uri, desc=''):
+    def __init__(self, base, uri, desc='', codec='utf-8'):
         self.base = base
         self.desc = desc if desc else 'rdbms driver'
-        self.base.metadata.bind = create_engine(uri)
+        self.codec = codec
+        self.base.metadata.bind = create_engine(uri, encoding=codec)
 
     def __str__(self):
         return '{}'.format(self.desc)
@@ -35,11 +36,12 @@ class RdbmsDriver(object):
         l_where_clause = []
         for col in self.base.metadata.tables[table_name].primary_key.columns:
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, row[col.name])]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, row[col.name])]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, row[col.name])]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, row[col.name])]
 
-        query = delete(self.base.metadata.tables[table_name], whereclause=' AND '.join(l_where_clause))
+        where_clause = u' AND '.join(l_where_clause)
+        query = delete(self.base.metadata.tables[table_name], whereclause=where_clause)
         self.base.metadata.bind.execute(query)
 
     def update_rows(self, df, table_name):
@@ -50,11 +52,12 @@ class RdbmsDriver(object):
         l_where_clause = []
         for col in self.base.metadata.tables[table_name].primary_key.columns:
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, value[col.name])]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, value[col.name])]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, value[col.name])]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, value[col.name])]
 
-        query = update(self.base.metadata.tables[table_name], whereclause=' AND '.join(l_where_clause), values=value)
+        where_clause = u' AND '.join(l_where_clause)
+        query = update(self.base.metadata.tables[table_name], whereclause=where_clause, values=value)
 
         try:
             self.base.metadata.bind.execute(query)
@@ -70,13 +73,14 @@ class RdbmsDriver(object):
         for k, v in kwargs.items():
             col = self.base.metadata.tables[table_name].columns[k]
             if isinstance(col.type, String):
-                l_where_clause += ["{}.{} = '{}'".format(table_name, col.name, v)]
+                l_where_clause += [u"{}.{} = '{}'".format(table_name, col.name, v)]
             else:
-                l_where_clause += ["{}.{} = {}".format(table_name, col.name, v)]
+                l_where_clause += [u"{}.{} = {}".format(table_name, col.name, v)]
 
         if len(l_where_clause) > 0:
+            where_clause = u' AND '.join(l_where_clause)
             query = select(
-                from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=' AND '.join(l_where_clause)
+                from_obj=self.base.metadata.tables[table_name], columns=columns, whereclause=where_clause
             )
         else:
             query = select(from_obj=self.base.metadata.tables[table_name], columns=columns)

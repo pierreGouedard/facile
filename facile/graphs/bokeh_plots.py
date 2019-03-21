@@ -97,7 +97,7 @@ def plot_scatter_advanced(df, x, y, color=None, hover=None, title='', plot_width
     return bokeh_plot
 
 
-def plot_pie(df_data, hover=False):
+def plot_pie(df_data, hover=False, codec='utf8'):
 
     df_data['angle'] = ((df_data['value'] / df_data.value.sum()) * 2 * pi).cumsum()
     df_data['start_angle'] = [0] + list(df_data['angle'].values[:-1])
@@ -109,6 +109,7 @@ def plot_pie(df_data, hover=False):
             plot_width=700, plot_height=400, tools='hover', toolbar_location=None, sizing_mode='scale_width',
             tooltips="@name: @hover"
         )
+
     else:
         bokeh_plot = plotting.figure(
             plot_width=700, plot_height=400, tools='', toolbar_location=None, sizing_mode='scale_width',

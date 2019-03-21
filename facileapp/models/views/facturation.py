@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Global import
 
 # Local import
@@ -9,10 +12,11 @@ from facileapp.models.devis import Devis
 from facileapp.models.affaire import Affaire
 from facileapp.models.facture import Facture
 from facileapp.models.contact import Contact
+from facileapp.models.client import Client
 
 
 class Facturation(BaseView):
-    l_documents = [('detail_facture', 'Detail facture')]
+    l_documents = [(u'detail_facture', u'Détail facture')]
     main_model = Facture
     l_models = [Affaire,  Devis]
 
@@ -40,10 +44,10 @@ class Facturation(BaseView):
     def form_document_loading():
 
         index_node = StringFields(
-            title='Numero de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
+            title=u'Numéro de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
         )
         document_node = StringFields(
-            title='Nom document', name='document', l_choices=Facturation.l_documents
+            title=u'Nom document', name='document', l_choices=Facturation.l_documents
         )
 
         return {'nodes': [document_node.sn, index_node.sn]}
@@ -55,45 +59,52 @@ class Facturation(BaseView):
         df = df.loc[df[Facture.l_index[0].name] == index[Facture.l_index[0].name]]
         df_contact = Contact.load_db()
         s_contact = df_contact.loc[df_contact.contact_id == df['contact_facturation_client'].iloc[0]].iloc[0]
+        df_client = Client.load_db()
+        s_client = df_client.loc[df_client.designation == df['designation_client'].iloc[0]].iloc[0]
 
         word_document = WordDocument(path, driver, {})
 
-        title = 'FACTURE {}'.format(index[Facture.l_index[0].name])
+        title = u'FACTURE {}'.format(index[Facture.l_index[0].name])
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # Info affaire
-        word_document.add_title('Details Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
+        word_document.add_title(u'Détails Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
         word_document.add_field(
-            "Numero d'affaire", '{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
+            u"Numéro d'affaire", u'{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
             space_before=0.1
         )
-        word_document.add_field('Designation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Montant du devis', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Debut du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Désignation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Montant du devis', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Début du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
 
         # Info facture
-        word_document.add_title('Infos facture', font_size=12, text_align='left', color='000000', space_before=1.)
+        word_document.add_title(u'Infos facture', font_size=12, text_align='left', color='000000', space_before=1.)
         word_document.add_field(
-            'Montant facture HT', '{} Euros'.format(float(int(df['montant_ht'].iloc[0] * 100) / 100)), left_indent=0.15,
+            u'Montant facture HT', u'{} Euros'.format(float(int(df['montant_ht'].iloc[0] * 100) / 100)), left_indent=0.15,
             space_before=0.1
         )
-        word_document.add_field('Numero de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de visa', df['date_visa'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field('Date de paiement', df['date_payed'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Numéro de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Date de visa', df['date_visa'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'Date de paiement', df['date_payed'].iloc[0], left_indent=0.15, space_before=0.1)
 
-        coord = '{}, {} - {} {}'.format(
+        coord = u'{}, {} - {} {}'.format(
             s_contact['adresse'], s_contact['cs_bp'], s_contact['code_postal'], s_contact['ville']
         )
         word_document.add_simple_paragraph(
-            ['Adresse de facturation'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
+            [u'Adresse de facturation'], space_before=0.1, space_after=0.1, left_indent=0.15, bold=True
         )
+
+        client = s_client['raison_social']
+        if s_client['division']:
+            client = ' - '.join([client, s_client['division']])
+
         word_document.add_simple_paragraph(
-            [s_contact['designation'], s_contact['contact'], coord], break_run=True, space_before=0.4,
+            [client, s_contact['contact'], coord], break_run=True, space_before=0.4,
             alignment='center'
         )
 

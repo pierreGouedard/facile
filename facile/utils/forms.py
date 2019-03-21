@@ -91,14 +91,14 @@ def build_form(table_key, request, deform_template_path, step=0, force_get=True,
 def process_form(table_key, d_data, action):
 
     # Code to download document at the completion of some form (Devis, Affaire, ...)
-    script = '$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
-             '.done(function (response, status, request) {alert(%s %s);});'
+    script = u'$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
+             u'.done(function (response, status, request) {alert(%s %s);});'
 
     if table_key in ['affaire', 'devis', 'facture', 'commande'] and 'Suprimer' not in action:
-        script = '$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
-                 '.done(function (response, status, request) { alert(%s %s);' \
-                 'var url = response["url"].concat(response["data"]);' \
-                 'window.location = url});'
+        script = u'$.ajax({method: "POST", url: "/url_success_form", data: {"table_key": %s, "index": %s}})' \
+                 u'.done(function (response, status, request) { alert(%s %s);' \
+                 u'var url = response["url"].concat(response["data"]);' \
+                 u'window.location = url});'
 
     if table_key == 'employe':
         l_index, l_fields = Employe.l_index, Employe.l_fields()
@@ -182,18 +182,18 @@ def process_form(table_key, d_data, action):
 
         if 'success' in statue:
             statue.update(
-                {'data': ('"{}"'.format(table_key), '"{}"'.format(d_data['index']),
-                          '"{}: {}'.format(table_key, d_data['index']),
-                          ' {} avec succes"'.format("edite"))}
+                {'data': (u'"{}"'.format(table_key), u'"{}"'.format(d_data['index']),
+                          u'"{}: {}'.format(table_key, d_data['index']),
+                          u' {} avec succes"'.format("edite"))}
             )
     else:
-        statue = {'error': 'Unknown table'}
+        statue = {'error': u'Unknown table'}
 
     if 'success' not in statue:
         if statue['error'] == 'index':
             script = \
-                'alert("Erreur: l\'element {} existe dans la base. Modifier l\'element existant ou changer la valeur' \
-                ' du champ {}");'.format(statue['index'], statue['index_name'])
+                u'alert("Erreur: l\'element {} existe dans la base. Modifier l\'element existant ou changer la valeur' \
+                u' du champ {}");'.format(statue['index'], statue['index_name'])
 
         else:
             raise ValueError('{}'.format(statue))
@@ -206,20 +206,26 @@ def process_form(table_key, d_data, action):
 def generic_process_form(l_index, l_fields, model, action, d_data=None, table_key=None, d_files=None):
 
     # Get data to alert successful
-    data = ('"{}"'.format(table_key), '"{}"'.format(d_data['index']),
-            '"{}: {}'.format(table_key, d_data['index']),
-            '{} avec succes"'.format(action))
+    data = (u'"{}"'.format(table_key), u'"{}"'.format(d_data['index']),
+            u'"{}: {}'.format(table_key, d_data['index']),
+            u'{} avec succes"'.format(action))
 
     if 'Ajouter' in action:
         try:
-            m = model({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index},
-                      {f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_fields}) \
+            m = model({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index},
+                      {f.name: f.processing_db["upload"](d_data[f.name]) for f in l_fields}) \
                 .add()
 
-            index = '/'.join(map(str, [m.__getattribute__(f.name) for f in l_index]))
-            data = ('"{}"'.format(table_key), '"{}"'.format(index),
-                    '"{}: {}'.format(table_key, index.replace('/', ' ')),
-                    '{} avec succes"'.format(action))
+            # Get new index (generated as element added for some tables)
+            l_index = map(
+                lambda x: x if isinstance(x, unicode) else str(x), [m.__getattribute__(f.name) for f in l_index]
+            )
+
+            index = u'/'.join(l_index)
+
+            data = (u'"{}"'.format(table_key), u'"{}"'.format(index),
+                    u'"{}: {}'.format(table_key, index.replace('/', ' ')),
+                    u'{} avec succes"'.format(action))
 
             if d_files is not None:
                 for k, v in d_files.items():
@@ -232,18 +238,18 @@ def generic_process_form(l_index, l_fields, model, action, d_data=None, table_ke
                     )
 
         except IndexError:
-            error = {'error': 'index',
+            error = {'error': u'index',
                      'index': [d_data.get(f.name, f.sn.missing) for f in l_index],
                      'index_name': [f.name for f in l_index]}
             return error
 
     elif 'Suprimer' in action:
-        model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index}).delete()
+        model.from_index_({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index}).delete()
 
     else:
-        model_ = model.from_index_({f.name: f.type(f.processing_db["upload"](d_data[f.name])) for f in l_index})
+        model_ = model.from_index_({f.name: f.processing_db["upload"](d_data[f.name]) for f in l_index})
         for f in l_fields:
-            model_.__setattr__(f.name, f.type(f.processing_db["upload"](d_data[f.name])))
+            model_.__setattr__(f.name, f.processing_db["upload"](d_data[f.name]))
         model_.alter()
 
     return {'success': True, 'data': data}
@@ -285,7 +291,7 @@ def get_title_from_step(step, data):
             title = action
 
         else:
-            title = '{}: {}'.format(action, data.get('index', ''))
+            title = u'{}: {}'.format(action, data.get('index', ''))
 
     return title
 

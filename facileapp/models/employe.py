@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # Global imports
 import pandas as pd
 
@@ -11,36 +14,36 @@ from facile.core.table_loader import TableLoader
 class Employe(BaseModel):
 
     table_name = 'employe'
-    l_index = [StringFields(title='Prenom', name='prenom', table_reduce=True, rank=0, primary_key=True),
-               StringFields(title='Nom', name='nom', table_reduce=True, rank=1, primary_key=True)]
-    l_actions = map(lambda x: (x.format('un employe'), x.format('un employe')), BaseModel.l_actions)
-    l_documents = [('convoc', 'Lettre de convocation'), ('miseap', 'Lettre de mise a pied')]
+    l_index = [StringFields(title=u'Prénom', name='prenom', table_reduce=True, rank=0, primary_key=True),
+               StringFields(title=u'Nom', name='nom', table_reduce=True, rank=1, primary_key=True)]
+    l_actions = map(lambda x: (x.format(u'un employe'), x.format(u'un employe')), BaseModel.l_actions)
+    l_documents = [('convoc', u'Lettre de convocation'), ('miseap', u'Lettre de mise a pied')]
     l_apps = ['repqual', 'repemp']
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='N securite social', name='securite_social', required=True),
-             StringFields(title='Carte de sejour', name='carte_sejoure', required=False),
-             StringFields(title='Emploi', name='emploi', table_reduce=True, rank=2, required=True),
-             StringFields(title='Categorie', name='categorie', table_reduce=True, rank=3, required=True),
-             StringFields(title='Type de contrat', name='type_contrat', table_reduce=True, rank=4, required=True),
-             StringFields(title='Adresse', name='adresse', required=True),
-             StringFields(title='Ville', name='ville', required=True),
-             StringFields(title='Code postal', name='code_postal', required=True),
-             StringFields(title='tel', name='num_tel'),
-             StringFields(title='E-mail', name='mail'),
-             DateFields(title="date d'entre", name='date_start', table_reduce=True, rank=5, required=True),
-             DateFields(title='date de sortie', name='date_end', missing='1970-01-01'),
+            [StringFields(title=u'N sécurité social', name='securite_social', required=True),
+             StringFields(title=u'Carte de séjour', name='carte_sejoure', required=False),
+             StringFields(title=u'Emploi', name='emploi', table_reduce=True, rank=2, required=True),
+             StringFields(title=u'Catégorie', name='categorie', table_reduce=True, rank=3, required=True),
+             StringFields(title=u'Type de contrat', name='type_contrat', table_reduce=True, rank=4, required=True),
+             StringFields(title=u'Adresse', name='adresse', required=True),
+             StringFields(title=u'Ville', name='ville', required=True),
+             StringFields(title=u'Code postal', name='code_postal', required=True),
+             StringFields(title=u'tel', name='num_tel'),
+             StringFields(title=u'E-mail', name='mail'),
+             DateFields(title=u"date d'entré", name='date_start', table_reduce=True, rank=5, required=True),
+             DateFields(title=u'date de sortie', name='date_end', missing='1970-01-01'),
              ]
         if widget:
             l_fields[3] = StringFields(
-                title='Categorie', name='categorie', l_choices=Employe.list('categorie'), table_reduce=True, rank=3
+                title=u'Catégorie', name='categorie', l_choices=Employe.list('categorie'), table_reduce=True, rank=3
             )
             l_fields[4] = StringFields(
-                title='Type de contrat', name='type_contrat', l_choices=Employe.list('type_contrat'), table_reduce=True,
+                title=u'Type de contrat', name='type_contrat', l_choices=Employe.list('type_contrat'), table_reduce=True,
                 rank=4
             )
 
@@ -55,10 +58,10 @@ class Employe(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'categorie':
-            return [('administration', 'Administration'), ('charge affaire', "Charge d'affaire"),
-                    ('charge etude', "Charge d'etude"), ('chantier', 'Personel chantier')]
+            return [(u'administration', u'Administration'), (u'charge affaire', u"Chargé d'affaire"),
+                    (u'charge etude', u"Chargé d'étude"), (u'chantier', u'Personel chantier')]
         elif kw == 'type_contrat':
-            return [('cdi', 'CDI'), ('cdd', "CDD"), ('stagiaire', 'Stagiaire')]
+            return [(u'cdi', u'CDI'), (u'cdd', u"CDD"), (u'stagiaire', u'Stagiaire')]
         else:
             return []
 
@@ -66,7 +69,6 @@ class Employe(BaseModel):
     def from_index_(d_index):
         # Series
         s = BaseModel.from_index('employe', d_index)
-
         return Employe(d_index, s.loc[[f.name for f in Employe.l_fields()]].to_dict())
 
     @staticmethod
@@ -83,8 +85,9 @@ class Employe(BaseModel):
     def get_employes(sep=' ', **kwargs):
 
         # Get list of employ name and surname
-        df = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs)\
-            .apply(lambda r: ('{}' + sep + '{}').format(*[r[c] for c in r.index]), axis=1)
+        df = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs) \
+            .transform({f.name: f.processing_db['download'] for f in Employe.l_index}) \
+            .apply(lambda r: (u'{}' + sep + u'{}').format(*[r[f.name] for f in Employe.l_index]), axis=1)
 
         if df.empty:
             return []
@@ -104,9 +107,9 @@ class Employe(BaseModel):
 
         if step % Employe.nb_step_form == 0:
             index_node = StringFields(
-                title='Nom complet', name='index', missing=unicode(''),
-                l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un employe"
+                title=u'Nom complet', name='index', missing=u'',
+                l_choices=zip(Employe.get_employes(sep='-'), Employe.get_employes()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un employé"
             )
             form_man.load_init_form(Employe.action_field, index_node)
 
@@ -114,7 +117,6 @@ class Employe(BaseModel):
             data_db = None
             if d_index is not None:
                 data_db = Employe.from_index_(d_index).__dict__
-
             form_man.load(step % Employe.nb_step_form, data_db=data_db, data_form=data)
 
         return form_man.d_form_data
@@ -162,7 +164,7 @@ class Employe(BaseModel):
 
         d_control_data['repqual'] = {
             'plot': {'k': 'pie', 'd': df_qual, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': "Repartition des categories d'employe", 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u"Répartition des catégories d'employe", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
                 }
