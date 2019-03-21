@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global import
 from facileapp import application
@@ -109,7 +109,7 @@ def form():
         else:
             form = Markup(u'<h1>Page des Formulaires</h1>'
                           u'<p class="lead"> Choisissez un onglet puis ajoutez, modifiez '
-                          u"ou suprimez un élément d'une table</p>")
+                          u"ou suprimez un Ã©lÃ©ment d'une table</p>")
             html = render_template("form.html", **{'form': form})
     else:
         # Get data from form
@@ -178,7 +178,7 @@ def document():
 
         else:
             document = Markup(u'<h1>Page des documents</h1>'
-                              u'<p class="lead"> Choisissez un onglet pour éditer un document</p>')
+                              u'<p class="lead"> Choisissez un onglet pour Ã©diter un document</p>')
             html = render_template("document.html", **{'document': document})
     else:
         path, tmpdir = process_document_form(request.args['table'], request.form)

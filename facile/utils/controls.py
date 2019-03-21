@@ -104,7 +104,7 @@ def generic_control_renderer(request, d_control_data, template_app_container, de
     # render app into app container template
     html = render_template(template_app_container, **d_app_context)
 
-    return html.encode('latin1')
+    return html
 
 
 def process_controls(request, session, deform_template_path):

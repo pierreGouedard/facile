@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global import
 import pandas as pd
@@ -142,7 +142,7 @@ class FeuilleTravaux(BaseView):
     def form_document_loading():
 
         index_node = StringFields(
-            title=u"Numéro d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
+            title=u"NumÃ©ro d'affaire", name='index', l_choices=zip(Affaire.get_affaire(), Affaire.get_affaire())
         )
         document_node = StringFields(
             title=u'Nom document', name='document', l_choices=FeuilleTravaux.l_documents
@@ -176,7 +176,7 @@ class FeuilleTravaux(BaseView):
         s_client = df_client.loc[df_client.designation == df['designation_client_devis'].iloc[0]].iloc[0]
 
         word_document.add_title(u'Client', font_size=12, text_align='left', color='000000')
-        word_document.add_field(u'Désignation', s_client['designation'], left_indent=0.15)
+        word_document.add_field(u'DÃ©signation', s_client['designation'], left_indent=0.15)
         word_document.add_field(u'Raison sociale', s_client['raison_social'], left_indent=0.15)
         word_document.add_field(u'Division', s_client['division'], left_indent=0.15)
 
@@ -195,10 +195,10 @@ class FeuilleTravaux(BaseView):
         # DEVIS
         word_document.add_title(u'Devis', font_size=12, text_align='left', color='000000')
 
-        word_document.add_field(u'Numéro', df['devis_id'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'NumÃ©ro', df['devis_id'].iloc[0], left_indent=0.15)
         word_document.add_field(u'Objet', df['object_devis'].iloc[0], left_indent=0.15)
         word_document.add_field(u'Responsable devis', df['responsable_devis'].iloc[0], left_indent=0.15)
-        word_document.add_field(u'Date de début', df['date_start_devis'].iloc[0], left_indent=0.15)
+        word_document.add_field(u'Date de dÃ©but', df['date_start_devis'].iloc[0], left_indent=0.15)
         word_document.add_field(u'Date de fin', df['date_end_devis'].iloc[0], left_indent=0.15)
         word_document.add_field(u'Montant total du devis', u'{} euros'.format(df['price_devis'].iloc[0]), left_indent=0.15)
         word_document.add_simple_paragraph(
@@ -290,7 +290,7 @@ class FeuilleTravaux(BaseView):
         df['montant_facture'] = df[[c for c in df.columns if 'montant_situation_' in c]].sum(axis=1)
         df['state'] = df[['price_devis', 'montant_facture']]\
             .apply(
-            lambda row: u'Cloturé' if abs(row['price_devis'] - row['montant_facture']) < max(5, 0.001 * row['price_devis'])
+            lambda row: u'CloturÃ©' if abs(row['price_devis'] - row['montant_facture']) < max(5, 0.001 * row['price_devis'])
             else u'En cours', axis=1
         )
 
@@ -303,7 +303,7 @@ class FeuilleTravaux(BaseView):
 
         d_control_data['repca'] = {
             'plot': {'k': 'pie', 'd': df_ca, 'o': {'hover': True}},
-            'rows': [('title', [{'content': 'title', 'value': u"Chiffre d'affaire cloturé et en cours", 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u"Chiffre d'affaire cloturÃ© et en cours", 'cls': 'text-center'}]),
                      ('figure', [{'content': 'plot'}])],
             'rank': 0
                 }

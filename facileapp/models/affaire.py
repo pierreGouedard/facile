@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -35,7 +35,7 @@ class Affaire(BaseModel):
     def l_fields(widget=False, **kwlist):
         if widget:
             l_fields = \
-                [StringFields(title=u"Numéro de devis", name='devis_id', l_choices=Affaire.list('devis'),
+                [StringFields(title=u"NumÃ©ro de devis", name='devis_id', l_choices=Affaire.list('devis'),
                               table_reduce=True, rank=2, required=True),
                  StringFields(title=u'Responsable affaire', name='responsable', l_choices=Affaire.list('responsable'),
                               table_reduce=True, rank=3, required=True),
@@ -51,7 +51,7 @@ class Affaire(BaseModel):
 
         else:
             l_fields = \
-                [StringFields(title=u"Numéro de devis", name='devis_id', table_reduce=True, rank=2, required=True),
+                [StringFields(title=u"NumÃ©ro de devis", name='devis_id', table_reduce=True, rank=2, required=True),
                  StringFields(title=u'Responsable Affaire', name='responsable', table_reduce=True, rank=3, required=True),
                  StringFields(title=u'Chantier', name='chantier_id', round=2, required=True),
                  StringFields(title=u'Contact client - chantier', name='contact_chantier_client', round=2, required=True),
@@ -172,10 +172,10 @@ class Affaire(BaseModel):
 
         if step % Affaire.nb_step_form == 0:
             index_node = StringFields(
-                title=u"Numéro d'affaire", name='index', missing=-1,
+                title=u"NumÃ©ro d'affaire", name='index', missing=-1,
                 l_choices=zip(Affaire.get_affaire(sep='/'), Affaire.get_affaire(sep='/')) + [('new', 'Nouveau')],
-                desc=u"En cas de modification: choisir un numéro d'affaire et un numéro d'indice.\n"
-                     u"En cas d'affaire secondaire: choisir le numéro d'affaire (peu import l'indice)")
+                desc=u"En cas de modification: choisir un numÃ©ro d'affaire et un numÃ©ro d'indice.\n"
+                     u"En cas d'affaire secondaire: choisir le numÃ©ro d'affaire (peu import l'indice)")
 
             form_man.load_init_form(Affaire.action_field, index_node)
 

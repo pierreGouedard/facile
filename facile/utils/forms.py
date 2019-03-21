@@ -291,9 +291,9 @@ def get_title_from_step(step, data):
             title = action
 
         else:
-            title = '{}: {}'.format(action, data.get('index', '').encode('latin1'))
+            title = u'{}: {}'.format(action, data.get('index', ''))
 
-    return title.decode('latin1')
+    return title
 
 
 def build_document_form(table_key, request, deform_template_path):

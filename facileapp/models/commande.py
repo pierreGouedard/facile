@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -19,7 +19,7 @@ class Commande(BaseModel):
     table_name = 'commande'
     l_index = [StringFields(title=u'Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
-    l_documents = [(u'comande', u'Résumé des Commandes')]
+    l_documents = [(u'comande', u'RÃ©sumÃ© des Commandes')]
     l_actions = map(lambda x: (x.format(u'une commande'), x.format(u'une commande')), BaseModel.l_actions)
     action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
@@ -28,18 +28,18 @@ class Commande(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
+                [StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
                               table_reduce=True, rank=1, required=True),
                  StringFields(title=u'Fournisseur', name='raison_social', l_choices=Commande.list('fournisseur'),
                               table_reduce=True, rank=2, required=True),
                  MoneyFields(title=u'Montant Commande HT', name='montant_ht', required=True),
-                 FileFields(title=u"Détails commande", name='details', required=True)]
+                 FileFields(title=u"DÃ©tails commande", name='details', required=True)]
         else:
             l_fields = \
-                [StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                [StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
                  StringFields(title=u'Fournisseur', name='raison_social', table_reduce=True, rank=2, required=True),
                  MoneyFields(title=u'Montant Commande HT', name='montant_ht', required=True),
-                 FileFields(title=u"Détails commande", name='details', required=True)]
+                 FileFields(title=u"DÃ©tails commande", name='details', required=True)]
 
         return l_fields
 

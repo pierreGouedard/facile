@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -30,10 +30,10 @@ class Contact(BaseModel):
             l_fields = \
                 [StringFields(title=u'Type de contact', name='type', l_choices=Contact.list('type'), table_reduce=True,
                               rank=1, multiple=True, required=True),
-                 StringFields(title=u'Désignation client / fournisseur', name='designation',
+                 StringFields(title=u'DÃ©signation client / fournisseur', name='designation',
                               l_choices=Contact.list('client') + Contact.list('fournisseur'), table_reduce=True, rank=2,
                               required=True),
-                 StringFields(title=u'Désignation du contact', name='contact', table_reduce=True, rank=3, required=True),
+                 StringFields(title=u'DÃ©signation du contact', name='contact', table_reduce=True, rank=3, required=True),
                  StringFields(title=u'Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title=u'Adresse', name='adresse'),
                  StringFields(title=u'CS/BP', name='cs_bp'),
@@ -45,9 +45,9 @@ class Contact(BaseModel):
             l_fields = \
                 [StringFields(title=u'Type de contact', name='type', table_reduce=True, rank=1, multiple=True,
                               required=True),
-                 StringFields(title=u'Désignation client / fournisseur', name='designation', table_reduce=True, rank=2,
+                 StringFields(title=u'DÃ©signation client / fournisseur', name='designation', table_reduce=True, rank=2,
                               required=True),
-                 StringFields(title=u'Désignation du contact', name='contact', table_reduce=True, rank=3, required=True),
+                 StringFields(title=u'DÃ©signation du contact', name='contact', table_reduce=True, rank=3, required=True),
                  StringFields(title=u'Description du contact', name='desc', table_reduce=True, rank=4),
                  StringFields(title=u'Adresse', name='adresse'),
                  StringFields(title=u'CS/BP', name='cs_bp'),
@@ -119,7 +119,7 @@ class Contact(BaseModel):
 
         d_contacts = df.set_index('contact_id', drop=True)\
             .loc[:, ['designation', 'contact']]\
-            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in r.index]), axis=1)\
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in ['designation', 'contact']]), axis=1)\
             .to_dict()
 
         if return_id:

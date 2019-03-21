@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global import
 
@@ -16,7 +16,7 @@ from facileapp.models.client import Client
 
 
 class Facturation(BaseView):
-    l_documents = [(u'detail_facture', u'Détail facture')]
+    l_documents = [(u'detail_facture', u'DÃ©tail facture')]
     main_model = Facture
     l_models = [Affaire,  Devis]
 
@@ -44,7 +44,7 @@ class Facturation(BaseView):
     def form_document_loading():
 
         index_node = StringFields(
-            title=u'Numéro de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
+            title=u'NumÃ©ro de facture', name='index', l_choices=zip(Facture.get_facture(), Facture.get_facture())
         )
         document_node = StringFields(
             title=u'Nom document', name='document', l_choices=Facturation.l_documents
@@ -68,16 +68,16 @@ class Facturation(BaseView):
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # Info affaire
-        word_document.add_title(u'Détails Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
+        word_document.add_title(u'DÃ©tails Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
         word_document.add_field(
-            u"Numéro d'affaire", u'{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
+            u"NumÃ©ro d'affaire", u'{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
             space_before=0.1
         )
-        word_document.add_field(u'Désignation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'DÃ©signation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Montant du devis', df['price'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Début du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'DÃ©but du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
@@ -88,7 +88,7 @@ class Facturation(BaseView):
             u'Montant facture HT', u'{} Euros'.format(float(int(df['montant_ht'].iloc[0] * 100) / 100)), left_indent=0.15,
             space_before=0.1
         )
-        word_document.add_field(u'Numéro de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'NumÃ©ro de situation', df['situation'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Date de visa', df['date_visa'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Date de paiement', df['date_payed'].iloc[0], left_indent=0.15, space_before=0.1)
 

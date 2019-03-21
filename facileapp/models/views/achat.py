@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global import
 
@@ -16,7 +16,7 @@ from facileapp.models.chantier import Chantier
 
 
 class Achat(BaseView):
-    l_documents = [(u'detail_commande', u'Détails Commande')]
+    l_documents = [(u'detail_commande', u'DÃ©tails Commande')]
     main_model = Commande
     l_models = [Affaire,  Devis]
 
@@ -70,15 +70,15 @@ class Achat(BaseView):
         word_document.add_title(title, font_size=15, text_align='center', color='000000')
 
         # Info affaire
-        word_document.add_title(u'Détails Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
+        word_document.add_title(u'DÃ©tails Affaire', font_size=12, text_align='left', color='000000', space_before=1.)
         word_document.add_field(
             u"Numero d'affaire", u'{}/{}'.format(df['affaire_num'].iloc[0], df['affaire_ind'].iloc[0]), left_indent=0.15,
             space_before=0.1
         )
-        word_document.add_field(u'Désignation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'DÃ©signation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Montant achat devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Début du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
+        word_document.add_field(u'DÃ©but du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)

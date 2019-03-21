@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -28,18 +28,18 @@ class Chantier(BaseModel):
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title=u'Désignation du client', name='designation_client', l_choices=Chantier.list('client'),
+                [StringFields(title=u'DÃ©signation du client', name='designation_client', l_choices=Chantier.list('client'),
                               table_reduce=True, rank=1, required=True),
-                 StringFields(title=u'Désignation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title=u'DÃ©signation du chantier', name='nom', table_reduce=True, rank=2, required=True),
                  StringFields(title=u'Adresse', name='adresse', required=True),
                  StringFields(title=u'Ville', name='ville', required=True),
                  StringFields(title=u'Code postal', name='code_postal', required=True),
                  ]
         else:
             l_fields = \
-                [StringFields(title=u'Désignation du client', name='designation_client', table_reduce=True, rank=1,
+                [StringFields(title=u'DÃ©signation du client', name='designation_client', table_reduce=True, rank=1,
                               required=True),
-                 StringFields(title=u'Désignation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title=u'DÃ©signation du chantier', name='nom', table_reduce=True, rank=2, required=True),
                  StringFields(title=u'Adresse', name='adresse', required=True),
                  StringFields(title=u'Ville', name='ville', required=True),
                  StringFields(title=u'Code postal', name='code_postal', required=True),
@@ -96,7 +96,7 @@ class Chantier(BaseModel):
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \
-            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in r.index]), axis=1) \
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in ['designation_client', 'nom']]), axis=1) \
             .to_dict()
 
         if return_id:

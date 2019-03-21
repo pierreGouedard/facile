@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 
 # Global import
@@ -43,7 +43,7 @@ d_map_contact.update({
 })
 
 
-f0 = lambda x: unicode.encode(x.decode('latin1'), 'latin1')
+f0 = lambda x: unicode.encode(x.decode('utf-8'), 'utf-8')
 f1 = lambda x: ' '.join(map(lambda y: y.lower().capitalize(), x.split(' ')))
 
 f21 = lambda x: x.replace('Av', 'Avenue')

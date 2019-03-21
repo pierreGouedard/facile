@@ -8,11 +8,11 @@ from sqlalchemy.exc import IntegrityError
 
 class RdbmsDriver(object):
 
-    def __init__(self, base, uri, desc='', codec='latin1'):
+    def __init__(self, base, uri, desc='', codec='utf-8'):
         self.base = base
         self.desc = desc if desc else 'rdbms driver'
         self.codec = codec
-        self.base.metadata.bind = create_engine(uri)
+        self.base.metadata.bind = create_engine(uri, encoding=codec)
 
     def __str__(self):
         return '{}'.format(self.desc)

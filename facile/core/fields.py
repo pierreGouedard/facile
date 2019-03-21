@@ -11,8 +11,9 @@ import copy
 
 
 class StringFields(object):
-    def __init__(self, title, name, round=1, missing='', widget=None, l_choices=None, multiple=False, desc=None,
-                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
+    def __init__(self, title, name, round=1, missing=u'', widget=None, l_choices=None, multiple=False, desc=None,
+                 table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False,
+                 codec='utf-8'):
 
         # Form display
         self.title = title
@@ -42,12 +43,12 @@ class StringFields(object):
                 self.widget = TextInputWidget()
 
         self.processing_form = {
-            'form': lambda x: unicode.encode(x, 'latin1').decode('latin1') if x else missing,
-            'db': lambda x: unicode.encode(x, 'latin1').decode('latin1')
+            'form': lambda x: x.decode(codec) if isinstance(x, str) else x,
+            'db': lambda x: x.decode(codec) if isinstance(x, str) else x
         }
         self.processing_db = {
-            'upload': lambda x: x.decode('latin1') if isinstance(x, str) else unicode.encode(x, 'latin1').decode('latin1'),
-            'download': lambda x: x.decode('latin1') if isinstance(x, str) else unicode.encode(x, 'latin1').decode('latin1')
+            'upload': lambda x: x.decode(codec) if isinstance(x, str) else x,
+            'download': lambda x: x.decode(codec) if isinstance(x, str) else x
         }
 
         if not multiple:

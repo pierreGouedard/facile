@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -14,7 +14,7 @@ from facile.core.base_model import BaseModel
 class Client(BaseModel):
 
     table_name = 'client'
-    l_index = [StringFields(title=u'Désignation', name='designation', table_reduce=True, rank=0, primary_key=True)]
+    l_index = [StringFields(title=u'DÃ©signation', name='designation', table_reduce=True, rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format(u'un client'), x.format(u'un client')), BaseModel.l_actions)
     action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2

@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 
 # Global imports
@@ -17,7 +17,7 @@ from facileapp.models.affaire import Affaire
 class Facture(BaseModel):
 
     table_name = 'facture'
-    l_index = [StringFields(title=u'Numéro de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title=u'NumÃ©ro de Facture', name='facture_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
     l_actions = map(lambda x: (x.format(u'une facture'), x.format(u'une facture')), BaseModel.l_actions)
     action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
@@ -27,7 +27,7 @@ class Facture(BaseModel):
     def l_fields(widget=False, restricted=True):
         if widget:
             l_fields = \
-                [StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
+                [StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', l_choices=Facture.list('affaire'),
                               table_reduce=True, rank=1, required=True),
                  StringFields(title=u'Type', name='type', l_choices=Facture.list('type'), table_reduce=True,
                               required=True),
@@ -36,7 +36,7 @@ class Facture(BaseModel):
                  FloatFields(title=u'Taux TVA', name='taux_tva', l_choices=Facture.list('tva'), required=True),
                  MoneyFields(title=u'Montant TVA', name='montant_tva', widget=HiddenWidget()),
                  MoneyFields(title=u'Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
-                 IntegerFields(title=u'Numéro de situation', name='situation', l_choices=Facture.list('situation'),
+                 IntegerFields(title=u'NumÃ©ro de situation', name='situation', l_choices=Facture.list('situation'),
                                required=True),
                  DateFields(title=u'Visa', name='date_visa', missing='1970-01-01'),
                  DateFields(title=u'Encaissement', name='date_payed', missing='1970-01-01')
@@ -49,7 +49,7 @@ class Facture(BaseModel):
                                           widget=HiddenWidget(), processing_form=lambda x: pd.Timestamp(x))
         else:
             l_fields = \
-                [StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                [StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
                  StringFields(title=u'Type', name='type', table_reduce=True, required=True),
                  StringFields(title=u'Objet', name='objet', required=True),
                  MoneyFields(title=u'Montant facture HT', name='montant_ht', required=True),
@@ -262,7 +262,7 @@ class Facture(BaseModel):
         df_, d_footer, kwargs = table_man.load_full_table(df.loc[df.date_payed > ref_date])
         d_control_data['tablepayment'] = {
             'table': {'df': df_, 'd_footer': d_footer, 'kwargs': kwargs, 'key': 'payement'},
-            'rows': [('title', [{'content': 'title', 'value': u'Factures encaissées', 'cls': 'text-center'}]),
+            'rows': [('title', [{'content': 'title', 'value': u'Factures encaissÃ©es', 'cls': 'text-center'}]),
                      ('Table', [{'content': 'table'}])],
             'rank': 2
                 }

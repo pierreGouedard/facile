@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
 
 # Global imports
 import pandas as pd
@@ -34,10 +34,10 @@ class Heure(BaseModel):
             l_fields = \
                 [StringFields(title=u"Semaine", name='semaine', widget=HiddenWidget(), table_reduce=True,
                               rank=1),
-                 StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
+                 StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', l_choices=Heure.list('affaire'),
                               table_reduce=True,  rank=2, required=True),
-                 StringFields(title=u"Désignation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
-                              rank=3, desc=u"Choisir 'Intérimaires' pour ajouter le cumul des heures des intérimaires",
+                 StringFields(title=u"DÃ©signation", name='name', l_choices=Heure.list('employe'), table_reduce=True,
+                              rank=3, desc=u"Choisir 'IntÃ©rimaires' pour ajouter le cumul des heures des intÃ©rimaires",
                               required=True),
                  IntegerFields(title=u"Cumul heure prod", name='heure_prod', l_choices=Heure.list('heures'),
                                missing=0, table_reduce=True, rank=4, required=True),
@@ -46,8 +46,8 @@ class Heure(BaseModel):
         else:
             l_fields = \
                 [StringFields(title=u"Semaine", name='semaine', table_reduce=True, rank=1),
-                 StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True,  rank=2),
-                 StringFields(title=u"Désignation", name='name', table_reduce=True, rank=3),
+                 StringFields(title=u"NumÃ©ro d'affaire", name='affaire_id', table_reduce=True,  rank=2),
+                 StringFields(title=u"DÃ©signation", name='name', table_reduce=True, rank=3),
                  IntegerFields(title=u"Cumul heure prod", name='heure_prod', missing=0, table_reduce=True, rank=4),
                  IntegerFields(title=u"Cumul heure autre", name='heure_autre', missing=0, table_reduce=True, rank=5)]
 
@@ -68,7 +68,7 @@ class Heure(BaseModel):
     @staticmethod
     def list(kw):
         if kw == 'employe':
-            return zip(Employe.get_employes(), Employe.get_employes()) + [(u'interim', u'Intérimaires')]
+            return zip(Employe.get_employes(), Employe.get_employes()) + [(u'interim', u'IntÃ©rimaires')]
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
         elif kw == 'week':
