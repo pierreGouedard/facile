@@ -1,13 +1,12 @@
 # Global imports
 import pandas as pd
-from facile.utils.drivers import rdbms
-
 
 # Local import
+from facile.utils.drivers import rdbms
 from facileapp import facile_base
-from config import d_sconfig
+from config import d_sconfig, CODEC
 
-driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'])
+driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'], codec=CODEC)
 
 __maintainer__ = 'Pierre Gouedard'
 
