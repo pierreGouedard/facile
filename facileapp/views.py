@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global import
 from facileapp import application
 from flask import render_template
@@ -66,8 +69,6 @@ def test_example():
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
 
     else:
-        import IPython
-        IPython.embed()
         html = render_template(custom_template, **{k: Markup(v) for k, v in web.items()})
 
     return html
@@ -106,9 +107,9 @@ def form():
             html = render_template(custom_template, **context)
 
         else:
-            form = Markup('<h1>Page des Formulaires</h1>'
-                          '<p class="lead"> Choisissez un onglet puis ajoutez, modifiez '
-                          "ou suprimez un element d'une table</p>")
+            form = Markup(u'<h1>Page des Formulaires</h1>'
+                          u'<p class="lead"> Choisissez un onglet puis ajoutez, modifiez '
+                          u"ou suprimez un élément d'une table</p>")
             html = render_template("form.html", **{'form': form})
     else:
         # Get data from form
@@ -161,7 +162,7 @@ def document():
         if request.args:
 
             # Build title
-            title = "Editer les documents de la table: {}".format(request.args['table'])
+            title = u"Editer les documents de la table: {}".format(request.args['table'])
 
             # Get template
             custom_template = Template(
@@ -176,8 +177,8 @@ def document():
             html = render_template(custom_template, **context)
 
         else:
-            document = Markup('<h1>Page des documents</h1>'
-                              '<p class="lead"> Choisissez un onglet pour editer un document</p>')
+            document = Markup(u'<h1>Page des documents</h1>'
+                              u'<p class="lead"> Choisissez un onglet pour éditer un document</p>')
             html = render_template("document.html", **{'document': document})
     else:
         path, tmpdir = process_document_form(request.args['table'], request.form)
@@ -217,8 +218,8 @@ def export():
             html = render_template(custom_template, **context)
 
         else:
-            export = Markup('<h1>Page des Exports</h1>'
-                            '<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
+            export = Markup(u'<h1>Page des Exports</h1>'
+                            u'<p class="lead"> Choisissez un onglet pour explorer et exporter les tables</p>')
             html = render_template("export.html", **{'export': export})
     else:
         path, tmpdir = process_table(request.args['table'])
@@ -242,9 +243,9 @@ def control():
             html = build_controls(request, session, DEFORM_TEMPLATE_PATH)
 
         else:
-            control = Markup('<div class="jumbotron">'
-                             '<h1>Page des controles</h1>'
-                             '<p class="lead"> Choisissez un onglet pour visualiser un controle</p></div>')
+            control = Markup(u'<div class="jumbotron">'
+                             u'<h1>Page des controles</h1>'
+                             u'<p class="lead"> Choisissez un onglet pour visualiser un controle</p></div>')
             html = render_template("control.html", **{'control': control})
 
     else:

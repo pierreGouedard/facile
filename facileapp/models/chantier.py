@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
@@ -14,32 +17,32 @@ from facileapp.models.contact import Contact
 class Chantier(BaseModel):
 
     table_name = 'chantier'
-    l_index = [StringFields(title='ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0,
+    l_index = [StringFields(title=u'ID', name='chantier_id', widget=HiddenWidget(), table_reduce=True, rank=0,
                             primary_key=True)]
     l_subindex = [0, 1]
-    l_actions = map(lambda x: (x.format('un chantier'), x.format('un chantier')), BaseModel.l_actions)
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    l_actions = map(lambda x: (x.format(u'un chantier'), x.format(u'un chantier')), BaseModel.l_actions)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title='Designation du client', name='designation_client', l_choices=Chantier.list('client'),
+                [StringFields(title=u'Désignation du client', name='designation_client', l_choices=Chantier.list('client'),
                               table_reduce=True, rank=1, required=True),
-                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2, required=True),
-                 StringFields(title='Adresse', name='adresse', required=True),
-                 StringFields(title='Ville', name='ville', required=True),
-                 StringFields(title='Code postal', name='code_postal', required=True),
+                 StringFields(title=u'Désignation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title=u'Adresse', name='adresse', required=True),
+                 StringFields(title=u'Ville', name='ville', required=True),
+                 StringFields(title=u'Code postal', name='code_postal', required=True),
                  ]
         else:
             l_fields = \
-                [StringFields(title='Designation du client', name='designation_client', table_reduce=True, rank=1,
+                [StringFields(title=u'Désignation du client', name='designation_client', table_reduce=True, rank=1,
                               required=True),
-                 StringFields(title='Designation du chantier', name='nom', table_reduce=True, rank=2, required=True),
-                 StringFields(title='Adresse', name='adresse', required=True),
-                 StringFields(title='Ville', name='ville', required=True),
-                 StringFields(title='Code postal', name='code_postal', required=True),
+                 StringFields(title=u'Désignation du chantier', name='nom', table_reduce=True, rank=2, required=True),
+                 StringFields(title=u'Adresse', name='adresse', required=True),
+                 StringFields(title=u'Ville', name='ville', required=True),
+                 StringFields(title=u'Code postal', name='code_postal', required=True),
                  ]
 
         return l_fields
@@ -54,7 +57,8 @@ class Chantier(BaseModel):
     def list(kw):
         if kw == 'client':
             return zip(
-                Client.load_db()['designation'].unique(), Client.load_db()['designation'].unique()
+                Client.load_db(columns=['designation'])['designation'].unique(),
+                Client.load_db(columns=['designation'])['designation'].unique()
             )
 
         else:
@@ -92,7 +96,7 @@ class Chantier(BaseModel):
 
         df = df.set_index('chantier_id', drop=True)\
             .loc[:, ['designation_client', 'nom']] \
-            .apply(lambda r: '{} / {}'.format(*[r[c] for c in r.index]), axis=1) \
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in r.index]), axis=1) \
             .to_dict()
 
         if return_id:
@@ -125,7 +129,7 @@ class Chantier(BaseModel):
     def form_loading(step, index=None, data=None):
 
         if index is not None:
-            l_subindex = [Chantier.l_fields()[i].name for i in Contact.l_subindex]
+            l_subindex = [Chantier.l_fields()[i].name for i in Chantier.l_subindex]
             d_index = {k: v for k, v in zip(l_subindex, index.split(' / '))}
         else:
             d_index = None
@@ -135,9 +139,9 @@ class Chantier(BaseModel):
 
         if step % Chantier.nb_step_form == 0:
             index_node = StringFields(
-                title='Nom du chantier', name='index', missing=unicode(''),
-                l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un chantier"
+                title=u'Nom du chantier', name='index', missing=unicode(''),
+                l_choices=zip(Chantier.get_chantier(), Chantier.get_chantier()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un chantier"
             )
             form_man.load_init_form(Chantier.action_field, index_node)
 

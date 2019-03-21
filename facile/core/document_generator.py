@@ -93,7 +93,7 @@ class WordDocument(Documents):
         for l_row_values in l_values:
             l_cells = table.add_row().cells
             for i, (cell, name) in enumerate(zip(l_cells, l_row_values)):
-                cell.text = str(name)
+                cell.text = name if isinstance(name, (str, unicode)) else str(name)
                 cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
                 cell.vertical_alignment = WD_ALIGN_PARAGRAPH.CENTER
                 if i == index_column:
@@ -111,7 +111,7 @@ class WordDocument(Documents):
         # Add info
         p.add_run(title).bold = True
         p.add_run(tab)
-        p.add_run(str(value))
+        p.add_run(value if isinstance(value, (str, unicode)) else str(value))
 
     def add_simple_paragraph(self, l_runs, break_run=False, left_indent=0., space_before=0.06, space_after=0.,
                              bold=False, alignment=None):

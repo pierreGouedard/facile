@@ -94,7 +94,7 @@ class Table(object):
         with html_head:
             with tr():
                 for c in l_cols:
-                    th(c)
+                    th(c if isinstance(c, (unicode, str)) else str(c))
 
         return html_head
 
@@ -106,7 +106,7 @@ class Table(object):
             for index, row in df.iterrows():
                 with tr():
                     for name in l_cols:
-                        td(str(row[name]), cls="table-primary")
+                        td(row[name] if isinstance(row[name], (unicode, str)) else str(row[name]), cls="table-primary")
 
         return html_body
 
@@ -117,6 +117,6 @@ class Table(object):
         with html_foot:
             with tr():
                 for name in l_cols:
-                    td(row[name], cls="table-primary")
+                    td(row[name] if isinstance(row[name], (unicode, str)) else str(row[name]), cls="table-primary")
 
         return html_foot

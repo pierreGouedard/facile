@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -12,21 +15,21 @@ class Fournisseur(BaseModel):
 
     table_name = 'fournisseur'
 
-    l_index = [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True,
+    l_index = [StringFields(title=u'Raison sociale', name='raison_social', table_reduce=True, rank=0, required=True,
                             primary_key=True)]
-    l_actions = map(lambda x: (x.format('un fournisseur'), x.format('un fournisseur')), BaseModel.l_actions)
+    l_actions = map(lambda x: (x.format(u'un fournisseur'), x.format(u'un fournisseur')), BaseModel.l_actions)
     action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='Adresse', name='adresse', required=True),
-             StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville', required=True),
-             StringFields(title='Code postal', name='code_postal', required=True),
-             StringFields(title='tel', name='num_tel', table_reduce=True, rank=2),
-             StringFields(title='E-mail', name='mail', table_reduce=True, rank=3)]
+            [StringFields(title=u'Adresse', name='adresse', required=True),
+             StringFields(title=u'CS/BP', name='cs_bp'),
+             StringFields(title=u'Ville', name='ville', ),
+             StringFields(title=u'Code postal', name='code_postal'),
+             StringFields(title=u'tel', name='num_tel', table_reduce=True, rank=2),
+             StringFields(title=u'E-mail', name='mail', table_reduce=True, rank=3)]
 
         return l_fields
 
@@ -35,10 +38,6 @@ class Fournisseur(BaseModel):
         return BaseModel.declarative_base(
             clsname='Fournisseur', name=Fournisseur.table_name, dbcols=[f.dbcol() for f in Fournisseur.l_index + Fournisseur.l_fields()]
         )
-
-    @staticmethod
-    def list(kw):
-        return []
 
     @staticmethod
     def from_index_(d_index):
@@ -78,9 +77,9 @@ class Fournisseur(BaseModel):
 
         if step % Fournisseur.nb_step_form == 0:
             index_node = StringFields(
-                title='Raison social', name='index', missing=unicode(''),
-                l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un fournisseur")
+                title=u'Raison sociale', name='index', missing=unicode(''),
+                l_choices=zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un fournisseur")
             form_man.load_init_form(Fournisseur.action_field, index_node)
 
         else:

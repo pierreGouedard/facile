@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -11,21 +14,22 @@ from facile.core.base_model import BaseModel
 class Client(BaseModel):
 
     table_name = 'client'
-    l_index = [StringFields(title='Designation', name='designation', table_reduce=True, rank=0, primary_key=True)]
-    l_actions = map(lambda x: (x.format('un client'), x.format('un client')), BaseModel.l_actions)
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    l_index = [StringFields(title=u'Désignation', name='designation', table_reduce=True, rank=0, primary_key=True)]
+    l_actions = map(lambda x: (x.format(u'un client'), x.format(u'un client')), BaseModel.l_actions)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         l_fields = \
-            [StringFields(title='Raison sociale', name='raison_social', table_reduce=True, rank=1, required=True),
-             StringFields(title='Adresse', name='adresse', rank=2, required=True),
-             StringFields(title='CS/BP', name='cs_bp'),
-             StringFields(title='Ville', name='ville', rank=3, required=True),
-             StringFields(title='Code postal', name='code_postal', required=True),
-             StringFields(title='tel', name='num_tel', table_reduce=True),
-             StringFields(title='E-mail', name='mail', table_reduce=True)]
+            [StringFields(title=u'Raison sociale', name='raison_social', table_reduce=True, rank=1, required=True),
+             StringFields(title=u'Division', name='division', table_reduce=True, rank=2),
+             StringFields(title=u'Adresse', name='adresse', rank=3, required=True),
+             StringFields(title=u'CS/BP', name='cs_bp'),
+             StringFields(title=u'Ville', name='ville', rank=4, required=True),
+             StringFields(title=u'Code postal', name='code_postal', required=True),
+             StringFields(title=u'tel', name='num_tel', table_reduce=True),
+             StringFields(title=u'E-mail', name='mail', table_reduce=True)]
 
         return l_fields
 
@@ -74,9 +78,9 @@ class Client(BaseModel):
         form_man = FormLoader(Client.l_index, Client.l_fields(widget=True))
         if step % Client.nb_step_form == 0:
             index_node = StringFields(
-                title='Designation', name='index', missing='',
-                l_choices=zip(Client.get_clients(), Client.get_clients()) + [('new', 'Nouveau')],
-                desc="En cas de modification ou supression, choisir la raison sociale du client"
+                title=u'Designation', name='index', missing=u'',
+                l_choices=zip(Client.get_clients(), Client.get_clients()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification ou supression, choisir la raison sociale du client"
             )
             form_man.load_init_form(Client.action_field, index_node)
 

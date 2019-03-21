@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 
@@ -13,7 +16,7 @@ class BaseModel(object):
     l_index, l_subindex = [], []
     l_hfields = [StringFields(name='creation_date', title='creation_date', round=0),
                  StringFields(name='maj_date', title='maj_date', round=0)]
-    l_actions = ['Ajouter {}', 'Modifier {}', 'Suprimer {}']
+    l_actions = [u'Ajouter {}', u'Modifier {}', u'Suprimer {}']
     l_documents = []
     l_apps = []
     driver = RdbmsDriver(facile_base, d_sconfig['mysql_uri'], 'BaseModel driver')
@@ -104,7 +107,11 @@ class BaseModel(object):
         df = df.astype({f.name: f.type for f in l_fields if f.name in columns}) \
             .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields if f.name in columns})
 
-        return df
+        df = df.transform(
+            {f.name: f.processing_db['download'] for f in l_fields if f.name in columns and f.processing_db is not None}
+        )
+
+        return df[columns]
 
     def add(self):
         # Update creation and maj timestamp
@@ -112,7 +119,7 @@ class BaseModel(object):
         self.maj_date = str(pd.Timestamp.now())
 
         # Add record and save dataframe as csv
-        data = [f.type(self.__getattribute__(f.name)) for f in self.l_index + self.l_fields() + self.l_hfields]
+        data = [self.__getattribute__(f.name) for f in self.l_index + self.l_fields() + self.l_hfields]
         df_ = pd.DataFrame([data], columns=[f.name for f in self.l_index + self.l_fields() + self.l_hfields])
 
         # Insert value
@@ -129,7 +136,7 @@ class BaseModel(object):
 
         # Get new values
         l_fields = self.l_index + self.l_fields() + self.l_hfields
-        d_value = {f.name: f.type(self.__getattribute__(f.name)) for f in l_fields}
+        d_value = {f.name: self.__getattribute__(f.name) for f in l_fields}
         d_value.pop('creation_date')
         # Update value
         self.driver.update_row(d_value, self.table_name)
@@ -140,7 +147,7 @@ class BaseModel(object):
 
         # Get new values
         l_fields = self.l_index + self.l_fields() + self.l_hfields
-        d_value = {f.name: f.type(self.__getattribute__(f.name)) for f in l_fields}
+        d_value = {f.name: self.__getattribute__(f.name) for f in l_fields}
 
         # Update value
         self.driver.delete_row(d_value, self.table_name)
@@ -150,7 +157,7 @@ class BaseModel(object):
     @staticmethod
     def control_loading():
         d_control_data = {'noapp': {'rows': [('title', [{'content': 'title',
-                                                         'value': 'Aucun controle disponnible',
+                                                         'value': 'Aucun controle disponible',
                                                          'cls': 'text-center'}]
                                               )],
                                     'rank': 0

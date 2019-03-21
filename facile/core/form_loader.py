@@ -67,9 +67,6 @@ class FormLoader(object):
         elif sequence_mapping_fields is not None:
             self.d_form_data['sequence_mapping_fields'] = sequence_mapping_fields
 
-
-
-
     def filter_index(self, d_mask_index):
 
         l_index_ = []

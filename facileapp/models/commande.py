@@ -1,9 +1,12 @@
+#!/usr/bin/python
+# -*- coding: latin-1 -*-
+
 # Global imports
 import pandas as pd
 from deform.widget import HiddenWidget
 
 # Local import
-from facile.core.fields import StringFields, FileFields, FloatFields, MoneyFields
+from facile.core.fields import StringFields, FileFields, MoneyFields
 from facile.core.form_loader import FormLoader
 from facile.core.table_loader import TableLoader
 from facile.core.base_model import BaseModel
@@ -14,35 +17,29 @@ from facileapp.models.fournisseur import Fournisseur
 class Commande(BaseModel):
 
     table_name = 'commande'
-    l_index = [StringFields(title='Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
+    l_index = [StringFields(title=u'Numero de Commande', name='commande_id', widget=HiddenWidget(), table_reduce=True,
                             rank=0, primary_key=True)]
-    l_documents = [('comande', 'Resume de Commande')]
-    l_actions = map(lambda x: (x.format('une commande'), x.format('une commande')), BaseModel.l_actions)
-    action_field = StringFields(title='Action', name='action', l_choices=l_actions, round=0)
+    l_documents = [(u'comande', u'Résumé des Commandes')]
+    l_actions = map(lambda x: (x.format(u'une commande'), x.format(u'une commande')), BaseModel.l_actions)
+    action_field = StringFields(title=u'Action', name='action', l_choices=l_actions, round=0)
     nb_step_form = 2
 
     @staticmethod
     def l_fields(widget=False):
         if widget:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
+                [StringFields(title=u"Numéro d'affaire", name='affaire_id', l_choices=Commande.list('affaire'),
                               table_reduce=True, rank=1, required=True),
-                 StringFields(title='Fournisseur', name='raison_social', l_choices=Commande.list('fournisseur'),
+                 StringFields(title=u'Fournisseur', name='raison_social', l_choices=Commande.list('fournisseur'),
                               table_reduce=True, rank=2, required=True),
-                 MoneyFields(title='Montant Commande HT', name='montant_ht', required=True),
-                 FloatFields(title='Taux TVA', name='taux_tva', l_choices=Commande.list('tva'), required=True),
-                 MoneyFields(title='Montant TVA', name='montant_tva', widget=HiddenWidget()),
-                 MoneyFields(title='Montant TTC', name='montant_ttc', widget=HiddenWidget(), table_reduce=True, rank=3),
-                 FileFields(title="Details commande", name='details', required=True)]
+                 MoneyFields(title=u'Montant Commande HT', name='montant_ht', required=True),
+                 FileFields(title=u"Détails commande", name='details', required=True)]
         else:
             l_fields = \
-                [StringFields(title="Numero d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
-                 StringFields(title='Fournisseur', name='raison_social', table_reduce=True, rank=2, required=True),
-                 MoneyFields(title='Montant Commande HT', name='montant_ht', required=True),
-                 FloatFields(title='Taux TVA', name='taux_tva', required=True),
-                 MoneyFields(title='Montant TVA', name='montant_tva'),
-                 MoneyFields(title='Montant TTC', name='montant_ttc', table_reduce=True, rank=3),
-                 FileFields(title="Details commande", name='details', required=True)]
+                [StringFields(title=u"Numéro d'affaire", name='affaire_id', table_reduce=True, rank=1, required=True),
+                 StringFields(title=u'Fournisseur', name='raison_social', table_reduce=True, rank=2, required=True),
+                 MoneyFields(title=u'Montant Commande HT', name='montant_ht', required=True),
+                 FileFields(title=u"Détails commande", name='details', required=True)]
 
         return l_fields
 
@@ -59,8 +56,6 @@ class Commande(BaseModel):
             return zip(Fournisseur.get_fournisseurs(), Fournisseur.get_fournisseurs())
         elif kw == 'affaire':
             return zip(Affaire.get_affaire(), map(str, Affaire.get_affaire()))
-        elif kw == 'tva':
-            return [(0.2, '20%'), (0.1, '10%'), (0.055, '5,5%'), (0.021, '2,1%')]
         else:
             return []
 
@@ -111,10 +106,6 @@ class Commande(BaseModel):
         if self.commande_id == '' or self.commande_id is None:
             self.commande_id = 'CM{0:0=4d}'.format(max(map(lambda x: int(x.replace('CM', '')), l_commandes)) + 1)
 
-        self.montant_ttc, self.montant_tva = Commande.get_montant(
-            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
-        )
-
         # Try to add and reset conatct id if failed
         try:
             super(Commande, self).add()
@@ -125,15 +116,6 @@ class Commande(BaseModel):
 
         return self
 
-    def alter(self):
-
-        self.montant_ttc, self.montant_tva = Commande.get_montant(
-            self.__getattribute__('montant_ht'), self.__getattribute__('taux_tva')
-        )
-
-        super(Commande, self).alter()
-
-        return self
 
     @staticmethod
     def get_montant(montant_ht, taux_tva):
@@ -144,7 +126,7 @@ class Commande(BaseModel):
     def form_loading(step, index=None, data=None):
 
         if index is not None:
-            d_index = {Commande.l_index[0].name: Commande.l_index[0].type(index)}
+            d_index = {Commande.l_index[0].name: Commande.l_index[0].processing_db['upload'](index)}
         else:
             d_index = None
 
@@ -152,9 +134,9 @@ class Commande(BaseModel):
 
         if step % Commande.nb_step_form == 0:
             index_node = StringFields(
-                title='Numero de commande', name='index', missing=-1,
-                l_choices=zip(Commande.get_commande(), Commande.get_commande()) + [('new', 'Nouveau')],
-                desc="En cas de modification choisir un numero de commande",
+                title=u'Numero de commande', name='index', missing=-1,
+                l_choices=zip(Commande.get_commande(), Commande.get_commande()) + [(u'new', u'Nouveau')],
+                desc=u"En cas de modification choisir un numero de commande",
             )
             form_man.load_init_form(Commande.action_field, index_node)
 

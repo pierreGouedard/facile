@@ -141,6 +141,7 @@ class Synthesizer():
         d_client = {
             i: {'designation': 'client {} - site {}'.format(i, i),
                 'raison_social': 'client {}'.format(i),
+                'division': '',
                 'adresse': self.adresse(),
                 'cs_bp': self.cs(),
                 'ville': self.ville(**{'seed': i, 'key': 'name'}),
@@ -369,20 +370,11 @@ class Synthesizer():
                 'affaire_id': affaire,
                 'raison_social': np.random.choice(['fournisseur {}'.format(j) for j in range(self.n_fournisseur)]),
                 'montant_ht': self.float(float(np.random.randint(1000, 20000))),
-                'taux_tva': 0.196,
-                'montant_ttc': 0.,
-                'montant_tva': 0.,
                 'details': ''.join([random.choice(string.ascii_letters) for _ in range(10)]) + '.pdf',
                 'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                 'maj_date': str(pd.Timestamp.now())
             }
             for i, affaire in enumerate(self.l_affaires + self.l_affaires)}
-
-        for k in d_commande.keys():
-            d_commande[k]['montant_tva'] = d_commande[k]['montant_ht'] * d_commande[k]['taux_tva']
-            d_commande[k]['montant_tva'] = self.float(d_commande[k]['montant_tva'])
-            d_commande[k]['montant_ttc'] = d_commande[k]['montant_ht'] + d_commande[k]['montant_tva']
-            d_commande[k]['montant_ttc'] = self.float(d_commande[k]['montant_ttc'])
 
         df_commande = pd.DataFrame.from_dict(
             {k: v for k, v in d_commande.items()}, orient='index'
@@ -437,6 +429,13 @@ class Synthesizer():
 
         # Add facture
         for k in range(3):
+            date_visa, date_payed = str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()), \
+                str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date())
+
+            if k == 1:
+                date_payed = ''
+            if k == 2:
+                date_visa, date_payed = '', ''
 
             d_ = {
                 i + (k * len(d_devis)): {
@@ -445,9 +444,12 @@ class Synthesizer():
                     'affaire_id': self.l_affaires[i],
                     'objet': 'facture num {}'.format(k),
                     'montant_ht': self.float(d['price'] / 3),
+                    'taux_tva': 0.196,
+                    'montant_ttc': 0.,
+                    'montant_tva': 0.,
                     'situation': i + 1,
-                    'date_visa': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
-                    'date_payed': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
+                    'date_visa': date_visa,
+                    'date_payed': date_payed,
                     'creation_date': str(pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))),
                     'maj_date': str(pd.Timestamp.now())
                     }
@@ -463,6 +465,9 @@ class Synthesizer():
                 'affaire_id': self.l_affaires[0],
                 'objet': 'avoir situation 1',
                 'montant_ht': self.float(d_devis.values()[0]['price'] / 3),
+                'taux_tva': 0.196,
+                'montant_ttc': 0.,
+                'montant_tva': 0.,
                 'situation': 0,
                 'date_visa': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
                 'date_payed': str((pd.Timestamp.now() - pd.Timedelta(days=np.random.randint(5, 10))).date()),
@@ -471,6 +476,12 @@ class Synthesizer():
             }
         }
         d_facture.update(d_)
+
+        for k in d_facture.keys():
+            d_facture[k]['montant_tva'] = d_facture[k]['montant_ht'] * d_facture[k]['taux_tva']
+            d_facture[k]['montant_tva'] = self.float(d_facture[k]['montant_tva'])
+            d_facture[k]['montant_ttc'] = d_facture[k]['montant_ht'] + d_facture[k]['montant_tva']
+            d_facture[k]['montant_ttc'] = self.float(d_facture[k]['montant_ttc'])
 
         df_facture = pd.DataFrame.from_dict(
             {k: v for k, v in d_facture.items()}, orient='index'
