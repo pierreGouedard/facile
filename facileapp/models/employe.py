@@ -85,7 +85,8 @@ class Employe(BaseModel):
     def get_employes(sep=' ', **kwargs):
 
         # Get list of employ name and surname
-        df = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs)\
+        df = Employe.driver.select(Employe.table_name, columns=['prenom', 'nom'], **kwargs) \
+            .transform({f.name: f.processing_db['download'] for f in Employe.l_index}) \
             .apply(lambda r: (u'{}' + sep + u'{}').format(*[r[c] for c in r.index]), axis=1)
 
         if df.empty:

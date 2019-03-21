@@ -46,8 +46,8 @@ class StringFields(object):
             'db': lambda x: unicode.encode(x, 'latin1').decode('latin1')
         }
         self.processing_db = {
-            'upload': lambda x: x.decode('latin1') if isinstance(x, str) else x,
-            'download': lambda x: unicode.encode(x, 'latin1').decode('latin1')
+            'upload': lambda x: x.decode('latin1') if isinstance(x, str) else unicode.encode(x, 'latin1').decode('latin1'),
+            'download': lambda x: x.decode('latin1') if isinstance(x, str) else unicode.encode(x, 'latin1').decode('latin1')
         }
 
         if not multiple:
@@ -104,7 +104,7 @@ class IntegerFields(object):
                 self.widget = None
 
         self.processing_form = {'form': lambda x: int(x) if x else missing, 'db': lambda x: int(x)}
-        self.processing_db = {'upload': lambda x: int(x), 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: int(x), 'download': lambda x: int(x)}
 
         self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -154,7 +154,7 @@ class FloatFields(object):
                 self.widget = None
 
         self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
-        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: float(x)}
 
         self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -203,7 +203,7 @@ class MoneyFields(object):
                 self.widget = MoneyInputWidget(options={'allowZero': True})
 
         self.processing_form = {'form': lambda x: float(x.replace(',', '')) if x else missing, 'db': lambda x: float(x)}
-        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: float(x)}
 
         self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -254,7 +254,7 @@ class DateFields(object):
 
         # Processing
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x).date()}
-        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x).date()), 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x).date()), 'download': lambda x: str(x)}
 
         self.sn = sn(Date(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)
@@ -307,7 +307,7 @@ class DateTimeFields(object):
         self.table_reduce, self.rank, = table_reduce, rank
 
         self.processing_form = {'form': processing_form, 'db': lambda x: pd.Timestamp(x)}
-        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x)), 'download': lambda x: x}
+        self.processing_db = {'upload': lambda x: str(pd.Timestamp(x)), 'download': lambda x: str(x)}
 
         self.sn = sn(DateTime(), title=self.title, name=name, widget=self.widget, description=desc,
                      required=self.required, missing_msg=self.missing_msg)

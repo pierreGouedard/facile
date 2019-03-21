@@ -199,7 +199,7 @@ def export():
         if request.args:
 
             # Build title
-            title = "Exporter la table: {}".format(request.args['table'])
+            title = u"Exporter la table: {}".format(request.args['table'])
 
             # Get template
             custom_template = Template(

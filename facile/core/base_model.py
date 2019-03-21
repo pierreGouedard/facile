@@ -104,8 +104,7 @@ class BaseModel(object):
             columns = df.columns
 
         # Load db as df
-        df = df.astype({f.name: f.type for f in l_fields if f.name in columns}) \
-            .fillna({f.name: f.__dict__.get('missing', '') for f in l_fields if f.name in columns})
+        df = df.fillna({f.name: f.__dict__.get('missing', '') for f in l_fields if f.name in columns})
 
         df = df.transform(
             {f.name: f.processing_db['download'] for f in l_fields if f.name in columns and f.processing_db is not None}
