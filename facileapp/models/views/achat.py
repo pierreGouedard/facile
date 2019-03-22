@@ -76,11 +76,6 @@ class Achat(BaseView):
             space_before=0.1
         )
         word_document.add_field(u'Désignation client', df['designation_client'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Objet du devis', df['object'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Montant achat devis', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Début du chantier', df['date_start'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Fin du chantier', df['date_end'].iloc[0], left_indent=0.15, space_before=0.1)
-        word_document.add_field(u'Base de prix', df['base_prix'].iloc[0], left_indent=0.15, space_before=0.1)
         word_document.add_field(u'Responsable affaire', df['responsable'].iloc[0], left_indent=0.15, space_before=0.1)
 
         # Info Chantier
