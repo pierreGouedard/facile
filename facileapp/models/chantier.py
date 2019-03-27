@@ -89,14 +89,21 @@ class Chantier(BaseModel):
     @staticmethod
     def get_chantier(return_id=False, **kwargs):
 
+        columns = ['chantier_id', 'designation_client', 'nom']
+
         # Get list of chantier
         df = Chantier.driver.select(Chantier.table_name, **kwargs)
         if df.empty:
             return []
 
-        df = df.set_index('chantier_id', drop=True)\
-            .loc[:, ['designation_client', 'nom']] \
-            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in ['designation_client', 'nom']]), axis=1) \
+        df = df.transform(
+            {f.name: f.processing_db['download'] for f in Chantier.l_fields() + Chantier.l_index
+             if f.name in columns and f.processing_db is not None}
+        )
+
+        df = df.set_index(columns[0], drop=True)\
+            .loc[:, columns[1:]] \
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in columns[1:]]), axis=1) \
             .to_dict()
 
         if return_id:

@@ -1,6 +1,7 @@
 # Global import
 import pandas as pd
-from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, Money, Float, Sequence, Set
+from colander import SchemaNode as sn, Schema, String, Date, DateTime, Integer, Money, Float, Sequence, Set, \
+    required as req
 from deform import FileData
 from deform.widget import DateInputWidget, DateTimeInputWidget, Select2Widget, MoneyInputWidget, HiddenWidget, \
     TextInputWidget, FileUploadWidget
@@ -56,7 +57,7 @@ class StringFields(object):
                          required=self.required, missing_msg=self.missing_msg)
         else:
             self.processing_form.update(
-                {'form': lambda x: ';'.join(map(str, x)) if x else missing, 'db': lambda x: x.split(';')}
+                {'form': lambda x: ';'.join(map(str, x)) if x and x != req else missing, 'db': lambda x: x.split(';')}
             )
             self.sn = sn(Set(), title=self.title, name=name, widget=self.widget, description=desc)
 
@@ -104,7 +105,7 @@ class IntegerFields(object):
             else:
                 self.widget = None
 
-        self.processing_form = {'form': lambda x: int(x) if x else missing, 'db': lambda x: int(x)}
+        self.processing_form = {'form': lambda x: int(x) if x != req and x else missing, 'db': lambda x: int(x)}
         self.processing_db = {'upload': lambda x: int(x), 'download': lambda x: int(x)}
 
         self.sn = sn(Integer(), title=self.title, name=name, widget=self.widget, description=desc,
@@ -154,7 +155,7 @@ class FloatFields(object):
             else:
                 self.widget = None
 
-        self.processing_form = {'form': lambda x: float(x) if x else missing, 'db': lambda x: float(x)}
+        self.processing_form = {'form': lambda x: float(x) if x and x != req else missing, 'db': lambda x: float(x)}
         self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: float(x)}
 
         self.sn = sn(Float(), title=self.title, name=name, widget=widget, description=desc,
@@ -175,7 +176,7 @@ class FloatFields(object):
 
 
 class MoneyFields(object):
-    def __init__(self, title, name, round=1, missing=0., widget=None, l_choices=None, desc=None, decimal=100,
+    def __init__(self, title, name, round=1, missing=0, widget=None, l_choices=None, desc=None, decimal=100,
                  table_reduce=False, rank=0, required=False, missing_msg='champ requis', primary_key=False):
 
         # Form display & param
@@ -203,7 +204,7 @@ class MoneyFields(object):
             else:
                 self.widget = MoneyInputWidget(options={'allowZero': True})
 
-        self.processing_form = {'form': lambda x: float(x.replace(',', '')) if x else missing, 'db': lambda x: float(x)}
+        self.processing_form = {'form': lambda x: float(x.replace(',', '')) if x and x != req else missing, 'db': lambda x: float(x)}
         self.processing_db = {'upload': lambda x: float(int(x * decimal)) / decimal, 'download': lambda x: float(x)}
 
         self.sn = sn(Money(), title=self.title, name=self.name, widget=self.widget, description=desc,

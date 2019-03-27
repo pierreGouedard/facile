@@ -105,11 +105,18 @@ class Contact(BaseModel):
     @staticmethod
     def get_contact(type_='all', return_id=False, **kwargs):
 
+        columns = ['contact_id', 'type', 'designation', 'contact']
+
         # Get contact of interest
         df = Contact.driver.select(Contact.table_name, **kwargs)
 
         if df.empty:
             return []
+
+        df = df.transform(
+            {f.name: f.processing_db['download'] for f in Contact.l_fields() + Contact.l_index
+             if f.name in columns and f.processing_db is not None}
+        )
 
         if type_ != 'all':
             df = df.loc[df.type.apply(lambda x: type_ in x)]
@@ -118,8 +125,8 @@ class Contact(BaseModel):
             return []
 
         d_contacts = df.set_index('contact_id', drop=True)\
-            .loc[:, ['designation', 'contact']]\
-            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in ['designation', 'contact']]), axis=1)\
+            .loc[:, columns[2:]]\
+            .apply(lambda r: u'{} / {}'.format(*[r[c] for c in columns[2:]]), axis=1)\
             .to_dict()
 
         if return_id:

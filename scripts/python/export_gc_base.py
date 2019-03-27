@@ -51,7 +51,7 @@ d_map_chantier = {
 # OPERATION ON TEXT
 f0 = lambda x: x.decode('utf-8')
 f1 = lambda x: ' '.join(map(lambda y: y.lower().capitalize(), x.split(' ')))
-f21 = lambda x: x.replace('Av', 'Avenue')
+f21 = lambda x: x.replace('Av ', 'Avenue ')
 f22 = lambda x: x.replace('Bd', 'Boulevard')
 f23 = lambda x: x.replace('Bld', 'Boulevard')
 f3 = lambda x: x if len(x.split(' ')) > 1 else 'Mr/Mme {}'.format(x)
@@ -100,6 +100,7 @@ df_contact_client[l_f1] = df_contact_client.transform({c: f1 for c in l_f1})[l_f
 df_contact_client[l_f2] = df_contact_client.transform({c: f21 for c in l_f2})[l_f2]
 df_contact_client[l_f2] = df_contact_client.transform({c: f22 for c in l_f2})[l_f2]
 df_contact_client[l_f2] = df_contact_client.transform({c: f23 for c in l_f2})[l_f2]
+
 
 # Load Fournisseur base
 dtype = {
@@ -172,25 +173,53 @@ def get_new(df_old, d_map):
     return df_new
 
 # Save to csv for inspection
-get_new(df_client, d_map_client).to_csv(os.path.join(pth_gc_base, 'New/client_new.csv'), encoding='utf-8')
-get_new(df_contact_client, d_map_contact_c).to_csv(os.path.join(pth_gc_base, 'New/client_contact_new.csv'), encoding='utf-8')
-get_new(df_fourniseur, d_map_founisseur).to_csv(os.path.join(pth_gc_base, 'New/fournisseur_new.csv'), encoding='utf-8')
-get_new(df_contact_fourniseur, d_map_contact_f).to_csv(os.path.join(pth_gc_base, 'New/fournisseur_contact_new.csv'), encoding='utf-8')
-get_new(df_chantier, d_map_chantier).to_csv(os.path.join(pth_gc_base, 'New/chantier_new.csv'), encoding='utf-8')
-
-import IPython
-IPython.embed()
+df_client_new = get_new(df_client, d_map_client)
+df_contact_client_new = get_new(df_contact_client, d_map_contact_c)
+df_fournisseur_new = get_new(df_fourniseur, d_map_founisseur)
+df_contact_fournisseur_new = get_new(df_contact_fourniseur, d_map_contact_f)
+df_chantier_new = get_new(df_chantier, d_map_chantier)
 
 
+df_client_new.to_csv(os.path.join(pth_gc_base, 'New/client_new.csv'), encoding='utf-8')
+df_contact_client_new.to_csv(os.path.join(pth_gc_base, 'New/client_contact_new.csv'), encoding='utf-8')
+df_fournisseur_new.to_csv(os.path.join(pth_gc_base, 'New/fournisseur_new.csv'), encoding='utf-8')
+df_contact_fournisseur_new.to_csv(os.path.join(pth_gc_base, 'New/fournisseur_contact_new.csv'), encoding='utf-8')
+df_chantier_new.to_csv(os.path.join(pth_gc_base, 'New/chantier_new.csv'), encoding='utf-8')
+
+df_client_new['creation_date'] = str(pd.Timestamp.now())
+df_client_new['maj_date'] = str(pd.Timestamp.now())
+df_contact_client_new['creation_date'] = str(pd.Timestamp.now())
+df_contact_client_new['maj_date'] = str(pd.Timestamp.now())
+df_fournisseur_new['creation_date'] = str(pd.Timestamp.now())
+df_fournisseur_new['maj_date'] = str(pd.Timestamp.now())
+df_contact_fournisseur_new['creation_date'] = str(pd.Timestamp.now())
+df_contact_fournisseur_new['maj_date'] = str(pd.Timestamp.now())
+df_chantier_new['creation_date'] = str(pd.Timestamp.now())
+df_chantier_new['maj_date'] = str(pd.Timestamp.now())
+
+d_cli = {k: True for k in df_client_new.designation.unique()}
+
+df_contact_client_new = df_contact_client_new.loc[df_contact_client_new.contact != '']
+df_contact_client_new = df_contact_client_new.loc[df_contact_client_new.designation.apply(lambda x: d_cli.get(x, False))]
+df_contact_client_new = df_contact_client_new.reset_index(drop=True)
+df_contact_client_new['contact_id'] = df_contact_client_new.index.map(lambda x: 'CT{0:0=4d}'.format(x + 1))
+
+d_fou = {k: True for k in df_fournisseur_new.raison_social.unique()}
+df_contact_fournisseur_new = df_contact_fournisseur_new.loc[df_contact_fournisseur_new.contact != '']
+df_contact_fournisseur_new = df_contact_fournisseur_new.loc[df_contact_fournisseur_new.designation.apply(lambda x: d_fou.get(x, False))]
+df_contact_fournisseur_new = df_contact_fournisseur_new.reset_index(drop=True)
+df_contact_fournisseur_new['contact_id'] = df_contact_fournisseur_new.index\
+    .map(lambda x: 'CT{0:0=4d}'.format(x + df_contact_client_new.index.max() + 2))
 
 
 # INSERT IN BASE
-# from facile.utils.drivers import rdbms
-# driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'])
-# driver.insert(df, name)
 
-# Create engin to access DB
-engine = db.create_engine(d_sconfig['mysql_uri'])
+from facile.utils.drivers import rdbms
+driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'])
+import IPython
+IPython.embed()
+
+# driver.insert(df, 'client')
 
 
 
