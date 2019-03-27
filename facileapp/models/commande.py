@@ -76,7 +76,7 @@ class Commande(BaseModel):
 
     @staticmethod
     def get_commande():
-        df_commande =  Commande.load_db(columns=['commande_id'])
+        df_commande = Commande.load_db(columns=['commande_id'])
 
         if df_commande.empty:
             return []
