@@ -129,11 +129,16 @@ class Facture(BaseModel):
         if self.facture_id == '' or self.facture_id is None:
             if self.type == 'facture':
                 l_factures_sub = [t[0] for t in l_factures if t[1] == 'facture']
-                self.facture_id = 'FC{0:0=4d}'.format(max(map(lambda x: int(x.replace('FC', '')), l_factures_sub)) + 1)
-
+                if len(l_factures_sub) > 0:
+                    self.facture_id = 'FC{0:0=4d}'.format(max(map(lambda x: int(x.replace('FC', '')), l_factures_sub)) + 1)
+                else:
+                    self.facture_id = 'FC{0:0=4d}'.format(1)
             else:
                 l_factures_sub = [t[0] for t in l_factures if t[1] == 'facture']
-                self.facture_id = 'AV{0:0=4d}'.format(max(map(lambda x: int(x.replace('AV', '')), l_factures_sub)) + 1)
+                if len(l_factures_sub) > 0:
+                    self.facture_id = 'AV{0:0=4d}'.format(max(map(lambda x: int(x.replace('AV', '')), l_factures_sub)) + 1)
+                else:
+                    self.facture_id = 'FC{0:0=4d}'.format(1)
 
                 if self.montant_ht > 0:
                     self.montant_ht *= -1

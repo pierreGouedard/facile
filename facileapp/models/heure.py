@@ -144,7 +144,10 @@ class Heure(BaseModel):
         heure_id_ = self.heure_id
 
         if self.heure_id == -1 or self.heure_id is None:
-            self.heure_id = max(map(int, l_heures)) + 1
+            if len(l_heures) > 0:
+                self.heure_id = max(map(int, l_heures)) + 1
+            else:
+                self.heure_id = 1
 
         # Try to add and reset conatct id if failed
         try:

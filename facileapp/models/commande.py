@@ -104,8 +104,10 @@ class Commande(BaseModel):
         commande_id_ = self.commande_id
 
         if self.commande_id == '' or self.commande_id is None:
-            self.commande_id = 'CM{0:0=4d}'.format(max(map(lambda x: int(x.replace('CM', '')), l_commandes)) + 1)
-
+            if len(l_commandes) > 0:
+                self.commande_id = 'CM{0:0=4d}'.format(max(map(lambda x: int(x.replace('CM', '')), l_commandes)) + 1)
+            else:
+                self.commande_id = 'CM{0:0=4d}'.format(1)
         # Try to add and reset conatct id if failed
         try:
             super(Commande, self).add()

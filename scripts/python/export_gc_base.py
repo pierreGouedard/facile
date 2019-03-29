@@ -45,7 +45,7 @@ d_map_contact_f = {
 
 d_map_chantier = {
     'designation_client': 'CH_CLIENT', 'nom': 'CH_NOM', 'adresse': 'CH_AD1', 'ville': 'CH_VILLE',
-    'code_potal': 'CH_CODPO'
+    'code_postal': 'CH_CODPO'
 }
 
 # OPERATION ON TEXT
@@ -211,9 +211,9 @@ df_contact_fournisseur_new = df_contact_fournisseur_new.reset_index(drop=True)
 df_contact_fournisseur_new['contact_id'] = df_contact_fournisseur_new.index\
     .map(lambda x: 'CT{0:0=4d}'.format(x + df_contact_client_new.index.max() + 2))
 
+df_chantier_new['chantier_id'] = df_chantier_new.index.map(lambda x: 'CH{0:0=4d}'.format(x + 1))
 
 # INSERT IN BASE
-
 from facile.utils.drivers import rdbms
 driver = rdbms.RdbmsDriver(facile_base, d_sconfig['mysql_uri'])
 import IPython
