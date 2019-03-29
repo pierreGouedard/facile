@@ -87,7 +87,7 @@ class Devis(BaseModel):
             return Contact.get_contact('client_commande', return_id=True)
         elif kw == 'responsable':
             return zip(Employe.get_employes(**{'categorie': 'charge affaire'}),
-                       E[Fri Mar 29 10:42:27.012154 2019] [:error] [pid 8501] [remote 172.31.43.4:39053]     self.devis_id = 'DV{0:0=4d}'.format(max(map(lambda x: int(x.replace('DV', '')), l_devis)) + 1)mploye.get_employes(**{'categorie': 'charge affaire'}))
+                       Employe.get_employes(**{'categorie': 'charge affaire'}))
         elif kw == 'base_prix':
             d = pd.Timestamp.now().date()
             l_dates = pd.DatetimeIndex(start=d - pd.Timedelta(days=95), end=d + pd.Timedelta(days=95), freq='M')
@@ -132,7 +132,7 @@ class Devis(BaseModel):
             if len(l_devis) > 0:
                 self.devis_id = 'DV{0:0=4d}'.format(max(map(lambda x: int(x.replace('DV', '')), l_devis)) + 1)
             else:
-                self.devis = 'DV{0:0=4d}'.format(1)
+                self.devis_id = 'DV{0:0=4d}'.format(1)
                 
         self.price = Devis.compute_price(
             {'hp': self.__getattribute__('heure_prod'), 'ha': self.__getattribute__('heure_autre'),
