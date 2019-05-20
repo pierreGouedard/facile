@@ -4,6 +4,7 @@
 secret-config.yaml
 secret-config-casoe.yaml
 facile-erp.db
+*.txt
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
