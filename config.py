@@ -14,5 +14,5 @@ TABLE_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/table/template
 FILE_DRIVER_TMP_DIR = '/tmp'
 CODEC = 'utf-8'
 import yaml
-with open('secret-config.yaml', 'rb') as lcf:
+with open('secret-config.yml', 'rb') as lcf:
     d_sconfig = yaml.safe_load(lcf)
