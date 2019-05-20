@@ -3,6 +3,7 @@
 *.sqlite3
 secret-config.yaml
 secret-config-casoe.yaml
+secret-config-casoe.yml
 facile-erp.db
 
 
