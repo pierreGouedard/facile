@@ -1,9 +1,9 @@
 *~
 *.pyc
 *.sqlite3
-secret-config.yaml
-secret-config-casoe.yaml
+secret-config.yml
 secret-config-casoe.yml
+secret-config-local.yml
 facile-erp.db
 
 
