@@ -14,3 +14,4 @@ python-docx==0.8.10
 PyMySQL==0.9.3
 SQLAlchemy==1.2.18
 boto3==1.9.108
+scipy
