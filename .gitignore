@@ -1,10 +1,15 @@
 *~
 *.pyc
 *.sqlite3
-secret-config.yaml
+secret-config.yml
+secret-config-casoe.yml
+secret-config-local.yml
 facile-erp.db
 
 # Elastic Beanstalk Files
 .elasticbeanstalk/*
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
+
+# Backup data
+backup_data
