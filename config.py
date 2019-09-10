@@ -12,6 +12,8 @@ FACILE_HOME = os.path.dirname(os.path.realpath(__file__))
 DEFORM_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/deform/templates/')
 TABLE_TEMPLATE_PATH = os.path.join(FACILE_HOME, 'facileapp/static/table/templates/')
 FILE_DRIVER_TMP_DIR = '/tmp'
+BACKUP_PATH = os.path.join(FACILE_HOME, 'backup_data')
+
 CODEC = 'utf-8'
 import yaml
 with open('secret-config-casoe.yml', 'rb') as lcf:

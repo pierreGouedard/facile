@@ -12,3 +12,6 @@ facile-erp.db
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 *.txt
+
+# Data file
+backup_data/*
